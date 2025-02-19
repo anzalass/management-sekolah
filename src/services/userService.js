@@ -21,14 +21,16 @@ const createGuru = async (guru, foto) => {
     status,
     RiwayatPendidikanGuru,
   } = guru;
+
   try {
+    let newGuru;
     const passwordHash = await bcrypt.hash(password, 10);
     const imageUploadResult = foto
       ? await uploadToImageKit(foto, "guru")
       : null;
 
     await prisma.$transaction(async (prisma) => {
-      const newGuru = await prisma.guru.create({
+      newGuru = await prisma.guru.create({
         data: {
           nip,
           nik,
@@ -47,27 +49,51 @@ const createGuru = async (guru, foto) => {
           fotoId: imageUploadResult?.fileId,
         },
       });
-
-      if (RiwayatPendidikanGuru?.length) {
-        const pendidikanData = RiwayatPendidikanGuru.map((pendidikan) => ({
-          nip: newGuru.nip,
-          nama: pendidikan.nama,
-          fakultas: pendidikan.fakultas,
-          jurusan: pendidikan.jurusan,
-          tahunLulus: pendidikan.tahunLulus,
-        }));
-
-        await prisma.riwayatPendidikanGuru.createMany({ data: pendidikanData });
-      }
     });
+
     return;
   } catch (error) {
     throw new Error(error.message);
   }
 };
 
-const updateGuru = async (nip, guru, foto) => {
+const createRiwayatPendidikan = async (nip, data) => {
+  console.log("well", data.data);
+
+  try {
+    await prisma.$transaction(async (prisma) => {
+      for (let index = 0; index < data.data.length; index++) {
+        await prisma.riwayatPendidikanGuru.create({
+          data: {
+            nip: nip, // or however you want to map this
+            nama: data.data[index].nama,
+            jenjangPendidikan: data.data[index].jenjangPendidikan,
+            gelar: data.data[index].gelar,
+            tahunLulus: data.data[index].tahunLulus,
+          },
+        });
+      }
+    });
+  } catch (error) {
+    throw new Error(error.message);
+  }
+};
+
+const deleteRiwayatPendidikan = async (id) => {
+  try {
+    await prisma.$transaction(async (prisma) => {
+      await prisma.riwayatPendidikanGuru.deleteMany({
+        where: { id: id },
+      });
+    });
+  } catch (error) {
+    throw new Error(error.message);
+  }
+};
+
+const updateGuru = async (id, guru, foto) => {
   const {
+    nip,
     nik,
     password,
     jabatan,
@@ -83,40 +109,74 @@ const updateGuru = async (nip, guru, foto) => {
   } = guru;
 
   try {
-    return await prisma.$transaction(async (tx) => {
-      const existingGuru = await tx.guru.findUnique({ where: { nip } });
-      if (!existingGuru)
-        throw new Error("Guru dengan NIP tersebut tidak ditemukan");
+    // 1️⃣ Ambil data guru di luar transaksi
+    const existingGuru = await prisma.guru.findUnique({ where: { id } });
+    if (!existingGuru)
+      throw new Error("Guru dengan NIP tersebut tidak ditemukan");
 
-      let imageUploadResult = null;
-
-      if (foto) {
-        if (existingGuru.fotoId) {
-          await deleteFromImageKit(existingGuru.fotoId);
-        }
-        imageUploadResult = await uploadToImageKit(foto, "guru");
+    // 2️⃣ Upload foto (jika ada) di luar transaksi
+    let imageUploadResult = null;
+    if (foto) {
+      if (existingGuru.fotoId) {
+        await deleteFromImageKit(existingGuru.fotoId);
       }
-      await tx.guru.update({
-        where: { nip },
-        data: {
-          nik,
-          password,
-          jabatan,
-          nama,
-          tempatLahir,
-          tanggalLahir,
-          alamat,
-          agama,
-          jenisKelamin,
-          noTelepon,
-          email,
-          status,
-          foto: imageUploadResult?.url || existingGuru.foto,
-          fotoId: imageUploadResult?.fileId || existingGuru.fotoId,
-        },
-      });
-      return;
-    });
+      imageUploadResult = await uploadToImageKit(foto, "guru");
+    }
+    let passwordHash = "";
+    if (password !== "") {
+      passwordHash = await bcrypt.hash(password, 10);
+    }
+
+    await prisma.$transaction(
+      async (tx) => {
+        await tx.guru.update({
+          where: { id },
+          data: {
+            nik,
+            ...(passwordHash && { password: passwordHash }), // Update password jika tidak kosong
+            jabatan,
+            nama,
+            tempatLahir,
+            tanggalLahir,
+            alamat,
+            agama,
+            jenisKelamin,
+            noTelepon,
+            email,
+            status,
+            foto: imageUploadResult?.url || existingGuru.foto,
+            fotoId: imageUploadResult?.fileId || existingGuru.fotoId,
+            nip, // Sekalian update NIP di sini
+          },
+        });
+
+        await tx.kelas.updateMany({
+          where: { nip: existingGuru.nip },
+          data: { nip },
+        });
+
+        await tx.kehadiran_Guru_Dan_Staff.updateMany({
+          where: { nip: existingGuru.nip },
+          data: { nip },
+        });
+
+        await tx.riwayatPendidikanGuru.updateMany({
+          where: { nip: existingGuru.nip },
+          data: { nip },
+        });
+
+        await tx.perizinanGuru.updateMany({
+          where: { nip: existingGuru.nip },
+          data: { nip },
+        });
+
+        await tx.logs.updateMany({
+          where: { nip: existingGuru.nip },
+          data: { nip },
+        });
+      },
+      { timeout: 10000 } // Tambah timeout jika transaksi lama
+    );
   } catch (error) {
     throw new Error(error.message);
   }
@@ -138,12 +198,31 @@ const deleteGuru = async (nip) => {
 };
 
 const getGuruByNip = async (nip) => {
-  const guru = await prisma.guru.findUnique({ where: { nip } });
+  const guru = await prisma.guru.findUnique({
+    where: { id: nip },
+    select: {
+      nip: true,
+      nik: true,
+      nama: true,
+      jabatan: true,
+      tempatLahir: true,
+      tanggalLahir: true,
+      alamat: true,
+      agama: true,
+      jenisKelamin: true,
+      noTelepon: true,
+      email: true,
+      status: true,
+      foto: true,
+      fotoId: true,
+      RiwayatPendidikanGuru: true, // Tetap mengambil relasi
+    },
+  });
+
   if (!guru) {
     throw new Error("Guru tidak ditemukan");
-  } else {
-    return guru;
   }
+  return guru;
 };
 
 const createSiswa = async (siswa, foto) => {
@@ -286,7 +365,107 @@ const getSiswaByNis = async (nis) => {
   }
 };
 
+const getAllGuru = async ({ page = 1, pageSize = 10, nama = "", nip = "" }) => {
+  try {
+    const skip = (page - 1) * pageSize; // Hitung pagination
+
+    const data = await prisma.guru.findMany({
+      skip,
+      take: pageSize,
+      where: {
+        AND: [
+          {
+            nama: {
+              contains: nama, // Pastikan tidak undefined
+              mode: "insensitive",
+            },
+          },
+          {
+            nip: {
+              contains: nip, // Pastikan tidak undefined
+              mode: "insensitive",
+            },
+          },
+        ],
+      },
+    });
+
+    const totalGuru = await prisma.guru.count({
+      where: {
+        AND: [
+          {
+            nama: {
+              contains: nama,
+              mode: "insensitive",
+            },
+          },
+          {
+            nip: {
+              contains: nip,
+              mode: "insensitive",
+            },
+          },
+        ],
+      },
+    });
+
+    return {
+      data,
+      total: totalGuru,
+      page,
+      pageSize,
+      totalPages: Math.ceil(totalGuru / pageSize),
+    };
+  } catch (error) {
+    console.error("Error di getAllGuru:", error); // Log error di backend
+    throw new Error(error.message || "Terjadi kesalahan pada server");
+  }
+};
+
+const getAllSiswa = async ({ page = 1, nama = "", nis = "", kelas = "" }) => {
+  try {
+    const skip = (page - 1) * 10; // Menghitung jumlah data yang dilewati
+    const take = 10; // Mengambil jumlah data sesuai pageSize
+
+    const data = await prisma.siswa.findMany({
+      skip: skip,
+      take: take,
+      where: {
+        AND: [
+          {
+            nama: {
+              contains: nama, // Pencarian berdasarkan nama
+              mode: "insensitive", // Tidak case-sensitive
+            },
+          },
+          {
+            nis: {
+              contains: nis, // Pencarian berdasarkan nis
+              mode: "insensitive", // Tidak case-sensitive
+            },
+          },
+          {
+            kelas: {
+              contains: kelas, // Pencarian berdasarkan kelas
+              mode: "insensitive", // Tidak case-sensitive
+            },
+          },
+        ],
+      },
+    });
+
+    return data;
+  } catch (error) {
+    console.error("Error getting all guru:", error);
+    throw new Error("Failed to fetch all guru.");
+  }
+};
+
 export {
+  createRiwayatPendidikan,
+  deleteRiwayatPendidikan,
+  getAllGuru,
+  getAllSiswa,
   createGuru,
   updateGuru,
   deleteGuru,

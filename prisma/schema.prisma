@@ -28,7 +28,8 @@ model Sekolah {
 }
 
 model Guru {
-  nip            String @id 
+  id            String @id @default(uuid())
+  nip            String @unique
   nik            String
   password       String
   jabatan        String
@@ -75,8 +76,7 @@ model RiwayatPendidikanGuru {
   id             String @id @default(uuid())
   nip            String
   nama           String
-  fakultas       String?
-  jurusan        String?
+  gelar          String
   jenjangPendidikan String
   tahunLulus     String
   Guru           Guru  @relation(fields: [nip], references: [nip])
@@ -156,10 +156,12 @@ model Siswa {
   poin          Int
   alamat        String?
   agama         String
+  kelas         String?
   jenisKelamin  String
   foto  String?
   fotoId String?  
   noTelepon     String? @unique
+  noTeleponOrtu String
   email         String? @unique
   ekstraKulikulerPeminatan String?
   ekstraKulikulerWajib String?
