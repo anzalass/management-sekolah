@@ -2,21 +2,53 @@
 CREATE TABLE "Sekolah" (
     "id" TEXT NOT NULL,
     "nama" TEXT NOT NULL,
+    "npsn" TEXT NOT NULL,
     "kas" INTEGER NOT NULL,
+    "desa" TEXT NOT NULL,
+    "kecamatan" TEXT NOT NULL,
+    "kabupaten" TEXT NOT NULL,
+    "provinsi" TEXT NOT NULL,
+    "telephone" TEXT NOT NULL,
+    "email" TEXT NOT NULL,
+    "website" TEXT NOT NULL,
+    "namaKepsek" TEXT NOT NULL,
+    "logo" TEXT NOT NULL,
+    "logoId" TEXT NOT NULL,
 
     CONSTRAINT "Sekolah_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
 CREATE TABLE "Guru" (
+    "id" TEXT NOT NULL,
     "nip" TEXT NOT NULL,
+    "nik" TEXT NOT NULL,
     "password" TEXT NOT NULL,
     "jabatan" TEXT NOT NULL,
     "nama" TEXT NOT NULL,
     "tempatLahir" TEXT NOT NULL,
-    "tanggalLahir" TIMESTAMP(3) NOT NULL,
+    "tanggalLahir" TIMESTAMP(3),
+    "alamat" TEXT NOT NULL,
+    "agama" TEXT NOT NULL,
+    "jenisKelamin" TEXT NOT NULL,
+    "noTelepon" TEXT NOT NULL,
+    "email" TEXT NOT NULL,
+    "status" TEXT NOT NULL,
+    "foto" TEXT,
+    "fotoId" TEXT,
 
-    CONSTRAINT "Guru_pkey" PRIMARY KEY ("nip")
+    CONSTRAINT "Guru_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "Kehadiran_Guru_Dan_Staff" (
+    "id" TEXT NOT NULL,
+    "nip" TEXT NOT NULL,
+    "latitude" TEXT NOT NULL,
+    "longitude" TEXT NOT NULL,
+    "tanggal" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "Kehadiran_Guru_Dan_Staff_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
@@ -35,6 +67,7 @@ CREATE TABLE "RiwayatPendidikanGuru" (
     "id" TEXT NOT NULL,
     "nip" TEXT NOT NULL,
     "nama" TEXT NOT NULL,
+    "gelar" TEXT NOT NULL,
     "jenjangPendidikan" TEXT NOT NULL,
     "tahunLulus" TEXT NOT NULL,
 
@@ -106,14 +139,26 @@ CREATE TABLE "KehadiranSiswa" (
 -- CreateTable
 CREATE TABLE "Siswa" (
     "nis" TEXT NOT NULL,
+    "nik" TEXT NOT NULL,
     "nama" TEXT NOT NULL,
-    "jurusan" TEXT NOT NULL,
+    "jurusan" TEXT,
     "tanggalLahir" TIMESTAMP(3) NOT NULL,
     "tempatLahir" TIMESTAMP(3) NOT NULL,
     "namaAyah" TEXT NOT NULL,
     "namaIbu" TEXT NOT NULL,
     "tahunLulus" TIMESTAMP(3) NOT NULL,
     "poin" INTEGER NOT NULL,
+    "alamat" TEXT,
+    "agama" TEXT NOT NULL,
+    "kelas" TEXT,
+    "jenisKelamin" TEXT NOT NULL,
+    "foto" TEXT,
+    "fotoId" TEXT,
+    "noTelepon" TEXT,
+    "noTeleponOrtu" TEXT NOT NULL,
+    "email" TEXT,
+    "ekstraKulikulerPeminatan" TEXT,
+    "ekstraKulikulerWajib" TEXT,
 
     CONSTRAINT "Siswa_pkey" PRIMARY KEY ("nis")
 );
@@ -166,6 +211,7 @@ CREATE TABLE "KegiatanSekolah" (
     "nama" TEXT NOT NULL,
     "keterangan" TEXT NOT NULL,
     "time" TIMESTAMP(3) NOT NULL,
+    "status" TEXT NOT NULL,
 
     CONSTRAINT "KegiatanSekolah_pkey" PRIMARY KEY ("id")
 );
@@ -177,6 +223,7 @@ CREATE TABLE "PerizinanGuru" (
     "jenis" TEXT NOT NULL,
     "keterangan" TEXT NOT NULL,
     "time" TIMESTAMP(3) NOT NULL,
+    "timeEnd" TIMESTAMP(3) NOT NULL,
 
     CONSTRAINT "PerizinanGuru_pkey" PRIMARY KEY ("id")
 );
@@ -189,6 +236,16 @@ CREATE TABLE "Logs" (
     "time" TIMESTAMP(3) NOT NULL,
 
     CONSTRAINT "Logs_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "EkstraKulikuler" (
+    "id" TEXT NOT NULL,
+    "nama" TEXT NOT NULL,
+    "waktu" TIMESTAMP(3) NOT NULL,
+    "jenis" TEXT NOT NULL,
+
+    CONSTRAINT "EkstraKulikuler_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
@@ -217,8 +274,35 @@ CREATE TABLE "Peminjaman_dan_Pengembalian" (
     CONSTRAINT "Peminjaman_dan_Pengembalian_pkey" PRIMARY KEY ("id")
 );
 
+-- CreateTable
+CREATE TABLE "Mata_Pelajaran" (
+    "id" TEXT NOT NULL,
+    "nama" TEXT NOT NULL,
+    "kelas" TEXT NOT NULL,
+    "guru" TEXT NOT NULL,
+
+    CONSTRAINT "Mata_Pelajaran_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "Periode_Tahun_Ajaran" (
+    "id" TEXT NOT NULL,
+    "tahunAjaran" TEXT NOT NULL,
+
+    CONSTRAINT "Periode_Tahun_Ajaran_pkey" PRIMARY KEY ("id")
+);
+
 -- CreateIndex
-CREATE UNIQUE INDEX "Kelas_nip_key" ON "Kelas"("nip");
+CREATE UNIQUE INDEX "Guru_nip_key" ON "Guru"("nip");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "Siswa_noTelepon_key" ON "Siswa"("noTelepon");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "Siswa_email_key" ON "Siswa"("email");
+
+-- AddForeignKey
+ALTER TABLE "Kehadiran_Guru_Dan_Staff" ADD CONSTRAINT "Kehadiran_Guru_Dan_Staff_nip_fkey" FOREIGN KEY ("nip") REFERENCES "Guru"("nip") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "Kelas" ADD CONSTRAINT "Kelas_nip_fkey" FOREIGN KEY ("nip") REFERENCES "Guru"("nip") ON DELETE RESTRICT ON UPDATE CASCADE;
