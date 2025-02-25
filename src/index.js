@@ -11,7 +11,9 @@ import inventarisRoutes from "./routes/inventarisRoutes.js";
 import kegiatanSekolahRoutes from "./routes/kegiatanSekolahRoutes.js";
 import mataPelajaranRoutes from "./routes/mataPelajaranRoutes.js";
 import perpustakaanRoutes from "./routes/perpustakaanRoutes.js";
-import ruangKelasRoutes from "./routes/ruangKelasRoutes.js";
+import ruangRoutes from "./routes/ruangRoutes.js";
+import anggaranRoutes from "./routes/anggaranRoutes.js";
+
 import kehadiranGuruDanStaffRoutes from "./routes/kehadiranGurudanStaffRoutes.js";
 
 dotenv.config();
@@ -34,6 +36,7 @@ app.get("/", (req, res) => {
   res.send("Management Sekolah");
 });
 
+app.use("/api/v1", anggaranRoutes);
 app.use("/api/v1", sekolaRoutes);
 app.use("/api/v1", authRoutes);
 app.use("/api/v1", userRoutes);
@@ -42,7 +45,7 @@ app.use("/api/v1", inventarisRoutes);
 app.use("/api/v1", kegiatanSekolahRoutes);
 app.use("/api/v1", mataPelajaranRoutes);
 app.use("/api/v1", perpustakaanRoutes);
-app.use("/api/v1", ruangKelasRoutes);
+app.use("/api/v1", ruangRoutes);
 app.use("/api/v1", kehadiranGuruDanStaffRoutes);
 
 app.listen(port, () => {

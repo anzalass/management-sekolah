@@ -3,6 +3,7 @@ const prisma = new PrismaClient();
 
 import bcrypt from "bcryptjs";
 import { deleteFromImageKit, uploadToImageKit } from "../utils/ImageHandler.js";
+import { prismaErrorHandler } from "../utils/errorHandlerPrisma.js";
 
 const createGuru = async (guru, foto) => {
   const {
@@ -53,13 +54,12 @@ const createGuru = async (guru, foto) => {
 
     return;
   } catch (error) {
-    throw new Error(error.message);
+    const errorMessage = prismaErrorHandler(error);
+    throw new Error(errorMessage);
   }
 };
 
 const createRiwayatPendidikan = async (nip, data) => {
-  console.log("well", data.data);
-
   try {
     await prisma.$transaction(async (prisma) => {
       for (let index = 0; index < data.data.length; index++) {
@@ -75,7 +75,8 @@ const createRiwayatPendidikan = async (nip, data) => {
       }
     });
   } catch (error) {
-    throw new Error(error.message);
+    const errorMessage = prismaErrorHandler(error);
+    throw new Error(errorMessage);
   }
 };
 
@@ -87,7 +88,8 @@ const deleteRiwayatPendidikan = async (id) => {
       });
     });
   } catch (error) {
-    throw new Error(error.message);
+    const errorMessage = prismaErrorHandler(error);
+    throw new Error(errorMessage);
   }
 };
 
@@ -178,7 +180,8 @@ const updateGuru = async (id, guru, foto) => {
       { timeout: 10000 } // Tambah timeout jika transaksi lama
     );
   } catch (error) {
-    throw new Error(error.message);
+    const errorMessage = prismaErrorHandler(error);
+    throw new Error(errorMessage);
   }
 };
 
@@ -193,7 +196,8 @@ const deleteGuru = async (nip) => {
       await tx.guru.delete({ where: { nip } });
     });
   } catch (error) {
-    throw new Error(error.message);
+    const errorMessage = prismaErrorHandler(error);
+    throw new Error(errorMessage);
   }
 };
 
@@ -237,6 +241,7 @@ const createSiswa = async (siswa, foto) => {
     namaIbu,
     tahunLulus,
     poin,
+    noTeleponOrtu,
     alamat,
     agama,
     jenisKelamin,
@@ -255,16 +260,16 @@ const createSiswa = async (siswa, foto) => {
           nik,
           nama,
           jurusan,
-          tanggalLahir,
+          tanggalLahir: new Date(`${tanggalLahir}T00:00:00Z`),
           tempatLahir,
           namaAyah,
           namaIbu,
           tahunLulus,
-          poin,
           alamat,
           agama,
           jenisKelamin,
           noTelepon,
+          noTeleponOrtu,
           email,
           ekstraKulikulerPeminatan,
           ekstraKulikulerWajib,
@@ -275,13 +280,15 @@ const createSiswa = async (siswa, foto) => {
     });
     return;
   } catch (error) {
-    throw new Error(error.message);
+    const errorMessage = prismaErrorHandler(error);
+    throw new Error(errorMessage);
   }
 };
 
-const updateSiswa = async (nis, siswa, foto) => {
+const updateSiswa = async (id, siswa, foto) => {
   const {
     nik,
+    nis,
     nama,
     jurusan,
     tanggalLahir,
@@ -299,44 +306,82 @@ const updateSiswa = async (nis, siswa, foto) => {
     ekstraKulikulerWajib,
   } = siswa;
   try {
-    await prisma.$transaction(async (tx) => {
-      const existingSiswa = await tx.siswa.findUnique({ where: { nis } });
+    let imageUploadResult = null;
+    let existingSiswa = null;
+    if (foto) {
+      existingSiswa = await prisma.siswa.findUnique({
+        where: { id: id },
+      });
       if (!existingSiswa) {
         throw new Error("Siswa dengan NIS tersebut tidak ditemukan");
       }
-      let imageUploadResult = null;
-      if (foto) {
-        if (existingSiswa.fotoId) {
-          await deleteFromImageKit(existingSiswa.fotoId);
-        }
-        imageUploadResult = await uploadToImageKit(foto, "siswa");
+
+      if (existingSiswa.fotoId) {
+        await deleteFromImageKit(existingSiswa.fotoId);
       }
-      await tx.siswa.update({
-        where: { nis },
-        data: {
-          nik,
-          nama,
-          jurusan,
-          tanggalLahir,
-          tempatLahir,
-          namaAyah,
-          namaIbu,
-          tahunLulus,
-          poin,
-          alamat,
-          agama,
-          jenisKelamin,
-          noTelepon,
-          email,
-          ekstraKulikulerPeminatan,
-          ekstraKulikulerWajib,
-          foto: imageUploadResult?.url,
-          fotoId: imageUploadResult?.fileId,
-        },
-      });
-    });
+
+      imageUploadResult = await uploadToImageKit(foto, "siswa");
+    }
+
+    await prisma.$transaction(
+      async (tx) => {
+        await tx.siswa.update({
+          where: { id: nis },
+          data: {
+            nik,
+            nis,
+            nama,
+            jurusan,
+            tanggalLahir: new Date(`${tanggalLahir}T00:00:00Z`),
+            tempatLahir,
+            namaAyah,
+            namaIbu,
+            tahunLulus,
+            poin,
+            alamat,
+            agama,
+            jenisKelamin,
+            noTelepon,
+            email,
+            ekstraKulikulerPeminatan,
+            ekstraKulikulerWajib,
+            foto: imageUploadResult?.url,
+            fotoId: imageUploadResult?.fileId,
+          },
+        });
+
+        await tx.daftarSiswa.updateMany({
+          where: { nis: existingSiswa.nis },
+          data: { nis: nis },
+        });
+        await tx.daftarSiswaKelas.updateMany({
+          where: { nis: existingSiswa.nis },
+          data: { nis: nis },
+        });
+        await tx.nilaiSiswa.updateMany({
+          where: { nis: existingSiswa.nis },
+          data: { nis: nis },
+        });
+        await tx.kehadiranSiswa.updateMany({
+          where: { nis: existingSiswa.nis },
+          data: { nis: nis },
+        });
+        await tx.pelanggaran_Dan_Prestasi_Siswa.updateMany({
+          where: { nis: existingSiswa.nis },
+          data: { nis: nis },
+        });
+        await tx.peminjaman_dan_Pengembalian.updateMany({
+          where: { nis: existingSiswa.nis },
+          data: { nis: nis },
+        });
+      },
+      { timeout: 10000 }
+    );
+
     return;
   } catch (error) {
+    console.log(error);
+
     throw new Error(error.message);
   }
 };
@@ -357,7 +402,7 @@ const deleteSiswa = async (nis) => {
 };
 
 const getSiswaByNis = async (nis) => {
-  const siswa = await prisma.siswa.findUnique({ where: { nis } });
+  const siswa = await prisma.siswa.findUnique({ where: { id: nis } });
   if (!siswa) {
     throw new Error("Siswa dengan NIS tersebut tidak ditemukan");
   } else {
@@ -417,47 +462,56 @@ const getAllGuru = async ({ page = 1, pageSize = 10, nama = "", nip = "" }) => {
       totalPages: Math.ceil(totalGuru / pageSize),
     };
   } catch (error) {
-    console.error("Error di getAllGuru:", error); // Log error di backend
-    throw new Error(error.message || "Terjadi kesalahan pada server");
+    const errorMessage = prismaErrorHandler(error);
+    throw new Error(errorMessage);
   }
 };
 
-const getAllSiswa = async ({ page = 1, nama = "", nis = "", kelas = "" }) => {
+const getAllSiswa = async ({
+  page = 1,
+  pageSize = 10,
+  nama = "",
+  nis = "",
+  kelas = "",
+}) => {
   try {
-    const skip = (page - 1) * 10; // Menghitung jumlah data yang dilewati
-    const take = 10; // Mengambil jumlah data sesuai pageSize
+    const skip = (page - 1) * 10;
+    const take = 10;
+
+    const where = {};
+
+    if (nama) {
+      where.nama = { contains: nama, mode: "insensitive" };
+    }
+
+    if (nis) {
+      where.nis = { contains: nis, mode: "insensitive" };
+    }
+
+    if (kelas) {
+      where.kelas = { contains: kelas, mode: "insensitive" };
+    }
 
     const data = await prisma.siswa.findMany({
-      skip: skip,
-      take: take,
-      where: {
-        AND: [
-          {
-            nama: {
-              contains: nama, // Pencarian berdasarkan nama
-              mode: "insensitive", // Tidak case-sensitive
-            },
-          },
-          {
-            nis: {
-              contains: nis, // Pencarian berdasarkan nis
-              mode: "insensitive", // Tidak case-sensitive
-            },
-          },
-          {
-            kelas: {
-              contains: kelas, // Pencarian berdasarkan kelas
-              mode: "insensitive", // Tidak case-sensitive
-            },
-          },
-        ],
-      },
+      skip,
+      take,
+      where,
     });
 
-    return data;
+    const totalSiswa = await prisma.siswa.count({
+      where,
+    });
+
+    return {
+      data,
+      total: totalSiswa,
+      page,
+      pageSize,
+      totalPages: Math.ceil(totalSiswa / pageSize),
+    };
   } catch (error) {
-    console.error("Error getting all guru:", error);
-    throw new Error("Failed to fetch all guru.");
+    const errorMessage = prismaErrorHandler(error);
+    throw new Error(errorMessage);
   }
 };
 

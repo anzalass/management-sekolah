@@ -1,41 +1,49 @@
 import { PrismaClient } from "@prisma/client";
+import { prismaErrorHandler } from "../utils/errorHandlerPrisma.js";
 const prisma = new PrismaClient();
 
 export const createAnggaran = async (data) => {
-  const { nama, keterangan, time, status, jumlah } = data;
+  const { nama, keterangan, tanggal, jenis, jumlah } = data;
   try {
     await prisma.$transaction(async (tx) => {
       await tx.riwayatAnggaran.create({
-        data: { nama, keterangan, time, status },
+        data: {
+          nama,
+          jumlah: parseInt(jumlah),
+          keterangan,
+          tanggal: new Date(`${tanggal}T00:00:00Z`),
+          jenis,
+        },
       });
 
       const kasSekolah = await tx.sekolah.findFirst({
         select: { kas: true },
       });
 
-      if (status === "pemasukan") {
-        await tx.sekolah.update({
-          where: { id: idSekolah },
+      if (jenis === "pemasukan") {
+        await tx.sekolah.updateMany({
           data: {
-            kas: kasSekolah + jumlah,
+            kas: kasSekolah.kas + parseInt(jumlah),
           },
         });
-      } else if (status === "pengeluaran") {
-        await tx.sekolah.update({
-          where: { id: idSekolah },
+      } else if (jenis === "pengeluaran") {
+        await tx.sekolah.updateMany({
           data: {
-            kas: kasSekolah - jumlah,
+            kas: kasSekolah.kas - parseInt(jumlah),
           },
         });
       }
     });
   } catch (error) {
-    throw new Error(error.message);
+    console.log(error);
+
+    const errorMessage = prismaErrorHandler(error);
+    throw new Error(errorMessage);
   }
 };
 
 export const updateAnggaran = async (idAnggaran, data) => {
-  const { nama, keterangan, time, status, jumlah } = data;
+  const { nama, keterangan, tanggal, jenis, jumlah } = data;
 
   try {
     await prisma.$transaction(async (tx) => {
@@ -48,21 +56,21 @@ export const updateAnggaran = async (idAnggaran, data) => {
 
       const riwayatAnggaran = await tx.riwayatAnggaran.findUnique({
         where: { id: idAnggaran },
-        select: { jumlah: true, status: true },
+        select: { jumlah: true, jenis: true },
       });
       if (!riwayatAnggaran) throw new Error("Riwayat anggaran tidak ditemukan");
 
       let kasBaru = sekolah.kas;
 
-      // 1. Balikkan kas sekolah sesuai dengan status dan jumlah anggaran sebelumnya
-      if (riwayatAnggaran.status === "pemasukan") {
+      // 1. Balikkan kas sekolah sesuai dengan jenis dan jumlah anggaran sebelumnya
+      if (riwayatAnggaran.jenis === "pemasukan") {
         kasBaru -= riwayatAnggaran.jumlah;
       } else {
         kasBaru += riwayatAnggaran.jumlah;
       }
 
-      // 2. Update kas sekolah sesuai dengan status dan jumlah baru
-      if (status === "pemasukan") {
+      // 2. Update kas sekolah sesuai dengan jenis dan jumlah baru
+      if (jenis === "pemasukan") {
         kasBaru += jumlah;
       } else {
         kasBaru -= jumlah;
@@ -74,21 +82,24 @@ export const updateAnggaran = async (idAnggaran, data) => {
       // 4. Update data riwayat anggaran dan kas sekolah
       await tx.riwayatAnggaran.update({
         where: { id: idAnggaran },
-        data: { nama, keterangan, time, status, jumlah },
+        data: {
+          nama,
+          keterangan,
+          tanggal: new Date(`${tanggal}T00:00:00Z`),
+          jenis,
+          jumlah,
+        },
       });
 
-      await tx.sekolah.update({
-        where: { id: idSekolah },
+      await tx.sekolah.updateMany({
         data: { kas: kasBaru },
       });
     });
 
     return { message: "Anggaran berhasil diperbarui" };
   } catch (error) {
-    console.error("Error updating anggaran:", error);
-    throw new Error(
-      error.message || "Terjadi kesalahan saat memperbarui anggaran"
-    );
+    const errorMessage = prismaErrorHandler(error);
+    throw new Error(errorMessage);
   }
 };
 
@@ -103,13 +114,13 @@ export const deleteAnggaran = async (idAnggaran) => {
 
       const anggaran = await tx.riwayatAnggaran.findUnique({
         where: { idAnggaran },
-        select: { jumlah: true, status: true },
+        select: { jumlah: true, jenis: true },
       });
 
       if (!anggaran) throw new Error("Anggaran not found");
       let kasBaru = sekolah.kas;
 
-      if (anggaran.status === "pemasukan") {
+      if (anggaran.jenis === "pemasukan") {
         kasBaru -= anggaran.jumlah;
       } else {
         kasBaru += anggaran.jumlah;
@@ -118,7 +129,8 @@ export const deleteAnggaran = async (idAnggaran) => {
       await tx.riwayatAnggaran.delete({ where: { id } });
     });
   } catch (error) {
-    throw new Error(error.message);
+    const errorMessage = prismaErrorHandler(error);
+    throw new Error(errorMessage);
   }
 };
 
@@ -128,4 +140,46 @@ export const getAnggaranById = async (id) => {
     throw new Error("Anggaran not found");
   }
   return anggaran;
+};
+
+export const getAllAnggaran = async ({
+  page = 1,
+  pageSize = 10,
+  nama = "",
+  jumlah,
+  jenis,
+  tanggal = "",
+}) => {
+  try {
+    const skip = (page - 1) * pageSize;
+    const take = pageSize;
+    let where = {};
+    if (nama) {
+      where.nama = { contains: nama, mode: "insensitive" };
+    }
+    if (jumlah) {
+      where.jumlah = parseInt(jumlah);
+    }
+    if (tanggal) {
+      where.tanggal = new Date(`${tanggal}T00:00:00Z`);
+    }
+    if (jenis) {
+      where.jenis = { contains: jenis, mode: "insensitive" };
+    }
+    const data = await prisma.riwayatAnggaran.findMany({
+      where,
+      skip,
+      take,
+      orderBy: { tanggal: "desc" },
+    });
+    return {
+      data,
+      page,
+      pageSize,
+      total: await prisma.riwayatAnggaran.count({ where }),
+    };
+  } catch (error) {
+    const errorMessage = prismaErrorHandler(error);
+    throw new Error(errorMessage);
+  }
 };

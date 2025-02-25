@@ -1,6 +1,7 @@
 import {
   createKegiatanSekolah,
   deleteKegiatanSekolah,
+  getAllKegiatanSekolah,
   getKegiatanSekolahById,
   updateKegiatanSekolah,
 } from "../services/kegiatanSekolahService.js";
@@ -44,6 +45,24 @@ export const getKegiatanSekolahByIdController = async (req, res, next) => {
     return res.status(200).json({
       message: "Berhasil mendapatkan kegiatan sekolah",
       data: kegiatanSekolah,
+    });
+  } catch (error) {
+    return res.status(500).json({ message: error.message });
+  }
+};
+
+export const getAllKegiatanSekolahController = async (req, res) => {
+  try {
+    const { page, nama, pageSize, ta } = req.query;
+    const result = await getAllKegiatanSekolah({
+      nama,
+      ta,
+      pageSize,
+      page,
+    });
+    return res.status(200).json({
+      message: "Berhasil mendapatkan semua kegiatan sekolah",
+      result,
     });
   } catch (error) {
     return res.status(500).json({ message: error.message });

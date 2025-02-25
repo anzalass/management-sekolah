@@ -1,6 +1,8 @@
 import {
   createMataPelajaran,
   deleteMataPelajaran,
+  getAllMataPelajaran,
+  getMataPelajaranById,
   updateMataPelajaran,
 } from "../services/mataPelajaranService.js";
 
@@ -41,6 +43,22 @@ export const getMataPelajaranByIdController = async (req, res, next) => {
     return res.status(200).json({
       message: "Berhasil mendapatkan mata pelajaran",
       data: mataPelajaran,
+    });
+  } catch (error) {
+    return res.status(500).json({ message: error.message });
+  }
+};
+
+export const getAllMataPelajaranController = async (req, res, next) => {
+  try {
+    const result = await getAllMataPelajaran({
+      page: parseInt(req.query.page) || 1,
+      pageSize: parseInt(req.query.pageSize) || 10,
+      nama: req.query.nama,
+    });
+    return res.status(200).json({
+      message: "Berhasil mendapatkan semua mata pelajaran",
+      result,
     });
   } catch (error) {
     return res.status(500).json({ message: error.message });

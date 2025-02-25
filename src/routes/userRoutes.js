@@ -32,8 +32,8 @@ router.delete(
 );
 
 router.post("/user/create-siswa", createSiswaController);
-router.put("/user/update-siswa", updateSiswaController);
-router.get("user/get-siswa/:nis", getSiswaByNisController);
+router.put("/user/update-siswa/:nis", updateSiswaController);
+router.get("/user/get-siswa/:nis", getSiswaByNisController);
 router.delete("/user/delete-siswa/:nip", deleteSiswaController);
 router.get("/user/get-all-siswa", getAllSiswaController);
 

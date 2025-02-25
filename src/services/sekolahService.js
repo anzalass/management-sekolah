@@ -1,12 +1,12 @@
 import { PrismaClient } from "@prisma/client";
 import { deleteFromImageKit, uploadToImageKit } from "../utils/ImageHandler.js";
+import { prismaErrorHandler } from "../utils/errorHandlerPrisma.js";
 const prisma = new PrismaClient();
 
-export const updateSekolah = async (id, data) => {
+export const createSekolah = async (data) => {
   const {
     nama,
     npsn,
-    kas,
     desa,
     kecamatan,
     kabupaten,
@@ -15,7 +15,44 @@ export const updateSekolah = async (id, data) => {
     email,
     website,
     namaKepsek,
-    logo,
+  } = data;
+
+  try {
+    await prisma.sekolah.create({
+      data: {
+        nama,
+        npsn,
+        desa,
+        kas: 0,
+        kecamatan,
+        kabupaten,
+        provinsi,
+        telephone,
+        email,
+        website,
+        namaKepsek,
+      },
+    });
+  } catch (error) {
+    console.log(error);
+
+    const errorMessage = prismaErrorHandler(error);
+    throw new Error(errorMessage);
+  }
+};
+
+export const updateSekolah = async (id, data, foto) => {
+  const {
+    nama,
+    npsn,
+    desa,
+    kecamatan,
+    kabupaten,
+    provinsi,
+    telephone,
+    email,
+    website,
+    namaKepsek,
   } = data;
 
   try {
@@ -27,7 +64,7 @@ export const updateSekolah = async (id, data) => {
     }
 
     let logoUploadResult = null;
-    if (logo !== null) {
+    if (foto !== null) {
       await deleteFromImageKit(sekolah.logoId);
       logoUploadResult = await uploadToImageKit(logo, "sekolah");
     }
@@ -36,7 +73,6 @@ export const updateSekolah = async (id, data) => {
       data: {
         nama,
         npsn,
-        kas,
         desa,
         kecamatan,
         kabupaten,
@@ -50,6 +86,7 @@ export const updateSekolah = async (id, data) => {
       },
     });
   } catch (error) {
-    console.error("Update sekolah gagal:", error.message);
+    const errorMessage = prismaErrorHandler(error);
+    throw new Error(errorMessage);
   }
 };
