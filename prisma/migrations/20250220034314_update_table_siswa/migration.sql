@@ -138,6 +138,7 @@ CREATE TABLE "KehadiranSiswa" (
 
 -- CreateTable
 CREATE TABLE "Siswa" (
+    "id" TEXT NOT NULL,
     "nis" TEXT NOT NULL,
     "nik" TEXT NOT NULL,
     "nama" TEXT NOT NULL,
@@ -160,7 +161,7 @@ CREATE TABLE "Siswa" (
     "ekstraKulikulerPeminatan" TEXT,
     "ekstraKulikulerWajib" TEXT,
 
-    CONSTRAINT "Siswa_pkey" PRIMARY KEY ("nis")
+    CONSTRAINT "Siswa_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
@@ -294,6 +295,9 @@ CREATE TABLE "Periode_Tahun_Ajaran" (
 
 -- CreateIndex
 CREATE UNIQUE INDEX "Guru_nip_key" ON "Guru"("nip");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "Siswa_nis_key" ON "Siswa"("nis");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "Siswa_noTelepon_key" ON "Siswa"("noTelepon");

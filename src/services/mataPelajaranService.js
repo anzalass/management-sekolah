@@ -1,4 +1,5 @@
 import { PrismaClient } from "@prisma/client";
+import { prismaErrorHandler } from "../utils/errorHandlerPrisma.js";
 const prisma = new PrismaClient();
 
 export const createMataPelajaran = async (data) => {
@@ -10,7 +11,8 @@ export const createMataPelajaran = async (data) => {
       });
     });
   } catch (error) {
-    throw new Error(error.message);
+    const errorMessage = prismaErrorHandler(error);
+    throw new Error(errorMessage);
   }
 };
 
@@ -24,7 +26,8 @@ export const updateMataPelajaran = async (id, data) => {
       });
     });
   } catch (error) {
-    throw new Error(error.message);
+    const errorMessage = prismaErrorHandler(error);
+    throw new Error(errorMessage);
   }
 };
 
@@ -34,7 +37,8 @@ export const deleteMataPelajaran = async (id) => {
       await prisma.mata_Pelajaran.delete({ where: { id } });
     });
   } catch (error) {
-    throw new Error(error.message);
+    const errorMessage = prismaErrorHandler(error);
+    throw new Error(errorMessage);
   }
 };
 
@@ -46,4 +50,29 @@ export const getMataPelajaranById = async (id) => {
     throw new Error("Mata Pelajaran not found");
   }
   return mataPelajaran;
+};
+
+export const getAllMataPelajaran = async ({
+  page = 1,
+  pageSize = 10,
+  nama,
+}) => {
+  try {
+    const skip = (page - 1) * pageSize;
+    const take = pageSize;
+    let where = {};
+    if (nama) {
+      where.nama = { contains: nama, mode: "insensitive" };
+    }
+    const data = await prisma.mata_Pelajaran.findMany({
+      skip,
+      take,
+      where,
+    });
+    const total = await prisma.mata_Pelajaran.count({ where });
+    return { data, total, page, pageSize };
+  } catch (error) {
+    const errorMessage = prismaErrorHandler(error);
+    throw new Error(errorMessage);
+  }
 };

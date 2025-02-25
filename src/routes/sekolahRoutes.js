@@ -1,7 +1,11 @@
 import express from "express";
 const router = express.Router();
-import { updateSekolahController } from "../controller/sekolahController.js";
+import {
+  createSekolahController,
+  updateSekolahController,
+} from "../controller/sekolahController.js";
 
 router.put("/sekolah/:id", updateSekolahController);
+router.post("/sekolah/create", createSekolahController);
 
 export default router;

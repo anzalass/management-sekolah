@@ -14,7 +14,7 @@ model Sekolah {
   id    String @id @default(uuid())
   nama  String
   npsn String
-  kas   Int
+  kas   Int?
   desa String
   kecamatan String
   kabupaten String
@@ -23,8 +23,8 @@ model Sekolah {
   email String
   website String
   namaKepsek String
-  logo String
-  logoId String
+  logo String?
+  logoId String?
 }
 
 model Guru {
@@ -144,24 +144,25 @@ model KehadiranSiswa {
 }
 
 model Siswa {
-  nis           String @id 
+  id            String @id @default(uuid())
+  nis           String @unique 
   nik           String
   nama          String
   jurusan       String?
   tanggalLahir  DateTime
-  tempatLahir   DateTime
+  tempatLahir   String
   namaAyah      String
   namaIbu       String
-  tahunLulus    DateTime
-  poin          Int
+  tahunLulus    String
+  poin          Int?
   alamat        String?
   agama         String
   kelas         String?
   jenisKelamin  String
-  foto  String?
-  fotoId String?  
+  foto          String?
+  fotoId        String?  
   noTelepon     String? @unique
-  noTeleponOrtu String
+  noTeleponOrtu String  @unique
   email         String? @unique
   ekstraKulikulerPeminatan String?
   ekstraKulikulerWajib String?
@@ -183,9 +184,10 @@ model Pelanggaran_Dan_Prestasi_Siswa {
   Siswa          Siswa @relation(fields: [nis], references: [nis])
 }
 
-model RuangKelas {
+model Ruangan {
   id    String @id @default(uuid())
   nama  String
+  keterangan String?
 }
 
 model Inventaris {
@@ -199,6 +201,7 @@ model Inventaris {
 model RiwayatAnggaran {
   id         String @id @default(uuid())
   nama       String
+  tanggal    DateTime
   jumlah     Int
   jenis      String
   keterangan String
@@ -207,8 +210,10 @@ model RiwayatAnggaran {
 model KegiatanSekolah {
   id         String @id @default(uuid())
   nama       String
+  tahunAjaran String
   keterangan String
-  time       DateTime
+  waktuMulai       DateTime
+  waktuSelesai     DateTime
   status     String
 }
 
@@ -264,7 +269,6 @@ model Mata_Pelajaran {
   id         String @id @default(uuid())
   nama       String
   kelas      String
-  guru       String
 }
 
 model Periode_Tahun_Ajaran {

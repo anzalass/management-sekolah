@@ -3,6 +3,7 @@ import { AuthMiddleware } from "../utils/authMiddleware.js";
 import {
   createKegiatanSekolahController,
   deleteKegiatanSekolahController,
+  getAllKegiatanSekolahController,
   getKegiatanSekolahByIdController,
   updateKegiatanSekolahController,
 } from "../controller/kegiatanSekolahController.js";
@@ -13,5 +14,6 @@ router.post("/kegiatan-sekolah/create", createKegiatanSekolahController);
 router.get("/kegiatan-sekolah/get/:id", getKegiatanSekolahByIdController);
 router.put("/kegiatan-sekolah/update/:id", updateKegiatanSekolahController);
 router.delete("/kegiatan-sekolah/delete/:id", deleteKegiatanSekolahController);
+router.get("/kegiatan-sekolah", getAllKegiatanSekolahController);
 
 export default router;
