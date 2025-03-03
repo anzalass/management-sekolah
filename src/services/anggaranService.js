@@ -98,6 +98,8 @@ export const updateAnggaran = async (idAnggaran, data) => {
 
     return { message: "Anggaran berhasil diperbarui" };
   } catch (error) {
+    console.log(error);
+
     const errorMessage = prismaErrorHandler(error);
     throw new Error(errorMessage);
   }
@@ -113,7 +115,7 @@ export const deleteAnggaran = async (idAnggaran) => {
       if (!sekolah) throw new Error("Sekolah not found");
 
       const anggaran = await tx.riwayatAnggaran.findUnique({
-        where: { idAnggaran },
+        where: { id: idAnggaran },
         select: { jumlah: true, jenis: true },
       });
 
@@ -126,16 +128,17 @@ export const deleteAnggaran = async (idAnggaran) => {
         kasBaru += anggaran.jumlah;
       }
 
-      await tx.riwayatAnggaran.delete({ where: { id } });
+      await tx.riwayatAnggaran.delete({ where: { id: idAnggaran } });
     });
   } catch (error) {
+    console.log(error);
     const errorMessage = prismaErrorHandler(error);
     throw new Error(errorMessage);
   }
 };
 
 export const getAnggaranById = async (id) => {
-  const anggaran = await prisma.anggaran.findUnique({ where: { id } });
+  const anggaran = await prisma.riwayatAnggaran.findUnique({ where: { id } });
   if (!anggaran) {
     throw new Error("Anggaran not found");
   }
