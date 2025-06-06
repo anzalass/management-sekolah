@@ -327,3 +327,59 @@ model RiwayatPembayaran {
   waktuBayar  DateTime
   Siswa Siswa @relation(fields: [nis], references: [nis])
 }
+model Testimoni {
+  id          String   @id @default(uuid())
+  image       String
+  description String
+  userId      String
+  user        User     @relation(fields: [userId], references: [id]) // Relation to User
+}
+
+model News {
+  id          String   @id @default(uuid())
+  title       String
+  content     String
+  image       String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  userId      String
+  user        User     @relation(fields: [userId], references: [id]) 
+}
+
+model Gallery {
+  id          String   @id @default(uuid())
+  image       String  
+  createdAt   DateTime @default(now()) 
+  updatedAt   DateTime @updatedAt 
+  userId      String
+  user        User     @relation(fields: [userId], references: [id])
+}
+
+model GuruTemplate {
+  id        String   @id @default(uuid()) 
+  name      String  
+  image     String  
+  createdAt DateTime @default(now())       
+  updatedAt DateTime @updatedAt
+  userId    String
+  user      User     @relation(fields: [userId], references: [id]) 
+}
+
+enum Role {
+  ADMIN
+  USER
+}
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  password  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  role      Role     @default(USER)
+
+  testimoni Testimoni[] 
+  news      News[]      
+  gallery   Gallery[]    
+  guruTemplates GuruTemplate[]
+}
