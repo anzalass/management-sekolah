@@ -327,7 +327,6 @@ model RiwayatPembayaran {
   waktuBayar  DateTime
   Siswa Siswa @relation(fields: [nis], references: [nis])
 }
-<<<<<<< Updated upstream
 model Testimoni {
   id          String   @id @default(uuid())
   image       String
@@ -384,7 +383,6 @@ model User {
   gallery   Gallery[]    
   guruTemplates GuruTemplate[]
 }
-=======
 
 model PendaftaranSiswa{
     id          String @id @default(uuid())
@@ -394,4 +392,3 @@ model PendaftaranSiswa{
     phoneNumber  String
     email        String
 }
->>>>>>> Stashed changes
