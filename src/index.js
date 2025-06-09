@@ -19,42 +19,38 @@ import testimoniRoutes from "./routes/testimoniRoutes.js";
 import newsRoutes from "./routes/newsRoutes.js";
 import galleryRoutes from "./routes/galleryRoutes.js";
 import guruTemplate from "./routes/guruTemplateRoutes.js";
-import { fileURLToPath } from 'url';
-import path from 'path';
-import fs from 'fs';  
+import { fileURLToPath } from "url";
+import path from "path";
+import fs from "fs";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+import pendaftaranRoutes from "./routes/pendaftaranRoutes.js";
 
 dotenv.config();
-
 
 const app = express();
 app.use(express.json());
 
-
 const port = process.env.PORT || 5000;
 
-app.use("/uploads", express.static(path.join(__dirname, 'uploads')));
+app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 app.use(morgan("dev"));
 app.use(
   cors({
-    origin: "http://localhost:3000",  
+    origin: "http://localhost:3000",
     methods: ["GET", "POST", "PUT", "DELETE"],
     allowedHeaders: ["Content-Type", "Authorization"],
     credentials: true,
   })
 );
 
-
 app.use(bodyParser.json());
-
 
 app.get("/", (req, res) => {
   res.send("Management Sekolah");
 });
-
 
 app.use("/api/v1", anggaranRoutes);
 app.use("/api/v1", sekolaRoutes);
@@ -73,19 +69,18 @@ app.use("/api/v1", newsRoutes);
 app.use("/api/v1", galleryRoutes);
 app.use("/api/v1", guruTemplate);
 
-
-app.get('/api/v1/view-image/:imageName', (req, res) => {
+app.get("/api/v1/view-image/:imageName", (req, res) => {
   const { imageName } = req.params;
 
-  
-  const imagePath = path.join(__dirname, "../uploads", imageName);  
+  const imagePath = path.join(__dirname, "../uploads", imageName);
   fs.access(imagePath, fs.constants.F_OK, (err) => {
     if (err) {
-      return res.status(404).json({ message: "Image not found" });  
+      return res.status(404).json({ message: "Image not found" });
     }
     res.sendFile(imagePath);
   });
 });
+app.use("/api/v1", pendaftaranRoutes);
 
 app.listen(port, () => {
   console.log(`Server running on http://localhost:${port}`);
