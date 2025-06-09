@@ -1,4 +1,4 @@
-import { PrismaClient } from "@prisma/client";
+import { PrismaClient, Role } from "@prisma/client";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
 import dotenv from "dotenv";
@@ -8,7 +8,7 @@ const prisma = new PrismaClient();
 
 export const login = async (auth) => {
   const { nip, password } = auth;
-  console.log(auth);
+
 
   try {
     const guru = await prisma.guru.findUnique({
@@ -60,5 +60,42 @@ export const resetPassword = async (nip, password) => {
     });
   } catch (error) {
     throw new Error(error);
+  }
+};
+
+export const loginAdmin = async (auth) => {
+  const { email, password } = auth;
+
+  try {
+    const user = await prisma.user.findUnique({
+      where: { email },
+    });
+
+    if (!user) {
+      throw new Error("User tidak ditemukan");
+    }
+
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) {
+      throw new Error("Invalid credentials");
+    }
+
+    const token = jwt.sign(
+      {
+        userId: user.id,
+        email: user.email,
+        role: user.role,
+      },
+      process.env.JWT_SECRET_KEY,
+      { expiresIn: "3d" }
+    );
+
+    const result = {
+      token,  
+    };
+
+    return result;
+  } catch (error) {
+    throw new Error(error.message);
   }
 };
