@@ -3,19 +3,21 @@ import fs from "fs";
 import upload from "../utils/multer.js";
 import { fileURLToPath } from "url";
 import path from "path";
+import localUpload from "../utils/localupload.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 
 export const createTestimoniController = async (req, res) => {
-  upload.single("image")(req, res, async (err) => {
+  localUpload.single("image")(req, res, async (err) => {
     if (err) {
       return res.status(400).json({ message: err.message });
     }
 
     try {
       const { description } = req.body;
+       const { guruId } = req.user;
 
       if (!req.file) {
         return res.status(400).json({ message: "Gambar wajib diunggah" });
@@ -23,7 +25,7 @@ export const createTestimoniController = async (req, res) => {
 
       const imagePath = req.file.path.replace(/\\/g, "/");
 
-      const newTestimoni = await createTestimoni({ image: imagePath, description, userId: req.user.userId, });
+      const newTestimoni = await createTestimoni({ image: imagePath, description, guruId: guruId, });
 
       return res.status(201).json({ message: "Testimoni berhasil dibuat", data: newTestimoni });
     } catch (error) {
@@ -73,7 +75,7 @@ export const getTestimoniByIdController = async (req, res) => {
 export const updateTestimoniController = async (req, res) => {
   const { id } = req.params;
 
-  upload.single("image")(req, res, async (err) => {
+  localUpload.single("image")(req, res, async (err) => {
     if (err) {
       return res.status(400).json({ message: err.message });
     }

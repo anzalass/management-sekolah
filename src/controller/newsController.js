@@ -4,27 +4,38 @@ import fs from "fs";
 import upload from "../utils/multer.js";
 import { fileURLToPath } from "url";
 import path from "path";
+import localUpload from "../utils/localupload.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 
 export const createNewsController = async (req, res) => {
-  upload.single("image")(req, res, async (err) => {
+  localUpload.single("image")(req, res, async (err) => {
     if (err) {
       return res.status(400).json({ message: err.message });
     }
 
     try {
-      const { title,content } = req.body;
+      const { title, content } = req.body;
+      const { guruId } = req.user; // <-- ambil dari token
 
       if (!req.file) {
         return res.status(400).json({ message: "Gambar wajib diunggah" });
       }
 
+      if (!guruId) {
+        return res.status(403).json({ message: "Akses ditolak, guruId tidak ditemukan di token" });
+      }
+
       const imagePath = req.file.path.replace(/\\/g, "/");
 
-      const newNews = await createNews({ image: imagePath, title,content, userId: req.user.userId, });
+      const newNews = await createNews({
+        image: imagePath,
+        title,
+        content,
+        guruId,
+      });
 
       return res.status(201).json({ message: "News berhasil dibuat", data: newNews });
     } catch (error) {
@@ -75,7 +86,7 @@ export const getNewsByIdController = async (req, res) => {
 export const updateNewsController = async (req, res) => {
   const { id } = req.params;
 
-  upload.single("image")(req, res, async (err) => {
+  localUpload.single("image")(req, res, async (err) => {
     if (err) {
       return res.status(400).json({ message: err.message });
     }

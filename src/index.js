@@ -19,6 +19,7 @@ import testimoniRoutes from "./routes/testimoniRoutes.js";
 import newsRoutes from "./routes/newsRoutes.js";
 import galleryRoutes from "./routes/galleryRoutes.js";
 import guruTemplate from "./routes/guruTemplateRoutes.js";
+import raportRoutes from "./routes/raportRoutes.js";
 import { fileURLToPath } from "url";
 import path from "path";
 import fs from "fs";
@@ -68,6 +69,7 @@ app.use("/api/v1", testimoniRoutes);
 app.use("/api/v1", newsRoutes);
 app.use("/api/v1", galleryRoutes);
 app.use("/api/v1", guruTemplate);
+app.use("/api/v1", raportRoutes);
 
 app.get("/api/v1/view-image/:imageName", (req, res) => {
   const { imageName } = req.params;

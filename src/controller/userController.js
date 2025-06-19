@@ -20,11 +20,10 @@ export const createGuruController = async (req, res) => {
     if (err) {
       return res.status(400).json({ message: err.message });
     }
+
     try {
       const result = await createGuru(req.body, req.file);
-      return res
-        .status(201)
-        .json({ message: "Berhasil membuat guru", data: result });
+      return res.status(201).json({ message: "Berhasil membuat guru", data: result });
     } catch (error) {
       return res.status(500).json({ message: error.message });
     }
@@ -55,21 +54,18 @@ export const deleteRiwayatPendidikanController = async (req, res, next) => {
 
 export const updateGuruController = async (req, res, next) => {
   upload.single("foto")(req, res, async (err) => {
-    if (err) {
-      return res.status(400).json({ message: err.message });
-    }
-    try {
-      const result = await updateGuru(req.params.nip, req.body, req.file);
-      console.log("awikwok", req.file);
+    if (err) return res.status(400).json({ message: err.message });
 
-      return res
-        .status(201)
-        .json({ message: "Berhasil mengupdate guru", data: result });
+    try {
+      console.log("Uploaded file:", req.file); // 👈 DEBUG
+      const result = await updateGuru(req.params.id, req.body, req.file);
+      return res.status(201).json({ message: "Berhasil mengupdate guru", data: result });
     } catch (error) {
       return res.status(500).json({ message: error.message });
     }
   });
 };
+
 
 export const deleteGuruController = async (req, res, next) => {
   try {
@@ -106,20 +102,25 @@ export const createSiswaController = async (req, res, next) => {
     }
   });
 };
+
 export const updateSiswaController = async (req, res, next) => {
   upload.single("foto")(req, res, async (err) => {
-    try {
-      console.log(req.file);
+    if (err) {
+      return res.status(400).json({ message: "Gagal upload foto", error: err.message });
+    }
 
-      const result = await updateSiswa(req.params.nis, req.body, req.file);
-      return res
-        .status(201)
-        .json({ message: "Berhasil mengupdate siswa", data: result });
+    try {
+      const result = await updateSiswa(req.params.id, req.body, req.file);
+      return res.status(201).json({
+        message: "Berhasil mengupdate siswa",
+        data: result,
+      });
     } catch (error) {
       return res.status(500).json({ message: error.message });
     }
   });
 };
+
 
 export const deleteSiswaController = async (req, res, next) => {
   try {

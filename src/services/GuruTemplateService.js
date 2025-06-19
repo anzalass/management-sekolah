@@ -4,14 +4,14 @@ import { prismaErrorHandler } from "../utils/errorHandlerPrisma.js";
 const prisma = new PrismaClient();
 
 export const createGuruTemplate = async (data) => {
-  const { image, name,userId } = data;
+  const { image, name,guruId } = data;
 
   try {
     const result = await prisma.guruTemplate.create({
       data: {
         image,
         name,
-        userId
+        guruId
       },
     });
 

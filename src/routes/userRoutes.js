@@ -18,7 +18,7 @@ import { AuthMiddleware } from "../utils/authMiddleware.js";
 const router = express.Router();
 
 router.post("/user/create-guru", createGuruController);
-router.put("/user/update-guru/:nip", updateGuruController);
+router.put("/user/update-guru/:id", updateGuruController);
 router.get("/user/get-guru/:nip", getGuruByNipController);
 router.delete("/user/delete-guru/:nip", deleteGuruController);
 router.get("/user/get-all-guru", getAllGuruController);
@@ -32,9 +32,9 @@ router.delete(
 );
 
 router.post("/user/create-siswa", createSiswaController);
-router.put("/user/update-siswa/:nis", updateSiswaController);
+router.put("/user/update-siswa/:id", updateSiswaController);
 router.get("/user/get-siswa/:nis", getSiswaByNisController);
-router.delete("/user/delete-siswa/:nip", deleteSiswaController);
+router.delete("/user/delete-siswa/:nis", deleteSiswaController);
 router.get("/user/get-all-siswa", getAllSiswaController);
 
 export default router;

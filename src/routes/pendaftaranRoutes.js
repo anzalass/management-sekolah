@@ -1,14 +1,19 @@
 import express from "express";
-import {
-  handleCreatePendaftaran,
-  handleGetAllPendaftaran,
-  handleGetPendaftaranById,
-} from "../controller/pendaftaranController.js";
-
 const router = express.Router();
 
-router.post("/pendaftaran", handleCreatePendaftaran);
-router.get("/pendaftaran", handleGetAllPendaftaran);
-router.get("/pendaftaran/:id", handleGetPendaftaranById); // 🔹 Tambahan route baru
+import {
+  createPendaftaranController,
+  getPendaftaranByIdController,
+  getAllPendaftaranController,
+  updatePendaftaranController,
+  deletePendaftaranController
+} from "../controller/pendaftaranController.js"; // Adjust path as needed
+import { AuthMiddleware } from "../utils/authMiddleware.js";
+
+router.post("/pendaftaran/", createPendaftaranController);
+router.get("/pendaftaran", getAllPendaftaranController);
+router.get("/pendaftaran/:id", getPendaftaranByIdController);
+router.put("/pendaftaran/update/:id", AuthMiddleware, updatePendaftaranController);
+router.delete("/pendaftaran/delete/:id", AuthMiddleware, deletePendaftaranController);
 
 export default router;
