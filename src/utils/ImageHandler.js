@@ -50,23 +50,22 @@ cloudinary.config({
  * @param {string} fileName - Nama file yang akan disimpan (opsional, default: "image")
  * @returns {Promise<{ secure_url: string }>} - Hasil upload dari Cloudinary
  */
+
 export const uploadToCloudinary = (fileBuffer, folder, fileName = "image") => {
   return new Promise((resolve, reject) => {
     const uploadStream = cloudinary.uploader.upload_stream(
       {
-        folder: folder,
+        folder,
         public_id: `${fileName}_${Date.now()}`,
         resource_type: "auto",
       },
       (error, result) => {
-        if (error) {
-          return reject(new Error("Upload failed: " + error.message));
-        }
+        if (error) return reject(new Error("Upload failed: " + error.message));
         resolve({ secure_url: result.secure_url, public_id: result.public_id });
       }
     );
 
-    uploadStream.end(fileBuffer); // Kirim buffer ke Cloudinary
+    uploadStream.end(fileBuffer); 
   });
 };
 

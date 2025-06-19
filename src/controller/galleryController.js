@@ -3,17 +3,19 @@ import fs from "fs";
 import upload from "../utils/multer.js";
 import { fileURLToPath } from "url";
 import path from "path";
+import localUpload from "../utils/localupload.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 export const createGalleryController = async (req, res) => {
-  upload.single("image")(req, res, async (err) => {
+  localUpload.single("image")(req, res, async (err) => {
     if (err) {
       return res.status(400).json({ message: err.message });
     }
 
     try {
+       const { guruId } = req.user;
      
       if (!req.file) {
         return res.status(400).json({ message: "Gambar wajib diunggah" });
@@ -21,7 +23,7 @@ export const createGalleryController = async (req, res) => {
 
       const imagePath = req.file.path.replace(/\\/g, "/");
 
-      const newNews = await createGallery({ image: imagePath,userId: req.user.userId });
+      const newNews = await createGallery({ image: imagePath,guruId: guruId });
 
       return res.status(201).json({ message: "Gallery berhasil dibuat", data: newNews });
     } catch (error) {
@@ -61,7 +63,7 @@ export const getGalleryByIdController = async (req, res) => {
 export const updateGalleryController = async (req, res) => {
   const { id } = req.params;
 
-  upload.single("image")(req, res, async (err) => {
+  localUpload.single("image")(req, res, async (err) => {
     if (err) {
       return res.status(400).json({ message: err.message });
     }

@@ -109,7 +109,7 @@ export const deleteAnggaran = async (idAnggaran) => {
   try {
     await prisma.$transaction(async (tx) => {
       const sekolah = await tx.sekolah.findFirst({
-        select: { kas: true },
+        select: { kas: true, id: true }, // ambil id-nya juga
       });
 
       if (!sekolah) throw new Error("Sekolah not found");
@@ -120,6 +120,7 @@ export const deleteAnggaran = async (idAnggaran) => {
       });
 
       if (!anggaran) throw new Error("Anggaran not found");
+
       let kasBaru = sekolah.kas;
 
       if (anggaran.jenis === "pemasukan") {
@@ -128,6 +129,13 @@ export const deleteAnggaran = async (idAnggaran) => {
         kasBaru += anggaran.jumlah;
       }
 
+      // Update kas sekolah di database
+      await tx.sekolah.update({
+        where: { id: sekolah.id },
+        data: { kas: kasBaru },
+      });
+
+      // Hapus data anggaran
       await tx.riwayatAnggaran.delete({ where: { id: idAnggaran } });
     });
   } catch (error) {
@@ -136,6 +144,7 @@ export const deleteAnggaran = async (idAnggaran) => {
     throw new Error(errorMessage);
   }
 };
+;
 
 export const getAnggaranById = async (id) => {
   const anggaran = await prisma.riwayatAnggaran.findUnique({ where: { id } });

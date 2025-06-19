@@ -1,80 +1,124 @@
 import { PrismaClient } from "@prisma/client";
-import { prismaErrorHandler } from "../utils/errorHandlerPrisma.js";
+import { prismaErrorHandler } from "../utils/errorHandlerPrisma.js"; // Make sure this utility is correct
 
 const prisma = new PrismaClient();
 
 export const createPendaftaran = async (data) => {
+  const { studentName, parentName, email, phoneNumber, yourLocation } = data;
   try {
-    return await prisma.pendaftaranSiswa.create({
+    const result = await prisma.pendaftaranSiswa.create({
       data: {
-        studentName: data.studentName,
-        parentName: data.parentName,
-        email: data.email,
-        phoneNumber: data.phoneNumber,
-        yourLocation: data.yourLocation,
+        studentName,
+        parentName,
+        email,
+        phoneNumber,
+        yourLocation,
       },
     });
+    return result;
   } catch (error) {
-    console.log(error);
-
-    throw prismaErrorHandler(error);
+    console.error("Error creating Pendaftaran:", error);
+    const errorMessage = prismaErrorHandler(error) || "Gagal membuat pendaftaran";
+    throw new Error(errorMessage);
   }
 };
 
-export const getAllPendaftaran = async ({
-  page = 1,
-  pageSize = 10,
-  studentName = "",
-  parentName = "",
-  email = "",
-  yourLocation = "",
-}) => {
+export const getAllPendaftaran = async (page = 1, pageSize = 10, search = '') => {
+  const skip = (page - 1) * pageSize;
+  const take = pageSize;
+
   try {
-    const skip = (page - 1) * pageSize;
-    const take = pageSize;
-
-    const where = {};
-
-    if (studentName) {
-      where.studentName = { contains: studentName, mode: "insensitive" };
-    }
-    if (parentName) {
-      where.parentName = { contains: parentName, mode: "insensitive" };
-    }
-    if (email) {
-      where.email = { contains: email, mode: "insensitive" };
-    }
-    if (yourLocation) {
-      where.yourLocation = { contains: yourLocation, mode: "insensitive" };
-    }
-
     const data = await prisma.pendaftaranSiswa.findMany({
-      where,
+      where: {
+        studentName: {
+          contains: search,
+          mode: "insensitive", 
+        },
+      },
       skip,
       take,
-      orderBy: { studentName: "asc" },
     });
 
-    const total = await prisma.pendaftaranSiswa.count({ where });
+    const totalPendaftaran = await prisma.pendaftaranSiswa.count({
+      where: {
+        studentName: {
+          contains: search,
+          mode: "insensitive",
+        },
+      },
+    });
 
     return {
       data,
+      total: totalPendaftaran,
       page,
       pageSize,
-      total,
+      totalPages: Math.ceil(totalPendaftaran / pageSize),
     };
   } catch (error) {
-    const err = prismaErrorHandler(error);
-    throw new Error(err.message || "Gagal mengambil data pendaftaran");
+    console.error('Error fetching all pendaftaran:', error);
+    const errorMessage = prismaErrorHandler(error) || "Gagal mengambil data pendaftaran";
+    throw new Error(errorMessage);
   }
 };
 
+
 export const getPendaftaranById = async (id) => {
   try {
-    return await prisma.pendaftaranSiswa.findUnique({
+    const pendaftaran = await prisma.pendaftaranSiswa.findUnique({
       where: { id },
     });
+
+    if (!pendaftaran) {
+      throw new Error("Pendaftaran not found");
+    }
+
+    return pendaftaran;
   } catch (error) {
-    throw prismaErrorHandler(error);
+    console.error("Error fetching pendaftaran by ID:", error);
+    const errorMessage = prismaErrorHandler(error) || "Gagal mendapatkan pendaftaran";
+    throw new Error(errorMessage);
+  }
+};
+
+export const updatePendaftaran = async (id, data) => {
+  const { studentName, parentName, email, phoneNumber, yourLocation } = data;
+
+
+  if (!studentName || !parentName || !email || !phoneNumber || !yourLocation) {
+    throw new Error("All required fields must be provided.");
+  }
+
+  try {
+    const updatedPendaftaran = await prisma.pendaftaranSiswa.update({
+      where: { id },
+      data: {
+        studentName,
+        parentName,
+        email,
+        phoneNumber,
+        yourLocation,
+      },
+    });
+
+    return updatedPendaftaran;
+  } catch (error) {
+    console.error("Error updating pendaftaran:", error);
+    const errorMessage = prismaErrorHandler(error) || "Gagal memperbarui pendaftaran";
+    throw new Error(errorMessage);
+  }
+};
+
+export const deletePendaftaran = async (id) => {
+  try {
+    const deletedPendaftaran = await prisma.pendaftaranSiswa.delete({
+      where: { id },
+    });
+
+    return deletedPendaftaran;
+  } catch (error) {
+    console.error("Error deleting pendaftaran:", error);
+    const errorMessage = prismaErrorHandler(error) || "Gagal menghapus pendaftaran";
+    throw new Error(errorMessage);
   }
 };

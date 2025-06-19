@@ -5,7 +5,7 @@ const prisma = new PrismaClient();
 
 
 export const createNews = async (data) => {
-  const { image, title,content,userId } = data;
+  const { image, title, content,guruId } = data;
 
   try {
     const result = await prisma.news.create({
@@ -13,17 +13,18 @@ export const createNews = async (data) => {
         image,
         title,
         content,
-        userId
+        guruId,
       },
     });
 
     return result;
   } catch (error) {
     console.error(error);
-    const errorMessage = prismaErrorHandler(error) || "Gagal membuat testimoni";
+    const errorMessage = prismaErrorHandler(error) || "Gagal membuat berita";
     throw new Error(errorMessage);
   }
 };
+
 
 
 export const getAllNews = async (page, pageSize, search) => {

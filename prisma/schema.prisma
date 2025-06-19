@@ -51,6 +51,11 @@ model Guru {
   WaktuMengajar  WaktuMengajar[]
   PerizinanGuru  PerizinanGuru[]
   Logs           Logs[]
+  MataPelajaran Mata_Pelajaran[]
+  testimoni     Testimoni[]
+  news          News[]
+  gallery       Gallery[]
+  guruTemplate  GuruTemplate[]
 }
 
 model Kehadiran_Guru_Dan_Staff {
@@ -297,10 +302,13 @@ model Peminjaman_dan_Pengembalian {
 }
 
 model Mata_Pelajaran {
-  id         String @id @default(uuid())
-  nama       String
-  kelas      String
+  id      String @id @default(uuid())
+  nama    String
+  kelas   String
+  guruId  String
+  Guru    Guru   @relation(fields: [guruId], references: [id])
 }
+
 
 model Periode_Tahun_Ajaran {
   id          String @id @default(uuid())
@@ -327,12 +335,14 @@ model RiwayatPembayaran {
   waktuBayar  DateTime
   Siswa Siswa @relation(fields: [nis], references: [nis])
 }
+
+
 model Testimoni {
   id          String   @id @default(uuid())
   image       String
   description String
-  userId      String
-  user        User     @relation(fields: [userId], references: [id]) // Relation to User
+  guruId      String?
+  guru        Guru?    @relation(fields: [guruId], references: [id])
 }
 
 model News {
@@ -342,47 +352,31 @@ model News {
   image       String
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
-  userId      String
-  user        User     @relation(fields: [userId], references: [id]) 
+  guruId      String?
+  guru        Guru?    @relation(fields: [guruId], references: [id])
 }
 
 model Gallery {
   id          String   @id @default(uuid())
-  image       String  
-  createdAt   DateTime @default(now()) 
-  updatedAt   DateTime @updatedAt 
-  userId      String
-  user        User     @relation(fields: [userId], references: [id])
+  image       String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  guruId      String?
+  guru        Guru?    @relation(fields: [guruId], references: [id])
 }
 
 model GuruTemplate {
-  id        String   @id @default(uuid()) 
-  name      String  
-  image     String  
-  createdAt DateTime @default(now())       
-  updatedAt DateTime @updatedAt
-  userId    String
-  user      User     @relation(fields: [userId], references: [id]) 
-}
-
-enum Role {
-  ADMIN
-  USER
-}
-
-model User {
   id        String   @id @default(uuid())
-  email     String   @unique
-  password  String
+  name      String
+  image     String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  role      Role     @default(USER)
-
-  testimoni Testimoni[] 
-  news      News[]      
-  gallery   Gallery[]    
-  guruTemplates GuruTemplate[]
+  guruId    String?
+  guru      Guru?    @relation(fields: [guruId], references: [id])
 }
+
+
+
 
 model PendaftaranSiswa{
     id          String @id @default(uuid())

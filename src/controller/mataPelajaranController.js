@@ -6,14 +6,33 @@ import {
   updateMataPelajaran,
 } from "../services/mataPelajaranService.js";
 
-export const createMataPelajaranController = async (req, res, next) => {
+export const createMataPelajaranController = async (req, res) => {
   try {
-    await createMataPelajaran(req.body);
-    return res.status(201).json({ message: "Berhasil membuat mata pelajaran" });
+    const { nama, kelas } = req.body;
+    const guruId = req.user?.guruId; // ✅ karena dari JWT pakai `guruId`
+
+    if (!guruId) {
+      return res.status(403).json({ message: "Akses ditolak, guruId tidak ditemukan di token" });
+    }
+
+    const result = await createMataPelajaran({
+      nama,
+      kelas,
+      guruId,
+    });
+
+    return res.status(201).json({
+      message: "Berhasil membuat mata pelajaran",
+      data: result,
+    });
   } catch (error) {
-    return res.status(500).json({ message: error.message });
+    return res.status(500).json({
+      message: "Gagal membuat mata pelajaran",
+      error: error.message,
+    });
   }
 };
+
 
 export const updateMataPelajaranController = async (req, res, next) => {
   try {
