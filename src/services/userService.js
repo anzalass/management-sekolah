@@ -30,6 +30,7 @@ const createGuru = async (guru, foto) => {
   try {
     let newGuru;
     const passwordHash = await bcrypt.hash(password, 10);
+    console.log(foto);
 
     // Upload foto ke Cloudinary jika ada
     const imageUploadResult = foto

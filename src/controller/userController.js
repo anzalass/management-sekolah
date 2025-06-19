@@ -13,10 +13,10 @@ import {
   deleteRiwayatPendidikan,
 } from "../services/userService.js";
 import { prismaErrorHandler } from "../utils/errorHandlerPrisma.js";
-import upload from "../utils/multer.js";
+import upload, { upload2 } from "../utils/multer.js";
 
 export const createGuruController = async (req, res) => {
-  upload.single("foto")(req, res, async (err) => {
+  upload2.single("foto")(req, res, async (err) => {
     if (err) {
       return res.status(400).json({ message: err.message });
     }

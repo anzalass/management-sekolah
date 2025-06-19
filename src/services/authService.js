@@ -1,4 +1,4 @@
-import { PrismaClient, Role } from "@prisma/client";
+import { PrismaClient } from "@prisma/client";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
 import dotenv from "dotenv";
@@ -8,7 +8,6 @@ const prisma = new PrismaClient();
 
 export const login = async (auth) => {
   const { nip, password } = auth;
-
 
   try {
     const guru = await prisma.guru.findUnique({
@@ -67,7 +66,7 @@ export const loginAdmin = async (auth) => {
   const { email, password } = auth;
 
   try {
-    const user = await prisma.user.findUnique({
+    const user = await prisma.guru.findUnique({
       where: { email },
     });
 
@@ -91,11 +90,13 @@ export const loginAdmin = async (auth) => {
     );
 
     const result = {
-      token,  
+      token,
     };
 
     return result;
   } catch (error) {
+    console.log(error);
+
     throw new Error(error.message);
   }
 };

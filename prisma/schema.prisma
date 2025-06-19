@@ -36,11 +36,11 @@ model Guru {
   nama           String
   tempatLahir    String
   tanggalLahir   DateTime?
-  alamat         String
+  alamat         String 
   agama          String
   jenisKelamin   String
   noTelepon      String
-  email          String
+  email          String @unique
   status         String
   foto           String?
   fotoId         String?  
@@ -48,9 +48,12 @@ model Guru {
   Kelas          Kelas[]
   Kehadiran_Guru_Dan_Staff  Kehadiran_Guru_Dan_Staff[]
   KelasDanMapel  KelasDanMapel[]
-  WaktuMengajar  WaktuMengajar[]
   PerizinanGuru  PerizinanGuru[]
   Logs           Logs[]
+  testimoni Testimoni[] 
+  news      News[]      
+  gallery   Gallery[]    
+  guruTemplates GuruTemplate[]
 }
 
 model Kehadiran_Guru_Dan_Staff {
@@ -82,24 +85,16 @@ model RiwayatPendidikanGuru {
   Guru           Guru  @relation(fields: [nip], references: [nip])
 }
 
-model WaktuMengajar {
-  id            String         @id @default(uuid())
-  nip           String
-  waktu         DateTime
-  ruangKelas    String
-  guruId        String
-  kelasDanMapelId String
-  Guru          Guru           @relation(fields: [guruId], references: [nip])
-  KelasDanMapel KelasDanMapel  @relation(fields: [kelasDanMapelId], references: [id])
-}
 
 model KelasDanMapel {
   id             String          @id @default(uuid())
   nip            String
   namaMapel      String
   ruangKelas     String
+  waktuMengajar String
+  kelas String
+  tahunAjaran String
   Guru           Guru            @relation(fields: [nip], references: [nip])
-  WaktuMengajar  WaktuMengajar[]
   DaftarSiswa DaftarSiswa[]
   NilaiSiswa     NilaiSiswa[]
   KehadiranSiswa KehadiranSiswa[]
@@ -332,7 +327,7 @@ model Testimoni {
   image       String
   description String
   userId      String
-  user        User     @relation(fields: [userId], references: [id]) // Relation to User
+  user        Guru     @relation(fields: [userId], references: [id]) // Relation to User
 }
 
 model News {
@@ -343,7 +338,7 @@ model News {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
   userId      String
-  user        User     @relation(fields: [userId], references: [id]) 
+  user        Guru     @relation(fields: [userId], references: [id]) 
 }
 
 model Gallery {
@@ -352,7 +347,7 @@ model Gallery {
   createdAt   DateTime @default(now()) 
   updatedAt   DateTime @updatedAt 
   userId      String
-  user        User     @relation(fields: [userId], references: [id])
+  user        Guru     @relation(fields: [userId], references: [id])
 }
 
 model GuruTemplate {
@@ -362,26 +357,7 @@ model GuruTemplate {
   createdAt DateTime @default(now())       
   updatedAt DateTime @updatedAt
   userId    String
-  user      User     @relation(fields: [userId], references: [id]) 
-}
-
-enum Role {
-  ADMIN
-  USER
-}
-
-model User {
-  id        String   @id @default(uuid())
-  email     String   @unique
-  password  String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  role      Role     @default(USER)
-
-  testimoni Testimoni[] 
-  news      News[]      
-  gallery   Gallery[]    
-  guruTemplates GuruTemplate[]
+  user      Guru     @relation(fields: [userId], references: [id]) 
 }
 
 model PendaftaranSiswa{
