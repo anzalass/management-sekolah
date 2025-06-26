@@ -2,14 +2,22 @@ import { PrismaClient } from "@prisma/client";
 const prisma = new PrismaClient();
 
 export const createKelasWaliKelas = async (data) => {
-  const { nip, nama, ruangKelas, periode, guru } = data;
+  const { nip, nama, ruangKelas } = data;
   try {
+    const tahunAjaran = await prisma.sekolah.findFirst();
     await prisma.$transaction(async (tx) => {
       await tx.kelas.create({
-        data: { nip, nama, ruangKelas, periode, guru },
+        data: {
+          nipGuru: nip,
+          nama,
+          ruangKelas,
+          tahunAjaran: tahunAjaran.tahunAjaran,
+        },
       });
     });
   } catch (error) {
+    console.log(error);
+
     throw new Error(error.message);
   }
 };

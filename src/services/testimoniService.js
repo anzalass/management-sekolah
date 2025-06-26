@@ -4,14 +4,14 @@ import { prismaErrorHandler } from "../utils/errorHandlerPrisma.js";
 const prisma = new PrismaClient();
 
 export const createTestimoni = async (data) => {
-  const { image, description,userId } = data;
+  const { image, description,guruId } = data;
 
   try {
     const result = await prisma.testimoni.create({
       data: {
         image,
         description,
-        userId
+        guruId
       },
     });
 

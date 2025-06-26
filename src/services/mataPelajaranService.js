@@ -3,53 +3,59 @@ import { prismaErrorHandler } from "../utils/errorHandlerPrisma.js";
 const prisma = new PrismaClient();
 
 export const createMataPelajaran = async (data) => {
-  const { nama, kelas, guru } = data;
+  const { nama, kelas, guruId } = data;
   try {
-    await prisma.$transaction(async () => {
-      await prisma.mata_Pelajaran.create({
-        data: { nama, kelas, guru },
-      });
+    const result = await prisma.mata_Pelajaran.create({
+      data: {
+        nama,
+        kelas,
+        guruId, 
+      },
     });
+    return result;
   } catch (error) {
+    console.error(error);
     const errorMessage = prismaErrorHandler(error);
     throw new Error(errorMessage);
   }
 };
 
 export const updateMataPelajaran = async (id, data) => {
-  const { nama, kelas, guru } = data;
+  const { nama, kelas, guruId } = data;
   try {
-    await prisma.$transaction(async () => {
-      await prisma.mata_Pelajaran.update({
-        where: { id },
-        data: { nama, kelas, guru },
-      });
+    const result = await prisma.mata_Pelajaran.update({
+      where: { id },
+      data: {
+        nama,
+        kelas,
+        guruId, // update guru juga bisa
+      },
     });
+    return result;
   } catch (error) {
-    const errorMessage = prismaErrorHandler(error);
-    throw new Error(errorMessage);
-  }
-};
-
-export const deleteMataPelajaran = async (id) => {
-  try {
-    await prisma.$transaction(async () => {
-      await prisma.mata_Pelajaran.delete({ where: { id } });
-    });
-  } catch (error) {
+    console.error(error);
     const errorMessage = prismaErrorHandler(error);
     throw new Error(errorMessage);
   }
 };
 
 export const getMataPelajaranById = async (id) => {
-  const mataPelajaran = await prisma.mata_Pelajaran.findUnique({
-    where: { id },
-  });
-  if (!mataPelajaran) {
-    throw new Error("Mata Pelajaran not found");
+  try {
+    const mataPelajaran = await prisma.mata_Pelajaran.findUnique({
+      where: { id },
+      include: {
+        Guru: true, // ambil data guru nya juga
+      },
+    });
+    if (!mataPelajaran) {
+      throw new Error("Mata Pelajaran not found");
+    }
+    return mataPelajaran;
+  } catch (error) {
+    console.error(error);
+    const errorMessage = prismaErrorHandler(error);
+    throw new Error(errorMessage);
   }
-  return mataPelajaran;
 };
 
 export const getAllMataPelajaran = async ({
@@ -60,18 +66,39 @@ export const getAllMataPelajaran = async ({
   try {
     const skip = (page - 1) * pageSize;
     const take = pageSize;
+
     let where = {};
     if (nama) {
       where.nama = { contains: nama, mode: "insensitive" };
     }
+
     const data = await prisma.mata_Pelajaran.findMany({
       skip,
       take,
       where,
+      include: {
+        Guru: true, // ambil guru nya juga
+      },
     });
+
     const total = await prisma.mata_Pelajaran.count({ where });
+
     return { data, total, page, pageSize };
   } catch (error) {
+    console.error(error);
+    const errorMessage = prismaErrorHandler(error);
+    throw new Error(errorMessage);
+  }
+};
+
+export const deleteMataPelajaran = async (id) => {
+  try {
+    const result = await prisma.mata_Pelajaran.delete({
+      where: { id },
+    });
+    return result;
+  } catch (error) {
+    console.error(error);
     const errorMessage = prismaErrorHandler(error);
     throw new Error(errorMessage);
   }

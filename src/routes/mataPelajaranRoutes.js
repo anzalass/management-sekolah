@@ -10,7 +10,7 @@ import {
 
 const router = express.Router();
 
-router.post("/mapel/create", createMataPelajaranController);
+router.post("/mapel/create", AuthMiddleware ,createMataPelajaranController);
 router.get("/mapel/get/:id", getMataPelajaranByIdController);
 router.put("/mapel/update/:id", updateMataPelajaranController);
 router.delete("/mapel/delete/:id", deleteMataPelajaranController);

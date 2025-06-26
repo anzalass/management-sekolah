@@ -4,13 +4,13 @@ import { prismaErrorHandler } from "../utils/errorHandlerPrisma.js";
 const prisma = new PrismaClient();
 
 export const createGallery = async (data) => {
-  const { image,userId } = data;
+  const { image,guruId } = data;
 
   try {
     const result = await prisma.gallery.create({
       data: {
         image,
-        userId
+        guruId
       },
     });
 

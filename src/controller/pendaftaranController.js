@@ -1,67 +1,91 @@
-import {
-  createPendaftaran,
-  getAllPendaftaran,
-  getPendaftaranById,
-} from "../services/pendaftaranService.js";
+import { createPendaftaran, deletePendaftaran, getAllPendaftaran, getPendaftaranById, updatePendaftaran } from "../services/pendaftaranService.js";
 
-// Sudah ada sebelumnya
-export const handleCreatePendaftaran = async (req, res) => {
+export const createPendaftaranController = async (req, res) => {
   try {
-    const data = req.body;
-    const newData = await createPendaftaran(data);
-    res.status(201).json(newData);
-  } catch (error) {
-    res.status(500).json({ message: "Gagal menambahkan data", error });
-  }
-};
+    const { studentName, parentName, email, phoneNumber, yourLocation } = req.body;
 
-export const handleGetAllPendaftaran = async (req, res) => {
-  try {
-    const {
-      page = "1",
-      pageSize = "10",
-      studentName = "",
-      parentName = "",
-      email = "",
-      yourLocation = "",
-    } = req.query;
-
-    const result = await getAllPendaftaran({
-      page: parseInt(page),
-      pageSize: parseInt(pageSize),
+    const newPendaftaran = await createPendaftaran({
       studentName,
       parentName,
       email,
+      phoneNumber,
       yourLocation,
     });
 
-    return res.status(200).json({
-      success: true,
-      message: "Data pendaftaran berhasil diambil",
-      data: result,
-    });
+    return res.status(201).json({ message: "Pendaftaran berhasil dibuat", data: newPendaftaran });
   } catch (error) {
-    console.error("Get Pendaftaran Error:", error.message);
-    return res.status(500).json({
-      success: false,
-      message:
-        error.message || "Terjadi kesalahan saat mengambil data pendaftaran",
-    });
+    return res.status(500).json({ message: error.message });
   }
 };
 
-// 🔹 Tambahan: handle get by ID
-export const handleGetPendaftaranById = async (req, res) => {
+export const getAllPendaftaranController = async (req, res) => {
   try {
-    const { id } = req.params;
-    const data = await getPendaftaranById(id);
+    const page = parseInt(req.query.page) || 1;
+    const pageSize = parseInt(req.query.pageSize) || 10;
+    const search = req.query.search || "";
+    const pendaftaran = await getAllPendaftaran(page, pageSize, search);
+    return res.status(200).json({
+      data: pendaftaran.data,
+      total: pendaftaran.total,
+      page: pendaftaran.page,
+      pageSize: pendaftaran.pageSize,
+      totalPages: pendaftaran.totalPages,
+    });
+  } catch (error) {
+    console.error("Error fetching pendaftaran:", error);
+    return res.status(500).json({ message: error.message });
+  }
+};
 
-    if (!data) {
-      return res.status(404).json({ message: "Data tidak ditemukan" });
+export const getPendaftaranByIdController = async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const pendaftaran = await getPendaftaranById(id);
+
+    if (!pendaftaran) {
+      return res.status(404).json({ message: "Pendaftaran tidak ditemukan" });
     }
 
-    res.status(200).json(data);
+    return res.status(200).json({ data: pendaftaran });
   } catch (error) {
-    res.status(500).json({ message: "Gagal mengambil data", error });
+    return res.status(500).json({ message: error.message });
+  }
+};
+
+export const updatePendaftaranController = async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const pendaftaran = await getPendaftaranById(id);
+
+    if (!pendaftaran) {
+      return res.status(404).json({ message: "Pendaftaran tidak ditemukan" });
+    }
+
+    const { studentName, parentName, email, phoneNumber, yourLocation } = req.body;
+
+    const updatedPendaftaran = await updatePendaftaran(id, { studentName, parentName, email, phoneNumber, yourLocation });
+
+    return res.status(200).json({ message: "Pendaftaran berhasil diperbarui", data: updatedPendaftaran });
+  } catch (error) {
+    return res.status(500).json({ message: error.message });
+  }
+};
+
+export const deletePendaftaranController = async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const pendaftaran = await getPendaftaranById(id);
+
+    if (!pendaftaran) {
+      return res.status(404).json({ message: "Pendaftaran tidak ditemukan" });
+    }
+
+    await deletePendaftaran(id);
+    return res.status(200).json({ message: "Pendaftaran berhasil dihapus" });
+  } catch (error) {
+    return res.status(500).json({ message: error.message });
   }
 };
