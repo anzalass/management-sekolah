@@ -31,9 +31,10 @@ export const dashboardMengajarServicePage = async (nipGuru) => {
     const statusIzin = !!izinHariIni;
 
     // Data lainnya
-    const [jadwalGuru, kelasWaliKelas, kelasMapel, perizinan] =
+    const [kehadiranGuru, jadwalGuru, kelasWaliKelas, kelasMapel, perizinan] =
       await Promise.all([
         prisma.kehadiranGuru.findMany({ where: { nipGuru } }),
+        prisma.jadwalMengajar.findMany({ where: { nipGuru } }),
         prisma.kelas.findMany({ where: { nipGuru } }),
         prisma.kelasDanMapel.findMany({ where: { nipGuru } }),
         prisma.perizinanGuru.findMany({ where: { nipGuru } }),
@@ -43,6 +44,7 @@ export const dashboardMengajarServicePage = async (nipGuru) => {
       statusMasuk,
       statusKeluar,
       statusIzin,
+      kehadiranGuru,
       jadwalGuru,
       kelasWaliKelas,
       kelasMapel,
