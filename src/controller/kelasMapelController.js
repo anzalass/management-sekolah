@@ -12,6 +12,7 @@ export const createKelasMapelController = async (req, res, next) => {
       nip: req.user.nip,
       namaMapel: req.body.namaMapel,
       ruangKelas: req.body.ruangKelas,
+      kelas: req.body.kelas,
     };
     await createKelasMapel(data);
     return res

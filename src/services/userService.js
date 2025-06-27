@@ -20,6 +20,7 @@ const createGuru = async (guru, foto) => {
 
   try {
     const passwordHash = await bcrypt.hash(password, 10);
+    console.log(foto);
 
     let imageUploadResult = null;
 

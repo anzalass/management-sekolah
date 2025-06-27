@@ -25,6 +25,7 @@ model Sekolah {
   namaKepsek String
   logo String?
   logoId String?
+  tahunAjaran String
 }
 
 model Guru {
@@ -36,45 +37,63 @@ model Guru {
   nama           String
   tempatLahir    String
   tanggalLahir   DateTime?
-  alamat         String
+  alamat         String 
   agama          String
   jenisKelamin   String
   noTelepon      String
-  email          String
+  email          String @unique
   status         String
   foto           String?
   fotoId         String?  
   RiwayatPendidikanGuru RiwayatPendidikanGuru[]
   Kelas          Kelas[]
-  Kehadiran_Guru_Dan_Staff  Kehadiran_Guru_Dan_Staff[]
+  KehadiranGuru  KehadiranGuru[]
   KelasDanMapel  KelasDanMapel[]
-  WaktuMengajar  WaktuMengajar[]
-  PerizinanGuru  PerizinanGuru[]
   Logs           Logs[]
   MataPelajaran Mata_Pelajaran[]
   testimoni     Testimoni[]
   news          News[]
   gallery       Gallery[]
   guruTemplate  GuruTemplate[]
+  jadwalMengajar jadwalMengajar[]
+  PerizinanGuru PerizinanGuru[]
+
 }
 
-model Kehadiran_Guru_Dan_Staff {
-  id                String             @id @default(uuid())
-  nip String
-  latitude          String
-  longitude         String
-  tanggal           DateTime
-  Guru              Guru               @relation(fields: [nip], references: [nip])
+model jadwalMengajar {
+    id            String @id @default(uuid())
+    kelas String
+    nipGuru String
+    jamMulai String
+    jamSelesai String
+    namaMapel String
+    hari String
+    ruang String
+    Guru              Guru               @relation(fields: [nipGuru], references: [nip])
 
+
+}
+
+model KehadiranGuru {
+  id            String   @id @default(uuid())
+  nipGuru       String
+  tanggal       DateTime @default(now())
+  jamMasuk      DateTime?
+  jamPulang     DateTime?
+  fotoMasuk     String?
+  lokasiMasuk   String?   // simpan JSON string: {"lat": -6.2, "long": 106.8}
+  lokasiPulang  String?
+  status String?
+  Guru          Guru      @relation(fields: [nipGuru], references: [nip])
 }
 
 model Kelas {
   id                String             @id @default(uuid())
-  nip               String             
+  nipGuru               String             
   nama              String
   ruangKelas        String
-  periode String
-  Guru              Guru               @relation(fields: [nip], references: [nip])
+  tahunAjaran       String
+  Guru              Guru               @relation(fields: [nipGuru], references: [nip])
   DaftarSiswaKelas  DaftarSiswaKelas[] 
 }
 model RiwayatPendidikanGuru {
@@ -87,27 +106,19 @@ model RiwayatPendidikanGuru {
   Guru           Guru  @relation(fields: [nip], references: [nip])
 }
 
-model WaktuMengajar {
-  id            String         @id @default(uuid())
-  nip           String
-  waktu         DateTime
-  ruangKelas    String
-  guruId        String
-  kelasDanMapelId String
-  Guru          Guru           @relation(fields: [guruId], references: [nip])
-  KelasDanMapel KelasDanMapel  @relation(fields: [kelasDanMapelId], references: [id])
-}
 
 model KelasDanMapel {
   id             String          @id @default(uuid())
-  nip            String
+  nipGuru            String
   namaMapel      String
   ruangKelas     String
-  Guru           Guru            @relation(fields: [nip], references: [nip])
-  WaktuMengajar  WaktuMengajar[]
+  kelas          String
+  tahunAjaran    String
+  Guru           Guru            @relation(fields: [nipGuru], references: [nip])
   DaftarSiswa DaftarSiswa[]
   NilaiSiswa     NilaiSiswa[]
   KehadiranSiswa KehadiranSiswa[]
+  JenisNilai JenisNilai[]
 }
 
 model DaftarSiswa {
@@ -118,7 +129,6 @@ model DaftarSiswa {
   Siswa     Siswa @relation(fields: [nis], references: [nis])
 }
 
-
 model DaftarSiswaKelas {
   id          String @id @default(uuid())
   idKelas     String
@@ -127,15 +137,22 @@ model DaftarSiswaKelas {
   Siswa       Siswa @relation(fields: [nis], references: [nis])
 }
 
+model JenisNilai {
+    id             String          @id @default(uuid())
+    idKelasMapel   String
+    jenis          String
+    bobot          Int
+    KelasDanMapel  KelasDanMapel @relation(fields: [id], references: [id])
+}
 
 model NilaiSiswa {
-  id             String @id @default(uuid())
-  nis            String
+  id              String @id @default(uuid())
+  nis             String
   idKelasDanMapel String
-  jenisNilai     String
-  nilai          Int
-  Siswa          Siswa @relation(fields: [nis], references: [nis])
-  KelasDanMapel  KelasDanMapel @relation(fields: [idKelasDanMapel], references: [id])
+  jenisNilai      String
+  nilai           Int
+  Siswa           Siswa @relation(fields: [nis], references: [nis])
+  KelasDanMapel   KelasDanMapel @relation(fields: [idKelasDanMapel], references: [id])
 }
 
 model KehadiranSiswa {
@@ -179,6 +196,7 @@ model Siswa {
   Peminjaman_dan_Pengembalian Peminjaman_dan_Pengembalian[]
   Tagihan Tagihan[]
   RiwayatPembayaran RiwayatPembayaran[]
+  PerizinanSiswa PerizinanSiswa[]
 }
 
 model Pelanggaran_Dan_Prestasi_Siswa {
@@ -246,14 +264,34 @@ model KegiatanSekolah {
   status     String
 }
 
+enum StatusIzin {
+  menunggu
+  disetujui
+  ditolak
+}
+
 model PerizinanGuru {
+  id         String   @id @default(uuid())
+  nipGuru        String
+  keterangan String
+  time       DateTime
+  bukti      String
+  bukti_id   String
+  status     StatusIzin
+  Guru      Guru @relation(fields: [nipGuru], references: [nip])
+
+}
+
+model PerizinanSiswa {
   id         String @id @default(uuid())
-  nip        String
+  nis        String
   jenis      String
   keterangan String
   time       DateTime
-  timeEnd    DateTime
-  Guru       Guru  @relation(fields: [nip], references: [nip])
+  bukti      String
+  bukti_id String
+  status     StatusIzin
+  Siswa       Siswa  @relation(fields: [nis], references: [nis])
 }
 
 model Logs {

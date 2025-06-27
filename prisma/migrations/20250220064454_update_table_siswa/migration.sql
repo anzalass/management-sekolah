@@ -1,2 +1,0 @@
--- AlterTable
-ALTER TABLE "Siswa" ALTER COLUMN "poin" DROP NOT NULL;

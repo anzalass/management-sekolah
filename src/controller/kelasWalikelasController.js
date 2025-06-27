@@ -13,8 +13,6 @@ export const createKelasWaliKelasController = async (req, res, next) => {
       nip: req.user.nip,
       nama: req.body.nama,
       ruangKelas: req.body.ruangKelas,
-      periode: req.body.periode,
-      guru: req.body.guru,
     };
     await createKelasWaliKelas(data);
     return res

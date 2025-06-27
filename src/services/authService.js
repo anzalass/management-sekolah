@@ -69,7 +69,7 @@ export const loginAdmin = async (auth) => {
   const { email, password } = auth;
 
   try {
-    const user = await prisma.user.findUnique({
+    const user = await prisma.guru.findUnique({
       where: { email },
     });
 
@@ -93,11 +93,13 @@ export const loginAdmin = async (auth) => {
     );
 
     const result = {
-      token,  
+      token,
     };
 
     return result;
   } catch (error) {
+    console.log(error);
+
     throw new Error(error.message);
   }
 };

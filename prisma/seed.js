@@ -24,6 +24,7 @@ async function main() {
         namaKepsek: "Ibu Siti Aminah",
         logo: null,
         logoId: null,
+        tahunAjaran: "2024-2025",
       },
     });
 

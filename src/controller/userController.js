@@ -12,18 +12,20 @@ import {
   createRiwayatPendidikan,
   deleteRiwayatPendidikan,
 } from "../services/userService.js";
-import { prismaErrorHandler } from "../utils/errorHandlerPrisma.js";
+import memoryUpload from "../utils/multer.js";
 import upload from "../utils/multer.js";
 
 export const createGuruController = async (req, res) => {
-  upload.single("foto")(req, res, async (err) => {
+  memoryUpload.single("foto")(req, res, async (err) => {
     if (err) {
       return res.status(400).json({ message: err.message });
     }
 
     try {
       const result = await createGuru(req.body, req.file);
-      return res.status(201).json({ message: "Berhasil membuat guru", data: result });
+      return res
+        .status(201)
+        .json({ message: "Berhasil membuat guru", data: result });
     } catch (error) {
       return res.status(500).json({ message: error.message });
     }
@@ -59,13 +61,14 @@ export const updateGuruController = async (req, res, next) => {
     try {
       console.log("Uploaded file:", req.file); // 👈 DEBUG
       const result = await updateGuru(req.params.id, req.body, req.file);
-      return res.status(201).json({ message: "Berhasil mengupdate guru", data: result });
+      return res
+        .status(201)
+        .json({ message: "Berhasil mengupdate guru", data: result });
     } catch (error) {
       return res.status(500).json({ message: error.message });
     }
   });
 };
-
 
 export const deleteGuruController = async (req, res, next) => {
   try {
@@ -106,7 +109,9 @@ export const createSiswaController = async (req, res, next) => {
 export const updateSiswaController = async (req, res, next) => {
   upload.single("foto")(req, res, async (err) => {
     if (err) {
-      return res.status(400).json({ message: "Gagal upload foto", error: err.message });
+      return res
+        .status(400)
+        .json({ message: "Gagal upload foto", error: err.message });
     }
 
     try {
@@ -120,7 +125,6 @@ export const updateSiswaController = async (req, res, next) => {
     }
   });
 };
-
 
 export const deleteSiswaController = async (req, res, next) => {
   try {

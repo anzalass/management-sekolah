@@ -7,7 +7,7 @@ export const createRuang = async (data) => {
   try {
     await prisma.$transaction(async (tx) => {
       await tx.ruangan.create({
-        data: { nama },
+        data: { nama, keterangan },
       });
     });
   } catch (error) {

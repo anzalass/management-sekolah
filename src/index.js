@@ -20,6 +20,12 @@ import newsRoutes from "./routes/newsRoutes.js";
 import galleryRoutes from "./routes/galleryRoutes.js";
 import guruTemplate from "./routes/guruTemplateRoutes.js";
 import raportRoutes from "./routes/raportRoutes.js";
+import perizinanGuruRoutes from "./routes/perizinanGuruRoutes.js";
+import jadwalMengajarRoutes from "./routes/jadwalMengajarRoutes.js";
+import kelasWaliKelasRoutes from "./routes/kelasWaliKelasRoutes.js";
+import kelasMapelRoutes from "./routes/kelasMapelRoutes.js";
+import pageRoutes from "./routes/pageRoutes.js";
+
 import { fileURLToPath } from "url";
 import path from "path";
 import fs from "fs";
@@ -70,6 +76,11 @@ app.use("/api/v1", newsRoutes);
 app.use("/api/v1", galleryRoutes);
 app.use("/api/v1", guruTemplate);
 app.use("/api/v1", raportRoutes);
+app.use("/api/v1", perizinanGuruRoutes);
+app.use("/api/v1", jadwalMengajarRoutes);
+app.use("/api/v1", kelasWaliKelasRoutes);
+app.use("/api/v1", kelasMapelRoutes);
+app.use("/api/v1", pageRoutes);
 
 app.get("/api/v1/view-image/:imageName", (req, res) => {
   const { imageName } = req.params;

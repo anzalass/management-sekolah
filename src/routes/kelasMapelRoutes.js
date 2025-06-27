@@ -11,7 +11,7 @@ import {
 } from "../services/kelasMapelService.js";
 const router = express.Router();
 
-router.post("/kelas-mapel/create", createKelasMapelController);
+router.post("/kelas-mapel/create", AuthMiddleware, createKelasMapelController);
 router.put("/kelas-mapel/update/:id", updateKelasMapelController);
 router.delete("/kelas-mapel/delete/:id", deleteKelasMapelController);
 router.post("/kelas-mapel/add-siswa", addSiswatoKelasKelasMapel);
