@@ -61,6 +61,7 @@ export const addSiswatoKelasKelasMapel = async (data) => {
   }
 };
 
+
 export const removeSiswaFromKelasMapel = async (id) => {
   try {
     await prisma.$transaction(async (tx) => {
