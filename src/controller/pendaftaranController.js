@@ -1,8 +1,21 @@
-import { createPendaftaran, deletePendaftaran, getAllPendaftaran, getPendaftaranById, updatePendaftaran } from "../services/pendaftaranService.js";
+import {
+  createPendaftaran,
+  deletePendaftaran,
+  getAllPendaftaran,
+  getPendaftaranById,
+  updatePendaftaran,
+} from "../services/pendaftaranService.js";
 
 export const createPendaftaranController = async (req, res) => {
   try {
-    const { studentName, parentName, email, phoneNumber, yourLocation } = req.body;
+    const {
+      studentName,
+      parentName,
+      email,
+      phoneNumber,
+      yourLocation,
+      kategori,
+    } = req.body;
 
     const newPendaftaran = await createPendaftaran({
       studentName,
@@ -10,9 +23,12 @@ export const createPendaftaranController = async (req, res) => {
       email,
       phoneNumber,
       yourLocation,
+      kategori,
     });
 
-    return res.status(201).json({ message: "Pendaftaran berhasil dibuat", data: newPendaftaran });
+    return res
+      .status(201)
+      .json({ message: "Pendaftaran berhasil dibuat", data: newPendaftaran });
   } catch (error) {
     return res.status(500).json({ message: error.message });
   }
@@ -63,11 +79,23 @@ export const updatePendaftaranController = async (req, res) => {
       return res.status(404).json({ message: "Pendaftaran tidak ditemukan" });
     }
 
-    const { studentName, parentName, email, phoneNumber, yourLocation } = req.body;
+    const { studentName, parentName, email, phoneNumber, yourLocation } =
+      req.body;
 
-    const updatedPendaftaran = await updatePendaftaran(id, { studentName, parentName, email, phoneNumber, yourLocation });
+    const updatedPendaftaran = await updatePendaftaran(id, {
+      studentName,
+      parentName,
+      email,
+      phoneNumber,
+      yourLocation,
+    });
 
-    return res.status(200).json({ message: "Pendaftaran berhasil diperbarui", data: updatedPendaftaran });
+    return res
+      .status(200)
+      .json({
+        message: "Pendaftaran berhasil diperbarui",
+        data: updatedPendaftaran,
+      });
   } catch (error) {
     return res.status(500).json({ message: error.message });
   }

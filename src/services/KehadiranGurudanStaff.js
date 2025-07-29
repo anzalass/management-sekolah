@@ -50,6 +50,7 @@ export const absenMasukGuru = async ({ nipGuru, fotoMasuk, lokasi }) => {
   return await prisma.kehadiranGuru.create({
     data: {
       nipGuru,
+      tanggal: new Date(`${now.toISOString().split("T")[0]}T00:00:00Z`), // <-- ini
       jamMasuk: now,
       fotoMasuk: imageUploadResult?.secure_url,
       lokasiMasuk: JSON.stringify(lokasi),
@@ -95,4 +96,76 @@ export const absenPulangGuru = async ({ nipGuru, lokasi }) => {
       status: "hadir",
     },
   });
+};
+
+export const getAllKehadiranGuru = async ({
+  tanggal,
+  nama,
+  nip,
+  page = 1,
+  pageSize = 10,
+}) => {
+  // Tentukan tanggal filter
+  const tanggalFilter = tanggal ? new Date(`${tanggal}T00:00:00Z`) : undefined;
+
+  // Step 1: Cari semua nip guru yang cocok (kalau ada filter nama atau nip)
+  let nipList = undefined;
+  if (nama || nip) {
+    const guruFilter = {
+      ...(nama && {
+        nama: {
+          contains: nama,
+          mode: "insensitive",
+        },
+      }),
+      ...(nip && {
+        nip: {
+          contains: nip,
+          mode: "insensitive",
+        },
+      }),
+    };
+
+    const gurus = await prisma.guru.findMany({
+      where: guruFilter,
+      select: { nip: true },
+    });
+
+    nipList = gurus.map((g) => g.nip);
+
+    // Kalau hasil pencarian kosong, langsung balikin array kosong
+    if (nipList.length === 0) {
+      return [];
+    }
+  }
+
+  const whereClause = {
+    ...(tanggalFilter && { tanggal: tanggalFilter }),
+    ...(nipList && { nipGuru: { in: nipList } }),
+  };
+
+  const kehadiran = await prisma.kehadiranGuru.findMany({
+    where: whereClause,
+    include: {
+      Guru: {
+        select: {
+          nama: true,
+          nip: true,
+        },
+      },
+    },
+    orderBy: {
+      tanggal: "desc",
+    },
+    skip: (page - 1) * pageSize,
+    take: pageSize,
+  });
+
+  // Flatten
+  return kehadiran.map((item) => ({
+    ...item,
+    nama: item.Guru?.nama || null,
+    nip: item.Guru?.nip || null,
+    Guru: undefined,
+  }));
 };

@@ -36,14 +36,11 @@ export const createPerizinanGuru = async (data, foto) => {
   }
 };
 
-export const updatePerizinanGuru = async (id, data) => {
-  const { jenis, keterangan, timeEnd, time } = data;
+export const updateStatusPerizinanGuru = async (id, status) => {
   try {
-    await prisma.$transaction(async () => {
-      await prisma.perizinanGuru.update({
-        where: { id },
-        data: { jenis, keterangan, time, timeEnd },
-      });
+    return await prisma.perizinanGuru.update({
+      where: { id },
+      data: { status },
     });
   } catch (error) {
     throw new Error(error.message);
@@ -68,4 +65,74 @@ export const getPerizinanGuruById = async (id) => {
     throw new Error("Perizinan Guru not found");
   }
   return perizinanGuru;
+};
+
+export const getPerizinanGuru = async ({
+  nama = "",
+  nip = "",
+  tanggal = "",
+  page = 1,
+  pageSize = 10,
+}) => {
+  const skip = (page - 1) * pageSize;
+
+  const where = {
+    AND: [
+      nip ? { nipGuru: { contains: nip } } : {},
+      nama
+        ? {
+            Guru: {
+              nama: {
+                contains: nama,
+                mode: "insensitive",
+              },
+            },
+          }
+        : {},
+      tanggal
+        ? {
+            time: {
+              gte: new Date(tanggal + "T00:00:00.000Z"),
+              lte: new Date(tanggal + "T23:59:59.999Z"),
+            },
+          }
+        : {},
+    ],
+  };
+
+  const [dataRaw, total] = await Promise.all([
+    prisma.perizinanGuru.findMany({
+      where,
+      include: {
+        Guru: {
+          select: {
+            nama: true,
+            nip: true,
+          },
+        },
+      },
+      orderBy: {
+        time: "desc",
+      },
+      skip,
+      take: pageSize,
+    }),
+    prisma.perizinanGuru.count({ where }),
+  ]);
+
+  // Mapping agar nama & nip keluar langsung tanpa nested Guru
+  const data = dataRaw.map((item) => ({
+    ...item,
+    nama: item.Guru?.nama || null,
+    nip: item.Guru?.nip || null,
+    Guru: undefined,
+  }));
+
+  return {
+    data,
+    total,
+    page,
+    pageSize,
+    totalPages: Math.ceil(total / pageSize),
+  };
 };

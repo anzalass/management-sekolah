@@ -52,7 +52,7 @@ export const addSiswatoKelasKelasMapel = async (data) => {
   const { nis, idKelas } = data;
   try {
     await prisma.$transaction(async (tx) => {
-      await tx.daftarSiswaKelas.create({
+      await tx.daftarSiswaMapel.create({
         data: { nis, idKelas },
       });
     });
@@ -61,11 +61,10 @@ export const addSiswatoKelasKelasMapel = async (data) => {
   }
 };
 
-
 export const removeSiswaFromKelasMapel = async (id) => {
   try {
     await prisma.$transaction(async (tx) => {
-      await tx.daftarSiswaKelas.delete({
+      await tx.daftarSiswaMapel.delete({
         where: { id: id },
       });
     });
