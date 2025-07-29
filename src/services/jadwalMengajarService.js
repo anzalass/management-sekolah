@@ -1,6 +1,5 @@
 import { PrismaClient } from "@prisma/client";
 import { prismaErrorHandler } from "../utils/errorHandlerPrisma.js";
-
 const prisma = new PrismaClient();
 
 export const createJadwalMengajar = async (data) => {

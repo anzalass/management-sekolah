@@ -1,4 +1,10 @@
-import { createTestimoni, getAllTestimoni, getTestimoniById, updateTestimoni, deleteTestimoni } from "../services/testimoniService.js";
+import {
+  createTestimoni,
+  getAllTestimoni,
+  getTestimoniById,
+  updateTestimoni,
+  deleteTestimoni,
+} from "../services/testimoniService.js";
 import fs from "fs";
 import upload from "../utils/multer.js";
 import { fileURLToPath } from "url";
@@ -8,7 +14,6 @@ import localUpload from "../utils/localupload.js";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-
 export const createTestimoniController = async (req, res) => {
   localUpload.single("image")(req, res, async (err) => {
     if (err) {
@@ -16,8 +21,8 @@ export const createTestimoniController = async (req, res) => {
     }
 
     try {
-      const { description } = req.body;
-       const { guruId } = req.user;
+      const { description, parentName } = req.body;
+      const { guruId } = req.user;
 
       if (!req.file) {
         return res.status(400).json({ message: "Gambar wajib diunggah" });
@@ -25,21 +30,27 @@ export const createTestimoniController = async (req, res) => {
 
       const imagePath = req.file.path.replace(/\\/g, "/");
 
-      const newTestimoni = await createTestimoni({ image: imagePath, description, guruId: guruId, });
+      const newTestimoni = await createTestimoni({
+        image: imagePath,
+        description,
+        guruId: guruId,
+        parentName,
+      });
 
-      return res.status(201).json({ message: "Testimoni berhasil dibuat", data: newTestimoni });
+      return res
+        .status(201)
+        .json({ message: "Testimoni berhasil dibuat", data: newTestimoni });
     } catch (error) {
       return res.status(500).json({ message: error.message });
     }
   });
 };
 
-
 export const getAllTestimoniController = async (req, res) => {
   try {
     const page = parseInt(req.query.page) || 1;
-    const pageSize = parseInt(req.query.pageSize) || 10;  
-    const search = req.query.search || "";  
+    const pageSize = parseInt(req.query.pageSize) || 10;
+    const search = req.query.search || "";
     const testimonis = await getAllTestimoni(page, pageSize, search);
     return res.status(200).json({
       data: testimonis.data,
@@ -49,11 +60,10 @@ export const getAllTestimoniController = async (req, res) => {
       totalPages: testimonis.totalPages,
     });
   } catch (error) {
-    console.error('Error fetching testimonies:', error);
+    console.error("Error fetching testimonies:", error);
     return res.status(500).json({ message: error.message });
   }
 };
-
 
 export const getTestimoniByIdController = async (req, res) => {
   const { id } = req.params;
@@ -70,7 +80,6 @@ export const getTestimoniByIdController = async (req, res) => {
     return res.status(500).json({ message: error.message });
   }
 };
-
 
 export const updateTestimoniController = async (req, res) => {
   const { id } = req.params;
@@ -90,7 +99,11 @@ export const updateTestimoniController = async (req, res) => {
       const { description } = req.body;
       let imagePath = testimoni.image;
       if (req.file) {
-        const oldImagePath = path.join(__dirname, "../../uploads", path.basename(imagePath));
+        const oldImagePath = path.join(
+          __dirname,
+          "../../uploads",
+          path.basename(imagePath)
+        );
         fs.access(oldImagePath, fs.constants.F_OK, (err) => {
           if (!err) {
             fs.unlink(oldImagePath, (err) => {
@@ -106,15 +119,22 @@ export const updateTestimoniController = async (req, res) => {
         imagePath = req.file.path.replace(/\\/g, "/");
       }
 
-      const updatedTestimoni = await updateTestimoni(id, { description, image: imagePath });
+      const updatedTestimoni = await updateTestimoni(id, {
+        description,
+        image: imagePath,
+      });
 
-      return res.status(200).json({ message: "Testimoni berhasil diperbarui", data: updatedTestimoni });
+      return res
+        .status(200)
+        .json({
+          message: "Testimoni berhasil diperbarui",
+          data: updatedTestimoni,
+        });
     } catch (error) {
       return res.status(500).json({ message: error.message });
     }
   });
 };
-
 
 export const deleteTestimoniController = async (req, res) => {
   const { id } = req.params;
@@ -127,7 +147,11 @@ export const deleteTestimoniController = async (req, res) => {
     }
 
     const imagePath = testimoni.image;
-    const filePath = path.join(__dirname, "../../uploads", path.basename(imagePath));
+    const filePath = path.join(
+      __dirname,
+      "../../uploads",
+      path.basename(imagePath)
+    );
     fs.access(filePath, fs.constants.F_OK, (err) => {
       if (err) {
         console.error("File does not exist:", err);
@@ -141,7 +165,9 @@ export const deleteTestimoniController = async (req, res) => {
 
         deleteTestimoni(id)
           .then(() => {
-            return res.status(200).json({ message: "Testimoni dan gambar berhasil dihapus" });
+            return res
+              .status(200)
+              .json({ message: "Testimoni dan gambar berhasil dihapus" });
           })
           .catch((dbError) => {
             return res.status(500).json({ message: dbError.message });

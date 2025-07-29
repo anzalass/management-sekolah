@@ -45,20 +45,38 @@ CREATE TABLE "Guru" (
 );
 
 -- CreateTable
-CREATE TABLE "Kehadiran_Guru_Dan_Staff" (
+CREATE TABLE "jadwalMengajar" (
     "id" TEXT NOT NULL,
-    "nip" TEXT NOT NULL,
-    "latitude" TEXT NOT NULL,
-    "longitude" TEXT NOT NULL,
-    "tanggal" TIMESTAMP(3) NOT NULL,
+    "kelas" TEXT NOT NULL,
+    "nipGuru" TEXT NOT NULL,
+    "jamMulai" TEXT NOT NULL,
+    "jamSelesai" TEXT NOT NULL,
+    "namaMapel" TEXT NOT NULL,
+    "hari" TEXT NOT NULL,
+    "ruang" TEXT NOT NULL,
 
-    CONSTRAINT "Kehadiran_Guru_Dan_Staff_pkey" PRIMARY KEY ("id")
+    CONSTRAINT "jadwalMengajar_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "KehadiranGuru" (
+    "id" TEXT NOT NULL,
+    "nipGuru" TEXT NOT NULL,
+    "tanggal" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "jamMasuk" TIMESTAMP(3),
+    "jamPulang" TIMESTAMP(3),
+    "fotoMasuk" TEXT,
+    "lokasiMasuk" TEXT,
+    "lokasiPulang" TEXT,
+    "status" TEXT,
+
+    CONSTRAINT "KehadiranGuru_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
 CREATE TABLE "Kelas" (
     "id" TEXT NOT NULL,
-    "nip" TEXT NOT NULL,
+    "nipGuru" TEXT NOT NULL,
     "nama" TEXT NOT NULL,
     "ruangKelas" TEXT NOT NULL,
     "tahunAjaran" TEXT NOT NULL,
@@ -81,7 +99,7 @@ CREATE TABLE "RiwayatPendidikanGuru" (
 -- CreateTable
 CREATE TABLE "KelasDanMapel" (
     "id" TEXT NOT NULL,
-    "nip" TEXT NOT NULL,
+    "nipGuru" TEXT NOT NULL,
     "namaMapel" TEXT NOT NULL,
     "ruangKelas" TEXT NOT NULL,
     "kelas" TEXT NOT NULL,
@@ -91,12 +109,12 @@ CREATE TABLE "KelasDanMapel" (
 );
 
 -- CreateTable
-CREATE TABLE "DaftarSiswa" (
+CREATE TABLE "DaftarSiswaMapel" (
     "id" TEXT NOT NULL,
     "idKelas" TEXT NOT NULL,
     "nis" TEXT NOT NULL,
 
-    CONSTRAINT "DaftarSiswa_pkey" PRIMARY KEY ("id")
+    CONSTRAINT "DaftarSiswaMapel_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
@@ -253,7 +271,7 @@ CREATE TABLE "KegiatanSekolah" (
 -- CreateTable
 CREATE TABLE "PerizinanGuru" (
     "id" TEXT NOT NULL,
-    "nip" TEXT NOT NULL,
+    "nipGuru" TEXT NOT NULL,
     "keterangan" TEXT NOT NULL,
     "time" TIMESTAMP(3) NOT NULL,
     "bukti" TEXT NOT NULL,
@@ -452,22 +470,25 @@ CREATE UNIQUE INDEX "Siswa_noTeleponOrtu_key" ON "Siswa"("noTeleponOrtu");
 CREATE UNIQUE INDEX "Siswa_email_key" ON "Siswa"("email");
 
 -- AddForeignKey
-ALTER TABLE "Kehadiran_Guru_Dan_Staff" ADD CONSTRAINT "Kehadiran_Guru_Dan_Staff_nip_fkey" FOREIGN KEY ("nip") REFERENCES "Guru"("nip") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "jadwalMengajar" ADD CONSTRAINT "jadwalMengajar_nipGuru_fkey" FOREIGN KEY ("nipGuru") REFERENCES "Guru"("nip") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "Kelas" ADD CONSTRAINT "Kelas_nip_fkey" FOREIGN KEY ("nip") REFERENCES "Guru"("nip") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "KehadiranGuru" ADD CONSTRAINT "KehadiranGuru_nipGuru_fkey" FOREIGN KEY ("nipGuru") REFERENCES "Guru"("nip") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "Kelas" ADD CONSTRAINT "Kelas_nipGuru_fkey" FOREIGN KEY ("nipGuru") REFERENCES "Guru"("nip") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "RiwayatPendidikanGuru" ADD CONSTRAINT "RiwayatPendidikanGuru_nip_fkey" FOREIGN KEY ("nip") REFERENCES "Guru"("nip") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "KelasDanMapel" ADD CONSTRAINT "KelasDanMapel_nip_fkey" FOREIGN KEY ("nip") REFERENCES "Guru"("nip") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "KelasDanMapel" ADD CONSTRAINT "KelasDanMapel_nipGuru_fkey" FOREIGN KEY ("nipGuru") REFERENCES "Guru"("nip") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "DaftarSiswa" ADD CONSTRAINT "DaftarSiswa_idKelas_fkey" FOREIGN KEY ("idKelas") REFERENCES "KelasDanMapel"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "DaftarSiswaMapel" ADD CONSTRAINT "DaftarSiswaMapel_idKelas_fkey" FOREIGN KEY ("idKelas") REFERENCES "KelasDanMapel"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "DaftarSiswa" ADD CONSTRAINT "DaftarSiswa_nis_fkey" FOREIGN KEY ("nis") REFERENCES "Siswa"("nis") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "DaftarSiswaMapel" ADD CONSTRAINT "DaftarSiswaMapel_nis_fkey" FOREIGN KEY ("nis") REFERENCES "Siswa"("nis") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "DaftarSiswaKelas" ADD CONSTRAINT "DaftarSiswaKelas_idKelas_fkey" FOREIGN KEY ("idKelas") REFERENCES "Kelas"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
@@ -497,7 +518,7 @@ ALTER TABLE "Pelanggaran_Dan_Prestasi_Siswa" ADD CONSTRAINT "Pelanggaran_Dan_Pre
 ALTER TABLE "Pemeliharaan_Inventaris" ADD CONSTRAINT "Pemeliharaan_Inventaris_idinventaris_fkey" FOREIGN KEY ("idinventaris") REFERENCES "Inventaris"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "PerizinanGuru" ADD CONSTRAINT "PerizinanGuru_nip_fkey" FOREIGN KEY ("nip") REFERENCES "Guru"("nip") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "PerizinanGuru" ADD CONSTRAINT "PerizinanGuru_nipGuru_fkey" FOREIGN KEY ("nipGuru") REFERENCES "Guru"("nip") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "PerizinanSiswa" ADD CONSTRAINT "PerizinanSiswa_nis_fkey" FOREIGN KEY ("nis") REFERENCES "Siswa"("nis") ON DELETE RESTRICT ON UPDATE CASCADE;

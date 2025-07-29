@@ -4,14 +4,15 @@ import { prismaErrorHandler } from "../utils/errorHandlerPrisma.js";
 const prisma = new PrismaClient();
 
 export const createTestimoni = async (data) => {
-  const { image, description,guruId } = data;
+  const { parentName, image, description, guruId } = data;
 
   try {
     const result = await prisma.testimoni.create({
       data: {
         image,
+        parentName,
         description,
-        guruId
+        guruId,
       },
     });
 
@@ -31,7 +32,7 @@ export const getAllTestimoni = async (page, pageSize, search) => {
       where: {
         description: {
           contains: search,
-          mode: "insensitive", 
+          mode: "insensitive",
         },
       },
       skip: skip,
@@ -55,12 +56,11 @@ export const getAllTestimoni = async (page, pageSize, search) => {
     };
   } catch (error) {
     console.error(error);
-    const errorMessage = prismaErrorHandler(error) || "Gagal mendapatkan testimonies";
+    const errorMessage =
+      prismaErrorHandler(error) || "Gagal mendapatkan testimonies";
     throw new Error(errorMessage);
   }
 };
-
-
 
 export const getTestimoniById = async (id) => {
   try {
@@ -70,7 +70,8 @@ export const getTestimoniById = async (id) => {
     return testimoni;
   } catch (error) {
     console.error(error);
-    const errorMessage = prismaErrorHandler(error) || "Gagal mendapatkan testimoni";
+    const errorMessage =
+      prismaErrorHandler(error) || "Gagal mendapatkan testimoni";
     throw new Error(errorMessage);
   }
 };
@@ -90,11 +91,11 @@ export const updateTestimoni = async (id, data) => {
     return updatedTestimoni;
   } catch (error) {
     console.error(error);
-    const errorMessage = prismaErrorHandler(error) || "Gagal memperbarui testimoni";
+    const errorMessage =
+      prismaErrorHandler(error) || "Gagal memperbarui testimoni";
     throw new Error(errorMessage);
   }
 };
-
 
 export const deleteTestimoni = async (id) => {
   try {
@@ -105,7 +106,8 @@ export const deleteTestimoni = async (id) => {
     return deletedTestimoni;
   } catch (error) {
     console.error(error);
-    const errorMessage = prismaErrorHandler(error) || "Gagal menghapus testimoni";
+    const errorMessage =
+      prismaErrorHandler(error) || "Gagal menghapus testimoni";
     throw new Error(errorMessage);
   }
 };

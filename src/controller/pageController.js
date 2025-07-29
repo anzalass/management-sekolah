@@ -1,4 +1,7 @@
-import { dashboardMengajarServicePage } from "../services/pagesServices.js";
+import {
+  dashboardMengajarServicePage,
+  dashboardOverview,
+} from "../services/pagesServices.js";
 
 export const getDashboardMengajar = async (req, res) => {
   try {
@@ -9,6 +12,19 @@ export const getDashboardMengajar = async (req, res) => {
 
     const result = await dashboardMengajarServicePage(nipGuru);
 
+    return res.status(200).json({
+      message: "Berhasil mendapatkan data dashboard",
+      data: result,
+    });
+  } catch (error) {
+    console.error("Dashboard Controller Error:", error);
+    return res.status(500).json({ message: error.message });
+  }
+};
+
+export const getDashboardOverview = async (req, res) => {
+  try {
+    const result = await dashboardOverview();
     return res.status(200).json({
       message: "Berhasil mendapatkan data dashboard",
       data: result,
