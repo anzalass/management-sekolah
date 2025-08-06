@@ -7,10 +7,7 @@ import {
   updateKelasMapelController,
 } from "../controller/kelasMapelController.js";
 import { AuthMiddleware } from "../utils/authMiddleware.js";
-import {
-  addSiswatoKelasKelasMapel,
-  removeSiswaFromKelasMapel,
-} from "../services/kelasMapelService.js";
+
 const router = express.Router();
 
 router.post("/kelas-mapel/create", AuthMiddleware, createKelasMapelController);

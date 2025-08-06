@@ -1,6 +1,6 @@
 import multer from "multer";
 
-const memoryUpload = multer({
+export const memoryUpload = multer({
   storage: multer.memoryStorage(),
   limits: { fileSize: 5 * 1024 * 1024 },
   fileFilter: (req, file, cb) => {

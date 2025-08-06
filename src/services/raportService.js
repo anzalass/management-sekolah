@@ -1,33 +1,56 @@
-import { fillPDFTemplate } from '../utils/generatePdf.js';
+import { fillPDFTemplate } from "../utils/generatePdf.js";
 
 const generateRaportService = async (nis) => {
   const siswaData = {
-    '123456': {
-      nama: 'Andri Setiawan',
-      tahunAjaran: '2024/2025',
+    123456: {
+      nama: "Andri Setiawan",
+      tahunAjaran: "2024/2025",
       program: "LAP",
       nilaiSiswa: [
-        { mapel: 'Matematika', minggu1: '80', minggu2: '85', minggu3: '90', minggu4: '80' },
-        { mapel: 'Bahasa Indonesia', minggu1: '85', minggu2: '90', minggu3: '92', minggu4: '90' },
-        { mapel: 'IPA', minggu1: '90', minggu2: '92', minggu3: '95', minggu4: '70' }
-      ]
+        {
+          mapel: "Matematika",
+          minggu1: "80",
+          minggu2: "85",
+          minggu3: "90",
+          minggu4: "80",
+        },
+        {
+          mapel: "Bahasa Indonesia",
+          minggu1: "85",
+          minggu2: "90",
+          minggu3: "92",
+          minggu4: "90",
+        },
+        {
+          mapel: "IPA",
+          minggu1: "90",
+          minggu2: "92",
+          minggu3: "95",
+          minggu4: "70",
+        },
+      ],
     },
-    '654321': {
-      nama: 'Siti Rahmawati',
-      tahunAjaran: '2024/2025',
+    654321: {
+      nama: "Siti Rahmawati",
+      tahunAjaran: "2024/2025",
       program: "LAP",
       nilaiSiswa: [
-        { mapel: 'Matematika', minggu1: '88', minggu2: '90', minggu4: '93' },
-        { mapel: 'Bahasa Inggris', minggu1: '92', minggu2: '94', minggu4: '96' },
-        { mapel: 'Biologi', minggu1: '89', minggu2: '91', minggu4: '94' }
-      ]
-    }
+        { mapel: "Matematika", minggu1: "88", minggu2: "90", minggu4: "93" },
+        {
+          mapel: "Bahasa Inggris",
+          minggu1: "92",
+          minggu2: "94",
+          minggu4: "96",
+        },
+        { mapel: "Biologi", minggu1: "89", minggu2: "91", minggu4: "94" },
+      ],
+    },
   };
 
   const siswa = siswaData[nis];
 
   if (!siswa) {
-    throw new Error('Siswa tidak ditemukan');
+    throw new Error("Siswa tidak ditemukan");
   }
 
   const { nama, program, nilaiSiswa } = siswa;
@@ -42,15 +65,16 @@ const generateRaportService = async (nis) => {
 
     const validNilai = nilaiArray.filter((v) => !isNaN(v));
     const total = validNilai.reduce((sum, nilai) => sum + nilai, 0);
-    const rata2 = validNilai.length > 0 ? (total / validNilai.length).toFixed(2) : '0';
+    const rata2 =
+      validNilai.length > 0 ? (total / validNilai.length).toFixed(2) : "0";
 
     return {
       ...item,
-      rataRata: rata2
+      rataRata: rata2,
     };
   });
 
-  const mingguKeys = ['minggu1', 'minggu2', 'minggu3', 'minggu4'];
+  const mingguKeys = ["minggu1", "minggu2", "minggu3", "minggu4"];
   const rataRataPerMinggu = {};
 
   mingguKeys.forEach((mingguKey) => {
@@ -67,7 +91,7 @@ const generateRaportService = async (nis) => {
       }
     });
 
-    rataRataPerMinggu[mingguKey] = count > 0 ? (total / count).toFixed(2) : '0';
+    rataRataPerMinggu[mingguKey] = count > 0 ? (total / count).toFixed(2) : "0";
   });
 
   const data = {

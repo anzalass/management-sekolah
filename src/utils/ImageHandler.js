@@ -65,7 +65,7 @@ export const uploadToCloudinary = (fileBuffer, folder, fileName = "image") => {
       }
     );
 
-    uploadStream.end(fileBuffer); 
+    uploadStream.end(fileBuffer);
   });
 };
 
