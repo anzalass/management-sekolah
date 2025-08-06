@@ -1,27 +1,26 @@
 import express from "express";
-import { AuthMiddleware } from "../utils/authMiddleware.js";
+import multer from "multer";
+
 import {
-  createBukuPerpustakaanController,
-  createPeminjamanController,
-  deleteBukuPerpustakaanController,
+  createBukuController,
+  getAllBukuController,
+  deleteBukuController,
+  pinjamBukuController,
+  kembalikanBukuController,
   deletePeminjamanController,
-  getBukuPerpustakaanByIdController,
-  updateBukuPerpustakaanController,
-  updatePeminjamanController,
-  updateStatusPeminjamanController,
 } from "../controller/perpustakaanController.js";
 
 const router = express.Router();
+const upload = multer({ dest: "uploads/" });
 
-router.post("/perpus/create", createBukuPerpustakaanController);
-router.get("/perpus/get/:id", getBukuPerpustakaanByIdController);
-router.put("/perpus/update/:id", updateBukuPerpustakaanController);
-router.delete("/perpus/delete/:id", deleteBukuPerpustakaanController);
-router.post("/perpus/create-peminjaman", createPeminjamanController);
-router.put(
-  "/perpus/update-status-peminjaman",
-  updateStatusPeminjamanController
-);
-router.put("/perpus/update-peminjaman", updatePeminjamanController);
-router.delete("/perpus/delete-peminjaman", deletePeminjamanController);
+// === Rute Buku ===
+router.post("/buku", upload.single("foto"), createBukuController);
+router.get("/buku", getAllBukuController);
+router.delete("/buku/:id", deleteBukuController);
+
+// === Rute Peminjaman & Pengembalian ===
+router.post("/peminjaman", pinjamBukuController);
+router.post("/pengembalian/:id", kembalikanBukuController);
+router.delete("/peminjaman/:id", deletePeminjamanController);
+
 export default router;

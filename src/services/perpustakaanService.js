@@ -1,116 +1,162 @@
 import { PrismaClient } from "@prisma/client";
+import fs from "fs/promises";
+import { uploadToCloudinary } from "../utils/ImageHandler.js";
+import { prismaErrorHandler } from "../utils/errorHandlerPrisma.js";
+
 const prisma = new PrismaClient();
 
-export const createBukuPerpustakaan = async (data) => {
+// ===== BUAT BUKU =====
+export const createBuku = async (data, file) => {
   const { nama, pengarang, penerbit, tahunTerbit, keterangan, stok } = data;
+  let UploadResult = null;
+
   try {
-    await prisma.$transaction(async (tx) => {
-      await tx.buku_Perpustakaan.create({
-        data: { nama, pengarang, penerbit, tahunTerbit, keterangan, stok },
+    if (file && file.path) {
+      const fileBuffer = await fs.readFile(file.path);
+
+      if (fileBuffer.length === 0)
+        throw new Error("File kosong saat dibaca dari disk");
+
+      // Validasi ukuran file maksimal 5MB
+      const maxSize = 5 * 1024 * 1024;
+      if (fileBuffer.length > maxSize)
+        throw new Error("Ukuran file melebihi 5MB");
+
+      UploadResult = await uploadToCloudinary(fileBuffer, "buku", nama);
+    }
+
+    const result = await prisma.buku_Perpustakaan.create({
+      data: {
+        nama,
+        pengarang,
+        penerbit,
+        tahunTerbit: parseInt(tahunTerbit),
+        keterangan,
+        stok: parseInt(stok),
+        filepdf: UploadResult?.secure_url || null,
+      },
+    });
+
+    return result;
+  } catch (error) {
+    console.log(error);
+    const errorMessage = prismaErrorHandler(error);
+    throw new Error(errorMessage);
+  }
+};
+
+// ===== GET ALL BUKU (dengan filter nama) =====
+export const getAllBuku = async ({ nama }) => {
+  try {
+    const where = nama
+      ? { nama: { contains: nama, mode: "insensitive" } }
+      : undefined;
+
+    return await prisma.buku_Perpustakaan.findMany({ where });
+  } catch (error) {
+    console.log(error);
+    const errorMessage = prismaErrorHandler(error);
+    throw new Error(errorMessage);
+  }
+};
+
+// ===== HAPUS BUKU =====
+export const deleteBuku = async (id) => {
+  try {
+    return await prisma.buku_Perpustakaan.delete({ where: { id } });
+  } catch (error) {
+    console.log(error);
+    const errorMessage = prismaErrorHandler(error);
+    throw new Error(errorMessage);
+  }
+};
+
+// ===== PINJAM BUKU =====
+export const pinjamBuku = async (data) => {
+  const { nisSiswa, idBuku, waktuPinjam, waktuKembali, keterangan } = data;
+
+  try {
+    return await prisma.$transaction(async (tx) => {
+      const buku = await tx.buku_Perpustakaan.findUnique({
+        where: { id: idBuku },
       });
-    });
-  } catch (error) {
-    throw new Error(error.message);
-  }
-};
+      if (!buku || buku.stok <= 0) throw new Error("Stok buku tidak mencukupi");
 
-export const updateBukuPerpustakaan = async (id, data) => {
-  const { nama, pengarang, penerbit, tahunTerbit, keterangan, stok } = data;
-  try {
-    await prisma.$transaction(async (tx) => {
-      await tx.buku_Perpustakaan.update({
-        where: { id },
-        data: { nama, pengarang, penerbit, tahunTerbit, keterangan, stok },
-      });
-    });
-  } catch (error) {
-    throw new Error(error.message);
-  }
-};
-
-export const deleteBukuPerpustakaan = async (id) => {
-  try {
-    await prisma.$transaction(async (tx) => {
-      await tx.buku_Perpustakaan.delete({ where: { id } });
-    });
-  } catch (error) {
-    throw new Error(error.message);
-  }
-};
-
-export const getBukuPerpustakaanById = async (id) => {
-  const buku = await prisma.buku_Perpustakaan.findUnique({ where: { id } });
-  if (!buku) {
-    throw new Error("Buku perpustakaan tidak ditemukan");
-  }
-  return buku;
-};
-
-export const createPeminjaman = async (data) => {
-  try {
-    await prisma.$transaction(async (tx) => {
-      await tx.peminjaman_dan_Pengembalian.create({
+      const peminjaman = await tx.peminjaman_dan_Pengembalian.create({
         data: {
-          idBbuku: data.idBuku,
-          nis: data.nis,
-          waktuPinjam: data.waktuPinjam,
-          waktuKembali: data.waktuKembali,
-          status: data.status,
-          keterangan: data.keterangan,
+          nisSiswa,
+          idBuku,
+          waktuPinjam: new Date(waktuPinjam),
+          waktuKembali: new Date(waktuKembali),
+          status: "dipinjam",
+          keterangan,
         },
       });
+
+      await tx.buku_Perpustakaan.update({
+        where: { id: idBuku },
+        data: { stok: buku.stok - 1 },
+      });
+
+      return peminjaman;
     });
   } catch (error) {
-    throw new Error(error.message);
+    console.log(error);
+    const errorMessage = prismaErrorHandler(error);
+    throw new Error(errorMessage);
   }
 };
 
-export const getPeminjamanByNis = async (nis) => {
-  const peminjaman = await prisma.peminjaman_dan_Pengembalian.findMany({
-    where: { nis },
-    include: {
-      buku_Perpustakaan: true,
-    },
-  });
-  if (!peminjaman) {
-    throw new Error("Peminjaman buku perpustakaan tidak ditemukan");
-  }
-  return peminjaman;
-};
-
-export const updateStatusPeminjaman = async (id, status) => {
+// ===== KEMBALIKAN BUKU =====
+export const kembalikanBuku = async (idPeminjaman) => {
   try {
-    await prisma.$transaction(async (tx) => {
+    return await prisma.$transaction(async (tx) => {
+      const peminjaman = await tx.peminjaman_dan_Pengembalian.findUnique({
+        where: { id: idPeminjaman },
+      });
+
+      if (!peminjaman) throw new Error("Data peminjaman tidak ditemukan");
+      if (peminjaman.status === "dikembalikan")
+        throw new Error("Buku sudah dikembalikan");
+
       await tx.peminjaman_dan_Pengembalian.update({
+        where: { id: idPeminjaman },
+        data: { status: "dikembalikan" },
+      });
+
+      await tx.buku_Perpustakaan.update({
+        where: { id: peminjaman.idBuku },
+        data: { stok: { increment: 1 } },
+      });
+
+      return { message: "Buku berhasil dikembalikan" };
+    });
+  } catch (error) {
+    console.log(error);
+    const errorMessage = prismaErrorHandler(error);
+    throw new Error(errorMessage);
+  }
+};
+
+export const deletePeminjamanDanPengembalian = async (id) => {
+  try {
+    return await prisma.$transaction(async (tx) => {
+      const peminjaman = await tx.peminjaman_dan_Pengembalian.findUnique({
         where: { id },
-        data: { status },
+      });
+
+      if (!peminjaman) {
+        throw new Error("Data peminjaman tidak ditemukan");
+      }
+
+      return await tx.peminjaman_dan_Pengembalian.delete({
+        where: { id },
       });
     });
   } catch (error) {
-    throw new Error(error.message);
-  }
-};
-
-export const updatePeminjaman = async (id, data) => {
-  const { idBuku, nis, waktuPinjam, waktuKembali, keterangan } = data;
-  try {
-    await prisma.$transaction(async (tx) => {
-      await tx.peminjaman_dan_Pengembalian.update({
-        where: { id },
-        data: { idBuku, nis, waktuPinjam, waktuKembali, keterangan },
-      });
-    });
-  } catch (error) {
-    throw new Error(error.message);
-  }
-};
-
-export const deletePeminjaman = async (id) => {
-  try {
-    await prisma.$transaction(async (tx) => {
-      await tx.peminjaman_dan_Pengembalian.delete({ where: { id } });
-    });
-  } catch (error) {
-    throw new Error(error.message);
+    console.error("Gagal hapus peminjaman:", error);
+    console.log(error);
+    const errorMessage = prismaErrorHandler(error);
+    throw new Error(errorMessage);
   }
 };

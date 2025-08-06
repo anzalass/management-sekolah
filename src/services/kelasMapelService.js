@@ -20,7 +20,8 @@ export const createKelasMapel = async (data) => {
   } catch (error) {
     console.log(error);
 
-    throw new Error(error.message);
+    const errorMessage = prismaErrorHandler(error);
+    throw new Error(errorMessage);
   }
 };
 
@@ -34,7 +35,10 @@ export const updateKelasMapel = async (id, data) => {
       });
     });
   } catch (error) {
-    throw new Error(error.message);
+    console.log(error);
+
+    const errorMessage = prismaErrorHandler(error);
+    throw new Error(errorMessage);
   }
 };
 
@@ -44,7 +48,10 @@ export const deleteKelasMapel = async (id) => {
       await tx.kelasDanMapel.delete({ where: { id } });
     });
   } catch (error) {
-    throw new Error(error.message);
+    console.log(error);
+
+    const errorMessage = prismaErrorHandler(error);
+    throw new Error(errorMessage);
   }
 };
 
@@ -52,23 +59,49 @@ export const addSiswatoKelasKelasMapel = async (data) => {
   const { nis, idKelas } = data;
   try {
     await prisma.$transaction(async (tx) => {
+      // Cek apakah siswa dengan NIS sudah ada di kelas ini
+      const existing = await tx.daftarSiswaMapel.findFirst({
+        where: {
+          nis,
+          idKelas,
+        },
+      });
+
+      if (existing) {
+        throw new Error("Siswa dengan NIS tersebut sudah ada di dalam kelas.");
+      }
+
+      // Tambahkan siswa jika belum ada
       await tx.daftarSiswaMapel.create({
         data: { nis, idKelas },
       });
     });
   } catch (error) {
-    throw new Error(error.message);
+    console.log(error);
+
+    const errorMessage = prismaErrorHandler(error);
+    throw new Error(errorMessage);
   }
 };
 
 export const removeSiswaFromKelasMapel = async (id) => {
   try {
     await prisma.$transaction(async (tx) => {
+      const existing = await tx.daftarSiswaMapel.findUnique({
+        where: { id },
+      });
+
+      if (!existing) {
+        throw new Error("Data tidak ditemukan, tidak bisa dihapus");
+      }
+
       await tx.daftarSiswaMapel.delete({
-        where: { id: id },
+        where: { id },
       });
     });
   } catch (error) {
-    throw new Error(error.message);
+    console.log(error);
+    const errorMessage = prismaErrorHandler(error);
+    throw new Error(errorMessage);
   }
 };

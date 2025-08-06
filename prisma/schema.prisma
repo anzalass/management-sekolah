@@ -144,17 +144,20 @@ model JenisNilai {
     idKelasMapel   String
     jenis          String
     bobot          Int
-    KelasDanMapel  KelasDanMapel @relation(fields: [id], references: [id])
+    NilaiSiswa     NilaiSiswa[]
+    KelasDanMapel  KelasDanMapel @relation(fields: [idKelasMapel], references: [id])
 }
 
 model NilaiSiswa {
   id              String @id @default(uuid())
-  nis             String
+  nisSiswa             String
   idKelasDanMapel String
+  idJenisNilai String
   jenisNilai      String
   nilai           Int
-  Siswa           Siswa @relation(fields: [nis], references: [nis])
+  Siswa           Siswa @relation(fields: [nisSiswa], references: [nis])
   KelasDanMapel   KelasDanMapel @relation(fields: [idKelasDanMapel], references: [id])
+  JenisNilai   JenisNilai @relation(fields: [idJenisNilai], references: [id])
 }
 
 model KehadiranSiswa {Name
@@ -201,16 +204,27 @@ model Siswa {
   PerizinanSiswa PerizinanSiswa[]
   SummaryMapel SummaryMateri[]
   SummaryTugas SummaryTugas[]
+  Konseling Konseling[]
+}
+
+model Konseling  {
+  id             String @id @default(uuid())
+  nisSiswa            String
+  namaSiswa String
+  tanggal DateTime
+  keterangan String
+  Siswa          Siswa @relation(fields: [nisSiswa], references: [nis])
+
 }
 
 model Pelanggaran_Dan_Prestasi_Siswa {
   id             String @id @default(uuid())
-  nis            String
+  nisSiswa       String
   waktu          DateTime
   poin           Int
   jenis          String
   keterangan     String
-  Siswa          Siswa @relation(fields: [nis], references: [nis])
+  Siswa          Siswa @relation(fields: [nisSiswa], references: [nis])
 }
 
 model Ruangan {
@@ -273,7 +287,6 @@ enum StatusIzin {
   disetujui
   ditolak
 }
-
 model PerizinanGuru {
   id         String   @id @default(uuid())
   nipGuru        String
@@ -313,16 +326,6 @@ model EkstraKulikuler {
   jenis      String
 }
 
-model Buku_Perpustakaan {
-  id         String @id @default(uuid())
-  nama       String
-  pengarang   String
-  penerbit   String
-  tahunTerbit Int
-  keterangan String
-  stok Int
-  Peminjaman_dan_Pengembalian Peminjaman_dan_Pengembalian[]
-}
 
 model Pengumuman {
   id         String @id @default(uuid())
@@ -331,16 +334,36 @@ model Pengumuman {
   content     String
 }
 
+model Buku_Perpustakaan {
+  id         String @id @default(uuid())
+  nama       String
+  filepdf String?
+  filePdfid String?
+  pengarang   String
+  penerbit   String
+  tahunTerbit Int
+  keterangan String
+  stok Int
+  Peminjaman_dan_Pengembalian Peminjaman_dan_Pengembalian[]
+}
+
+
 model Peminjaman_dan_Pengembalian {
   id         String @id @default(uuid())
-  nis        String
+  nisSiswa        String
   idBuku     String
   waktuPinjam DateTime
   waktuKembali DateTime
-  status      String
-  keterangan  String
+  status      StatusPeminjamanBuku
+  keterangan  String?
   Buku_Perpustakaan Buku_Perpustakaan @relation(fields: [idBuku], references: [id])
-  Siswa Siswa @relation(fields: [nis], references: [nis])
+  Siswa Siswa @relation(fields: [nisSiswa], references: [nis])
+}
+
+enum StatusPeminjamanBuku {
+  dipinjam
+  dikembalikan
+
 }
 
 model Mata_Pelajaran {
@@ -361,21 +384,21 @@ model Periode_Tahun_Ajaran {
 model Tagihan {
   id          String @id @default(uuid())
   nama        String
-  nis         String
+  nisSiswa         String
   waktu       DateTime
   jatuhTempo  DateTime
   status      String
   keterangan  String
   nominal     Int
-  Siswa Siswa @relation(fields: [nis], references: [nis])
+  Siswa Siswa @relation(fields: [nisSiswa], references: [nis])
 }
 
 model RiwayatPembayaran {
   id          String @id @default(uuid())
-  nis         String
+  nisSiswa         String
   idTagihan   String
   waktuBayar  DateTime
-  Siswa Siswa @relation(fields: [nis], references: [nis])
+  Siswa Siswa @relation(fields: [nisSiswa], references: [nis])
 }
 
 
@@ -437,8 +460,12 @@ model MateriMapel {
       id          String @id @default(uuid())
       idKelasMapel String
       judul       String 
+      konten String
+      tanggal DateTime
       iframeGoogleSlide String?
       iframeYoutube     String?
+      pdfUrl String?
+      pdfUrlId String?
       SummaryMateri SummaryMateri[]
       KelasMapel KelasDanMapel   @relation(fields: [idKelasMapel], references: [id])
 }
@@ -449,6 +476,7 @@ model SummaryMateri  {
   nisSiswa String
   idMateri String
   content String
+  waktu DateTime
   MateriMapel MateriMapel   @relation(fields: [idMateri], references: [id])
   Siswa Siswa   @relation(fields: [nisSiswa], references: [nis])
 
@@ -458,19 +486,34 @@ model TugasMapel {
     id          String @id @default(uuid())
     idKelasMapel String
     judul       String 
+    konten String
+    deadline DateTime
     iframeGoogleSlide String?
     iframeYoutube     String?
+    pdfUrl String?
+    pdfUrlId String?
     SummaryTugas SummaryTugas[]
     KelasMapel KelasDanMapel   @relation(fields: [idKelasMapel], references: [id])
 }
 
 model SummaryTugas {
-   id   String @id @default(uuid())
+  id   String @id @default(uuid())
   nisSiswa String
   idTugas String
   content String
+  waktu DateTime
   TugasMapel TugasMapel   @relation(fields: [idTugas], references: [id])
   Siswa Siswa   @relation(fields: [nisSiswa], references: [nis])
 
 
+}
+
+
+model Arsip {
+   id   String @id @default(uuid())
+   namaBerkas String
+   keterangan String
+   tanggal DateTime
+   url String
+   url_id String
 }

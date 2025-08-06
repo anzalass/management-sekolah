@@ -25,6 +25,10 @@ import jadwalMengajarRoutes from "./routes/jadwalMengajarRoutes.js";
 import kelasWaliKelasRoutes from "./routes/kelasWaliKelasRoutes.js";
 import kelasMapelRoutes from "./routes/kelasMapelRoutes.js";
 import pageRoutes from "./routes/pageRoutes.js";
+import bkRoutes from "./routes/bkroutes.js";
+import materiRoutes from "./routes/materiTugasSummaryRoutes.js";
+import penilaianRoutes from "./routes/penilaianRoutes.js";
+import arsipRoutes from "./routes/arsipRoutes.js";
 
 import { fileURLToPath } from "url";
 import path from "path";
@@ -81,6 +85,10 @@ app.use("/api/v1", jadwalMengajarRoutes);
 app.use("/api/v1", kelasWaliKelasRoutes);
 app.use("/api/v1", kelasMapelRoutes);
 app.use("/api/v1", pageRoutes);
+app.use("/api/v1", bkRoutes);
+app.use("/api/v1", materiRoutes);
+app.use("/api/v1", penilaianRoutes);
+app.use("/api/v1", arsipRoutes);
 
 app.get("/api/v1/view-image/:imageName", (req, res) => {
   const { imageName } = req.params;

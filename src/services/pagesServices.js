@@ -150,3 +150,37 @@ export const dashboardOverview = async () => {
     throw new Error(prismaErrorHandler(error));
   }
 };
+
+export const dashboardKelasMapel = async (idKelas) => {
+  try {
+    const [siswaKelas, materiKelas, tugasKelas] = await Promise.all([
+      prisma.daftarSiswaMapel.findMany({
+        where: { idKelas },
+        select: {
+          id: true,
+          Siswa: {
+            select: {
+              nama: true,
+              nis: true,
+            },
+          },
+        },
+      }),
+      prisma.materiMapel.findMany({
+        where: { idKelasMapel: idKelas },
+      }),
+      prisma.tugasMapel.findMany({
+        where: { idKelasMapel: idKelas },
+      }),
+    ]);
+
+    return {
+      siswaKelas,
+      materiKelas,
+      tugasKelas,
+    };
+  } catch (error) {
+    console.error("Dashboard Error:", error);
+    throw new Error(prismaErrorHandler(error));
+  }
+};

@@ -1,112 +1,70 @@
 import {
-  createBukuPerpustakaan,
-  createPeminjaman,
-  deleteBukuPerpustakaan,
-  deletePeminjaman,
-  getBukuPerpustakaanById,
-  getPeminjamanByNis,
-  updateBukuPerpustakaan,
-  updatePeminjaman,
-  updateStatusPeminjaman,
+  createBuku,
+  getAllBuku,
+  deleteBuku,
+  pinjamBuku,
+  kembalikanBuku,
+  deletePeminjamanDanPengembalian,
 } from "../services/perpustakaanService.js";
 
-export const createBukuPerpustakaanController = async (req, res, next) => {
+// === BUAT BUKU ===
+export const createBukuController = async (req, res) => {
   try {
-    await createBukuPerpustakaan(req.body);
-    return res
-      .status(201)
-      .json({ message: "Berhasil membuat buku perpustakaan" });
-  } catch (error) {
-    return res.status(500).json({ message: error.message });
+    const result = await createBuku(req.body, req.file);
+    res.status(201).json(result);
+  } catch (err) {
+    res.status(400).json({ error: err.message });
   }
 };
 
-export const updateBukuPerpustakaanController = async (req, res, next) => {
+// === GET ALL BUKU (dengan filter nama) ===
+export const getAllBukuController = async (req, res) => {
   try {
-    await updateBukuPerpustakaan(req.params.id, req.body);
-    return res
-      .status(200)
-      .json({ message: "Berhasil mengupdate buku perpustakaan" });
-  } catch (error) {
-    return res.status(500).json({ message: error.message });
+    const result = await getAllBuku(req.query);
+    res.status(200).json(result);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
   }
 };
 
-export const deleteBukuPerpustakaanController = async (req, res, next) => {
+// === HAPUS BUKU ===
+export const deleteBukuController = async (req, res) => {
   try {
-    await deleteBukuPerpustakaan(req.params.id);
-    return res
-      .status(200)
-      .json({ message: "Berhasil menghapus buku perpustakaan" });
-  } catch (error) {
-    return res.status(500).json({ message: error.message });
+    const result = await deleteBuku(req.params.id);
+    res.status(200).json({ message: "Buku berhasil dihapus", data: result });
+  } catch (err) {
+    res.status(404).json({ error: err.message });
   }
 };
 
-export const getBukuPerpustakaanByIdController = async (req, res, next) => {
+// === PINJAM BUKU ===
+export const pinjamBukuController = async (req, res) => {
   try {
-    const buku = await getBukuPerpustakaanById(req.params.id);
-    return res.status(200).json(buku);
-  } catch (error) {
-    return res.status(500).json({ message: error.message });
+    const result = await pinjamBuku(req.body);
+    res.status(201).json(result);
+  } catch (err) {
+    res.status(400).json({ error: err.message });
   }
 };
 
-export const createPeminjamanController = async (req, res, next) => {
+// === KEMBALIKAN BUKU ===
+export const kembalikanBukuController = async (req, res) => {
   try {
-    const data = {
-      idBbuku: req.body.idBbuku,
-      nis: req.body.nis,
-      waktuPinjam: new Date(),
-      waktuKembali: req.body.waktuKembali,
-      status: "Pinjam",
-      keterangan: req.body.keterangan,
-    };
-    await createPeminjaman(data);
-    return res.status(200).json({ data: req.user });
-  } catch (error) {
-    return res.status(500).json({ message: error.message });
+    const result = await kembalikanBuku(req.params.id);
+    res.status(200).json(result);
+  } catch (err) {
+    res.status(400).json({ error: err.message });
   }
 };
 
-export const getPeminjamanByNisController = async (req, res, next) => {
-  try {
-    const peminjaman = await getPeminjamanByNis(req.params.nis);
-    return res
-      .status(200)
-      .json({ message: "Berhasil mendapatkan pinjaman by NIS" });
-  } catch (error) {
-    return res.status(500).json({ message: error.message });
-  }
-};
-
-export const updateStatusPeminjamanController = async (req, res) => {
-  try {
-    await updateStatusPeminjaman(req.params.id, req.body.status);
-    return res
-      .status(200)
-      .json({ message: "Berhasil mengubah status peminjaman" });
-  } catch (error) {
-    return res.status(500).json({ message: error.message });
-  }
-};
-
-export const updatePeminjamanController = async (req, res) => {
-  try {
-    await updatePeminjaman(req.params.id, req.body);
-    return res
-      .status(200)
-      .json({ message: "Berhasil mengupdate data peminjaman" });
-  } catch (error) {
-    return res.status(500).json({ message: error.message });
-  }
-};
-
+// === HAPUS DATA PEMINJAMAN ===
 export const deletePeminjamanController = async (req, res) => {
   try {
-    await deletePeminjaman(req.params.id);
-    return res.status(200).json({ message: "Berhasil menghapus peminjaman" });
-  } catch (error) {
-    return res.status(500).json({ message: error.message });
+    const result = await deletePeminjamanDanPengembalian(req.params.id);
+    res
+      .status(200)
+      .json({ message: "Peminjaman berhasil dihapus", data: result });
+  } catch (err) {
+    res.status(404).json({ error: err.message });
   }
 };
