@@ -3,6 +3,7 @@ import {
   createJenisNilaiController,
   deleteJenisNilaiController,
   getJenisNilaiAndNilaiSiswaByKelasMapelController,
+  getRekapNilaiKelasBaruController,
   updateNilaiSiswaController,
 } from "../controller/penilaianController.js";
 
@@ -16,5 +17,6 @@ router.get(
 );
 
 router.put("/nilai-siswa/:id", updateNilaiSiswaController);
+router.get("/rekap-nilai-siswa/:idKelas", getRekapNilaiKelasBaruController);
 
 export default router;

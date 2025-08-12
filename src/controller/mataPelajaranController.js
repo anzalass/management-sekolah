@@ -9,10 +9,12 @@ import {
 export const createMataPelajaranController = async (req, res) => {
   try {
     const { nama, kelas } = req.body;
-    const guruId = req.user?.guruId; // ✅ karena dari JWT pakai `guruId`
+    const guruId = req.user.idGuru; // ✅ karena dari JWT pakai `guruId`
 
     if (!guruId) {
-      return res.status(403).json({ message: "Akses ditolak, guruId tidak ditemukan di token" });
+      return res
+        .status(403)
+        .json({ message: "Akses ditolak, guruId tidak ditemukan di token" });
     }
 
     const result = await createMataPelajaran({
@@ -32,7 +34,6 @@ export const createMataPelajaranController = async (req, res) => {
     });
   }
 };
-
 
 export const updateMataPelajaranController = async (req, res, next) => {
   try {

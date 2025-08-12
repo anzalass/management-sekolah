@@ -1,4 +1,5 @@
 import { PrismaClient } from "@prisma/client";
+import { prismaErrorHandler } from "../utils/errorHandlerPrisma.js";
 const prisma = new PrismaClient();
 
 export const createKegiatanSekolah = async (data) => {
@@ -26,14 +27,24 @@ export const createKegiatanSekolah = async (data) => {
 
 export const updateKegiatanSekolah = async (id, data) => {
   const { nama, keterangan, waktuMulai, waktuSelesai, tahunAjaran } = data;
+  console.log("dttt", nama);
+
   try {
     await prisma.$transaction(async (tx) => {
       await tx.kegiatanSekolah.update({
         where: { id },
-        data: { nama, keterangan, waktuMulai, waktuSelesai, tahunAjaran },
+        data: {
+          nama,
+          keterangan,
+          waktuMulai: new Date(`${waktuMulai}T00:00:00Z`),
+          waktuSelesai: new Date(`${waktuSelesai}T00:00:00Z`),
+          tahunAjaran,
+        },
       });
     });
   } catch (error) {
+    console.log(error);
+
     const errorMessage = prismaErrorHandler(error);
     throw new Error(errorMessage);
   }

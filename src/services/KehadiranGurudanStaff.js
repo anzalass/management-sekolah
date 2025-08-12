@@ -8,8 +8,14 @@ const LAT_SEKOLAH = -6.09955851839959;
 const LNG_SEKOLAH = 106.51911493230111;
 const MAX_RADIUS = 100; // meter
 
-export const absenMasukGuru = async ({ nipGuru, fotoMasuk, lokasi }) => {
+export const absenMasukGuru = async ({ idGuru, fotoMasuk, lokasi }) => {
   const { lat, long } = lokasi;
+  console.log("idgr", idGuru);
+
+  const guru = await prisma.guru.findUnique({ where: { id: idGuru } });
+  if (!guru) {
+    throw new Error("Guru tidak ditemukan di database");
+  }
 
   const jarak = hitungJarak(lat, long, LAT_SEKOLAH, LNG_SEKOLAH);
   if (jarak > MAX_RADIUS) {
@@ -24,7 +30,7 @@ export const absenMasukGuru = async ({ nipGuru, fotoMasuk, lokasi }) => {
     imageUploadResult = await uploadToCloudinary(
       fotoMasuk.buffer,
       "presensiguru",
-      nipGuru
+      idGuru
     );
   }
 
@@ -34,7 +40,7 @@ export const absenMasukGuru = async ({ nipGuru, fotoMasuk, lokasi }) => {
 
   const sudahAbsen = await prisma.kehadiranGuru.findFirst({
     where: {
-      nipGuru,
+      idGuru,
       tanggal: { gte: tanggalHariIni },
     },
   });
@@ -49,7 +55,7 @@ export const absenMasukGuru = async ({ nipGuru, fotoMasuk, lokasi }) => {
 
   return await prisma.kehadiranGuru.create({
     data: {
-      nipGuru,
+      idGuru: idGuru,
       tanggal: new Date(`${now.toISOString().split("T")[0]}T00:00:00Z`), // <-- ini
       jamMasuk: now,
       fotoMasuk: imageUploadResult?.secure_url,
@@ -59,7 +65,7 @@ export const absenMasukGuru = async ({ nipGuru, fotoMasuk, lokasi }) => {
   });
 };
 
-export const absenPulangGuru = async ({ nipGuru, lokasi }) => {
+export const absenPulangGuru = async ({ idGuru, lokasi }) => {
   const { lat, long } = lokasi;
 
   const jarak = hitungJarak(lat, long, LAT_SEKOLAH, LNG_SEKOLAH);
@@ -75,7 +81,7 @@ export const absenPulangGuru = async ({ nipGuru, lokasi }) => {
 
   const absenHariIni = await prisma.kehadiranGuru.findFirst({
     where: {
-      nipGuru,
+      idGuru,
       tanggal: { gte: tanggalHariIni },
     },
   });
@@ -105,10 +111,8 @@ export const getAllKehadiranGuru = async ({
   page = 1,
   pageSize = 10,
 }) => {
-  // Tentukan tanggal filter
   const tanggalFilter = tanggal ? new Date(`${tanggal}T00:00:00Z`) : undefined;
 
-  // Step 1: Cari semua nip guru yang cocok (kalau ada filter nama atau nip)
   let nipList = undefined;
   if (nama || nip) {
     const guruFilter = {
@@ -133,17 +137,22 @@ export const getAllKehadiranGuru = async ({
 
     nipList = gurus.map((g) => g.nip);
 
-    // Kalau hasil pencarian kosong, langsung balikin array kosong
     if (nipList.length === 0) {
-      return [];
+      return { data: [], total: 0 };
     }
   }
 
   const whereClause = {
     ...(tanggalFilter && { tanggal: tanggalFilter }),
-    ...(nipList && { nipGuru: { in: nipList } }),
+    ...(nipList && { Guru: { nip: { in: nipList } } }),
   };
 
+  // Hitung total dulu
+  const total = await prisma.kehadiranGuru.count({
+    where: whereClause,
+  });
+
+  // Ambil data dengan pagination
   const kehadiran = await prisma.kehadiranGuru.findMany({
     where: whereClause,
     include: {
@@ -161,11 +170,14 @@ export const getAllKehadiranGuru = async ({
     take: pageSize,
   });
 
-  // Flatten
-  return kehadiran.map((item) => ({
-    ...item,
-    nama: item.Guru?.nama || null,
-    nip: item.Guru?.nip || null,
-    Guru: undefined,
-  }));
+  // Map hasil dan return data + total
+  return {
+    data: kehadiran.map((item) => ({
+      ...item,
+      nama: item.Guru?.nama || null,
+      nip: item.Guru?.nip || null,
+      Guru: undefined,
+    })),
+    total,
+  };
 };

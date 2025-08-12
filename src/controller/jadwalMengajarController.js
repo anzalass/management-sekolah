@@ -6,7 +6,7 @@ import {
 
 export const createJadwalMengajarController = async (req, res) => {
   try {
-    const jadwal = await createJadwalMengajar(req.body);
+    const jadwal = await createJadwalMengajar(req.body, req.user.idGuru);
     return res.status(201).json({
       message: "Jadwal berhasil dibuat",
       data: jadwal,

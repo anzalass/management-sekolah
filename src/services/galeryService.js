@@ -4,13 +4,13 @@ import { prismaErrorHandler } from "../utils/errorHandlerPrisma.js";
 const prisma = new PrismaClient();
 
 export const createGallery = async (data) => {
-  const { image,guruId } = data;
+  const { image, guruId, file } = data;
 
   try {
     const result = await prisma.gallery.create({
       data: {
         image,
-        guruId
+        guruId,
       },
     });
 
@@ -22,18 +22,17 @@ export const createGallery = async (data) => {
   }
 };
 
-
 export const getAllGallery = async () => {
   try {
     const testimonis = await prisma.gallery.findMany();
     return testimonis;
   } catch (error) {
     console.error(error);
-    const errorMessage = prismaErrorHandler(error) || "Gagal mendapatkan testimonies";
+    const errorMessage =
+      prismaErrorHandler(error) || "Gagal mendapatkan testimonies";
     throw new Error(errorMessage);
   }
 };
-
 
 export const getGalleryByid = async (id) => {
   try {
@@ -43,12 +42,11 @@ export const getGalleryByid = async (id) => {
     return testimoni;
   } catch (error) {
     console.error(error);
-    const errorMessage = prismaErrorHandler(error) || "Gagal mendapatkan testimoni";
+    const errorMessage =
+      prismaErrorHandler(error) || "Gagal mendapatkan testimoni";
     throw new Error(errorMessage);
   }
 };
-
-
 
 export const updateGallery = async (id, data) => {
   const { image } = data;
@@ -64,11 +62,11 @@ export const updateGallery = async (id, data) => {
     return updatedGallery;
   } catch (error) {
     console.error(error);
-    const errorMessage = prismaErrorHandler(error) || "Gagal memperbarui testimoni";
+    const errorMessage =
+      prismaErrorHandler(error) || "Gagal memperbarui testimoni";
     throw new Error(errorMessage);
   }
 };
-
 
 export const deletedGallery = async (id) => {
   try {
@@ -79,7 +77,8 @@ export const deletedGallery = async (id) => {
     return deletedGallery;
   } catch (error) {
     console.error(error);
-    const errorMessage = prismaErrorHandler(error) || "Gagal menghapus testimoni";
+    const errorMessage =
+      prismaErrorHandler(error) || "Gagal menghapus testimoni";
     throw new Error(errorMessage);
   }
 };

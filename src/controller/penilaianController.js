@@ -3,6 +3,7 @@ import {
   deleteJenisNilai,
   getAllNilaiSiswaByIdKelas,
   getJenisNilaiByKelasMapel,
+  getRekapNilaiKelasBaru,
   updateNilaiSiswa,
 } from "../services/penilaianService.js";
 
@@ -78,3 +79,12 @@ export const updateNilaiSiswaController = async (req, res) => {
 //       .json({ error: error.message || "Gagal mengambil nilai siswa" });
 //   }
 // };
+
+export const getRekapNilaiKelasBaruController = async (req, res) => {
+  try {
+    const result = await getRekapNilaiKelasBaru(req.params.idKelas);
+    return res.status(200).json(result);
+  } catch (error) {
+    return res.status(500).json({ message: error.message });
+  }
+};

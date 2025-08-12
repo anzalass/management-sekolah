@@ -3,7 +3,7 @@ import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
 import dotenv from "dotenv";
 dotenv.config();
-const prisma = new PrismaClient();// pastikan path ini sesuai
+const prisma = new PrismaClient(); // pastikan path ini sesuai
 
 export const login = async (auth) => {
   const { nip, password } = auth;
@@ -14,39 +14,38 @@ export const login = async (auth) => {
     });
 
     if (!guru || !guru.password) {
-      throw new Error('NIP atau password salah');
+      throw new Error("NIP atau password salah");
     }
 
     const isMatch = await bcrypt.compare(password, guru.password);
 
     if (!isMatch) {
-      throw new Error('NIP atau password salah');
+      throw new Error("NIP atau password salah");
     }
 
     const token = jwt.sign(
       {
-        guruId: guru.id,         // ⬅️ Tambahkan ini
+        idGuru: guru.id, // ⬅️ Tambahkan ini
         nip: guru.nip,
         nama: guru.nama,
         jabatan: guru.jabatan,
       },
       process.env.JWT_SECRET_KEY,
-      { expiresIn: '3d' }
+      { expiresIn: "3d" }
     );
 
     return {
       token,
+      idGuru: guru.id,
       nip: guru.nip,
       nama: guru.nama,
       jabatan: guru.jabatan,
       foto: guru.foto,
     };
   } catch (error) {
-    throw new Error(error.message || 'Terjadi kesalahan saat login');
+    throw new Error(error.message || "Terjadi kesalahan saat login");
   }
 };
-
-
 
 export const resetPassword = async (nip, password) => {
   try {

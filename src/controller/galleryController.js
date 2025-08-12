@@ -1,6 +1,12 @@
-import { createGallery,deletedGallery,getAllGallery,getGalleryByid, updateGallery} from "../services/galeryService.js";
+import {
+  createGallery,
+  deletedGallery,
+  getAllGallery,
+  getGalleryByid,
+  updateGallery,
+} from "../services/galeryService.js";
 import fs from "fs";
-import upload from "../utils/multer.js";
+import upload, { memoryUpload } from "../utils/multer.js";
 import { fileURLToPath } from "url";
 import path from "path";
 import localUpload from "../utils/localupload.js";
@@ -15,23 +21,28 @@ export const createGalleryController = async (req, res) => {
     }
 
     try {
-       const { guruId } = req.user;
-     
+      const guruId = req.user.idGuru;
+
       if (!req.file) {
         return res.status(400).json({ message: "Gambar wajib diunggah" });
       }
 
       const imagePath = req.file.path.replace(/\\/g, "/");
 
-      const newNews = await createGallery({ image: imagePath,guruId: guruId });
+      const newNews = await createGallery({
+        guruId: guruId,
+        image: imagePath,
+        // file: imagePath,
+      });
 
-      return res.status(201).json({ message: "Gallery berhasil dibuat", data: newNews });
+      return res
+        .status(201)
+        .json({ message: "Gallery berhasil dibuat", data: newNews });
     } catch (error) {
       return res.status(500).json({ message: error.message });
     }
   });
 };
-
 
 export const getAllGalleryController = async (req, res) => {
   try {
@@ -58,8 +69,6 @@ export const getGalleryByIdController = async (req, res) => {
   }
 };
 
-
-
 export const updateGalleryController = async (req, res) => {
   const { id } = req.params;
 
@@ -77,7 +86,11 @@ export const updateGalleryController = async (req, res) => {
 
       let imagePath = news.image;
       if (req.file) {
-        const oldImagePath = path.join(__dirname, "../../uploads", path.basename(imagePath));
+        const oldImagePath = path.join(
+          __dirname,
+          "../../uploads",
+          path.basename(imagePath)
+        );
         fs.access(oldImagePath, fs.constants.F_OK, (err) => {
           if (!err) {
             fs.unlink(oldImagePath, (err) => {
@@ -95,13 +108,14 @@ export const updateGalleryController = async (req, res) => {
 
       const updatedNews = await updateGallery(id, { image: imagePath });
 
-      return res.status(200).json({ message: "Gallery berhasil diperbarui", data: updatedNews });
+      return res
+        .status(200)
+        .json({ message: "Gallery berhasil diperbarui", data: updatedNews });
     } catch (error) {
       return res.status(500).json({ message: error.message });
     }
   });
 };
-
 
 export const deletedGalleryController = async (req, res) => {
   const { id } = req.params;
@@ -114,7 +128,11 @@ export const deletedGalleryController = async (req, res) => {
     }
 
     const imagePath = gallery.image;
-    const filePath = path.join(__dirname, "../../uploads", path.basename(imagePath));
+    const filePath = path.join(
+      __dirname,
+      "../../uploads",
+      path.basename(imagePath)
+    );
     fs.access(filePath, fs.constants.F_OK, (err) => {
       if (err) {
         console.error("File does not exist:", err);
@@ -128,7 +146,9 @@ export const deletedGalleryController = async (req, res) => {
 
         deletedGallery(id)
           .then(() => {
-            return res.status(200).json({ message: "Gallery dan gambar berhasil dihapus" });
+            return res
+              .status(200)
+              .json({ message: "Gallery dan gambar berhasil dihapus" });
           })
           .catch((dbError) => {
             return res.status(500).json({ message: dbError.message });

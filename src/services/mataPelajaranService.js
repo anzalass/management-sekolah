@@ -9,7 +9,7 @@ export const createMataPelajaran = async (data) => {
       data: {
         nama,
         kelas,
-        guruId, 
+        idGuru: guruId,
       },
     });
     return result;

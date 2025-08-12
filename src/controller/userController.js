@@ -2,15 +2,15 @@ import {
   createGuru,
   updateGuru,
   deleteGuru,
-  getGuruByNip,
   createSiswa,
   updateSiswa,
   deleteSiswa,
-  getSiswaByNis,
   getAllGuru,
   getAllSiswa,
   createRiwayatPendidikan,
   deleteRiwayatPendidikan,
+  getGuruByID,
+  getSiswaByID,
 } from "../services/userService.js";
 import memoryUpload from "../utils/multer.js";
 import upload from "../utils/multer.js";
@@ -34,7 +34,7 @@ export const createGuruController = async (req, res) => {
 
 export const createRiwayatPendidikanController = async (req, res, next) => {
   try {
-    await createRiwayatPendidikan(req.params.nip, req.body);
+    await createRiwayatPendidikan(req.params.idGuru, req.body);
     return res
       .status(201)
       .json({ message: "Berhasil membuat riwayat pendidikan" });
@@ -60,7 +60,7 @@ export const updateGuruController = async (req, res, next) => {
 
     try {
       console.log("Uploaded file:", req.file); // 👈 DEBUG
-      const result = await updateGuru(req.params.id, req.body, req.file);
+      const result = await updateGuru(req.params.idGuru, req.body, req.file);
       return res
         .status(201)
         .json({ message: "Berhasil mengupdate guru", data: result });
@@ -72,16 +72,16 @@ export const updateGuruController = async (req, res, next) => {
 
 export const deleteGuruController = async (req, res, next) => {
   try {
-    await deleteGuru(req.params.nip);
+    await deleteGuru(req.params.idGuru);
     return res.status(200).json({ message: "Berhasil menghapus guru" });
   } catch (error) {
     return res.status(500).json({ message: error.message });
   }
 };
 
-export const getGuruByNipController = async (req, res, next) => {
+export const getGuruByIDController = async (req, res, next) => {
   try {
-    const result = await getGuruByNip(req.params.nip);
+    const result = await getGuruByID(req.params.idGuru);
     return res
       .status(200)
       .json({ message: "Berhasil mendapatkan guru", data: result });
@@ -115,7 +115,7 @@ export const updateSiswaController = async (req, res, next) => {
     }
 
     try {
-      const result = await updateSiswa(req.params.id, req.body, req.file);
+      const result = await updateSiswa(req.params.idSiswa, req.body, req.file);
       return res.status(201).json({
         message: "Berhasil mengupdate siswa",
         data: result,
@@ -128,16 +128,16 @@ export const updateSiswaController = async (req, res, next) => {
 
 export const deleteSiswaController = async (req, res, next) => {
   try {
-    await deleteSiswa(req.params.nis);
+    await deleteSiswa(req.params.idSiswa);
     return res.status(200).json({ message: "Berhasil menghapus siswa" });
   } catch (error) {
     return res.status(500).json({ message: error.message });
   }
 };
 
-export const getSiswaByNisController = async (req, res, next) => {
+export const getSiswaByIDController = async (req, res, next) => {
   try {
-    const result = await getSiswaByNis(req.params.nis);
+    const result = await getSiswaByID(req.params.idSiswa);
     return res
       .status(200)
       .json({ message: "Berhasil mendapatkan siswa", data: result });

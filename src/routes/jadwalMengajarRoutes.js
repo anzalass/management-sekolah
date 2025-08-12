@@ -16,9 +16,17 @@ router.post(
 );
 
 // [PUT] Update jadwal mengajar berdasarkan ID
-router.put("/jadwal-mengajar/update/:id", updateJadwalMengajarController);
+router.put(
+  "/jadwal-mengajar/update/:id",
+  AuthMiddleware,
+  updateJadwalMengajarController
+);
 
 // [DELETE] Hapus jadwal mengajar berdasarkan ID
-router.delete("jadwal-mengajar/delete/:id", deleteJadwalMengajarController);
+router.delete(
+  "jadwal-mengajar/delete/:id",
+  AuthMiddleware,
+  deleteJadwalMengajarController
+);
 
 export default router;

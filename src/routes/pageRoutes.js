@@ -3,6 +3,7 @@ import {
   getDashboardKelasMapel,
   getDashboardMengajar,
   getDashboardOverview,
+  getDashboardWaliKelas,
 } from "../controller/pageController.js";
 import { AuthMiddleware } from "../utils/authMiddleware.js";
 
@@ -14,6 +15,12 @@ router.get(
   "/dashboard-kelas-mapel/:idKelas",
   AuthMiddleware,
   getDashboardKelasMapel
+);
+
+router.get(
+  "/dashboard-walikelas/:idKelas",
+
+  getDashboardWaliKelas
 );
 
 export default router;

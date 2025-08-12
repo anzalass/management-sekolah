@@ -2,20 +2,20 @@ import { PrismaClient } from "@prisma/client";
 import { prismaErrorHandler } from "../utils/errorHandlerPrisma.js";
 const prisma = new PrismaClient();
 
-export const createJadwalMengajar = async (data) => {
+export const createJadwalMengajar = async (data, idGuru) => {
   try {
     const result = await prisma.$transaction(async (tx) => {
       const guru = await tx.guru.findUnique({
-        where: { nip: data.nipGuru },
+        where: { id: idGuru },
       });
 
       if (!guru) {
-        throw new Error(`Guru dengan NIP ${data.nipGuru} tidak ditemukan`);
+        throw new Error(`Guru dengan Id ${data.idGuru} tidak ditemukan`);
       }
 
       const jadwal = await tx.jadwalMengajar.create({
         data: {
-          nipGuru: data.nipGuru,
+          idGuru: idGuru,
           jamMulai: data.jamMulai,
           jamSelesai: data.jamSelesai,
           namaMapel: data.namaMapel,
@@ -45,9 +45,9 @@ export const updateJadwalMengajar = async (id, data) => {
         throw new Error("Jadwal tidak ditemukan");
       }
 
-      if (data.nipGuru) {
+      if (data.idGuru) {
         const guru = await tx.guru.findUnique({
-          where: { nip: data.nipGuru },
+          where: { id: data.idGuru },
         });
         if (!guru) throw new Error("Guru tidak ditemukan");
       }
@@ -55,7 +55,7 @@ export const updateJadwalMengajar = async (id, data) => {
       const updated = await tx.jadwalMengajar.update({
         where: { id },
         data: {
-          nipGuru: data.nipGuru,
+          idGuru: data.idGuru,
           jamMulai: data.jamMulai,
           jamSelesai: data.jamSelesai,
           namaMapel: data.namaMapel,

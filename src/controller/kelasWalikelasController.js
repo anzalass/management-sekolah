@@ -4,13 +4,16 @@ import {
   deleteKelasWaliKelas,
   deleteSiswatoKelasWaliKelas,
   getKelasWaliKelasById,
+  getSiswaByIdKelas,
   updateKelasWaliKelas,
 } from "../services/kelasWalikelasService.js";
 
 export const createKelasWaliKelasController = async (req, res, next) => {
   try {
     const data = {
-      nip: req.user.nip,
+      namaGuru: req.user.nama,
+      nipGuru: req.user.nip,
+      idGuru: req.user.idGuru,
       nama: req.body.nama,
       ruangKelas: req.body.ruangKelas,
     };
@@ -73,5 +76,14 @@ export const deleteSiswatoKelasWaliKelasController = async (req, res, next) => {
       .json({ message: "Berhasil menghapus siswa dari kelas wali kelas" });
   } catch (error) {
     return res.status(500).json({ message: error.message });
+  }
+};
+
+export const getSiswaByIdKelasHandler = async (req, res) => {
+  try {
+    const siswaList = await getSiswaByIdKelas(req.params.idKelas);
+    res.status(200).json(siswaList);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
   }
 };

@@ -204,7 +204,6 @@ async function main() {
       data: {
         nama: `Pelajaran ${i + 1}`,
         kelas: `Kelas ${(i % 6) + 1}`,
-        guruId: guruIds[i % guruIds.length].id,
       },
     });
     console.log(`✅ Mata pelajaran ${i + 1} berhasil ditambahkan.`);

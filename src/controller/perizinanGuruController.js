@@ -23,7 +23,7 @@ export const createPerizinanGuruController = async (req, res, next) => {
       }
 
       const data = {
-        nip: req.user.nip,
+        idGuru: req.user.idGuru,
         keterangan,
         time,
       };

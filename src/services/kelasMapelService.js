@@ -2,16 +2,18 @@ import { PrismaClient } from "@prisma/client";
 const prisma = new PrismaClient();
 
 export const createKelasMapel = async (data) => {
-  const { nip, namaMapel, ruangKelas, kelas } = data;
+  const { idGuru, namaMapel, ruangKelas, kelas, nipGuru, namaGuru } = data;
   try {
     const tahunAjaran = await prisma.sekolah.findFirst();
 
     await prisma.$transaction(async (tx) => {
       await tx.kelasDanMapel.create({
         data: {
-          nipGuru: nip,
+          idGuru: idGuru,
           namaMapel,
           ruangKelas,
+          nipGuru,
+          namaGuru,
           kelas: kelas,
           tahunAjaran: tahunAjaran.tahunAjaran,
         },
@@ -26,12 +28,14 @@ export const createKelasMapel = async (data) => {
 };
 
 export const updateKelasMapel = async (id, data) => {
-  const { namaMapel, ruangKelas } = data;
+  const { namaMapel, ruangKelas, kelas } = data;
+  console.log("rk", ruangKelas);
+
   try {
     await prisma.$transaction(async (tx) => {
       await tx.kelasDanMapel.update({
         where: { id },
-        data: { nip, namaMapel, ruangKelas },
+        data: { namaMapel, ruangKelas, kelas },
       });
     });
   } catch (error) {
@@ -45,6 +49,48 @@ export const updateKelasMapel = async (id, data) => {
 export const deleteKelasMapel = async (id) => {
   try {
     await prisma.$transaction(async (tx) => {
+      await tx.daftarSiswaMapel.deleteMany({
+        where: {
+          idKelas: id,
+        },
+      });
+
+      await tx.summaryMateri.deleteMany({
+        where: {
+          idKelas: id,
+        },
+      });
+
+      await tx.summaryTugas.deleteMany({
+        where: {
+          idKelas: id,
+        },
+      });
+
+      await tx.nilaiSiswa.deleteMany({
+        where: {
+          idKelas: id,
+        },
+      });
+
+      await tx.materiMapel.deleteMany({
+        where: {
+          idKelas: id,
+        },
+      });
+
+      await tx.tugasMapel.deleteMany({
+        where: {
+          idKelas: id,
+        },
+      });
+
+      await tx.jenisNilai.deleteMany({
+        where: {
+          idKelas: id,
+        },
+      });
+
       await tx.kelasDanMapel.delete({ where: { id } });
     });
   } catch (error) {
@@ -56,13 +102,13 @@ export const deleteKelasMapel = async (id) => {
 };
 
 export const addSiswatoKelasKelasMapel = async (data) => {
-  const { nis, idKelas } = data;
+  const { idSiswa, idKelas, nisSiswa, namaSiswa } = data;
   try {
     await prisma.$transaction(async (tx) => {
       // Cek apakah siswa dengan NIS sudah ada di kelas ini
       const existing = await tx.daftarSiswaMapel.findFirst({
         where: {
-          nis,
+          idSiswa,
           idKelas,
         },
       });
@@ -73,7 +119,7 @@ export const addSiswatoKelasKelasMapel = async (data) => {
 
       // Tambahkan siswa jika belum ada
       await tx.daftarSiswaMapel.create({
-        data: { nis, idKelas },
+        data: { idKelas, namaSiswa, nisSiswa, idSiswa },
       });
     });
   } catch (error) {

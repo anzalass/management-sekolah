@@ -4,7 +4,7 @@ import { startOfDay, endOfDay } from "date-fns";
 
 const prisma = new PrismaClient();
 
-export const dashboardMengajarServicePage = async (nipGuru) => {
+export const dashboardMengajarServicePage = async (idGuru) => {
   try {
     const hariIni = new Date();
     hariIni.setHours(0, 0, 0, 0);
@@ -12,7 +12,7 @@ export const dashboardMengajarServicePage = async (nipGuru) => {
     // Ambil data absensi hari ini
     const kehadiranHariIni = await prisma.kehadiranGuru.findFirst({
       where: {
-        nipGuru,
+        idGuru,
         tanggal: { gte: hariIni },
       },
     });
@@ -24,7 +24,7 @@ export const dashboardMengajarServicePage = async (nipGuru) => {
     // Cek perizinan hari ini
     const izinHariIni = await prisma.perizinanGuru.findFirst({
       where: {
-        nipGuru,
+        idGuru,
         time: { gte: hariIni },
       },
     });
@@ -34,11 +34,11 @@ export const dashboardMengajarServicePage = async (nipGuru) => {
     // Data lainnya
     const [kehadiranGuru, jadwalGuru, kelasWaliKelas, kelasMapel, perizinan] =
       await Promise.all([
-        prisma.kehadiranGuru.findMany({ where: { nipGuru } }),
-        prisma.jadwalMengajar.findMany({ where: { nipGuru } }),
-        prisma.kelas.findMany({ where: { nipGuru } }),
-        prisma.kelasDanMapel.findMany({ where: { nipGuru } }),
-        prisma.perizinanGuru.findMany({ where: { nipGuru } }),
+        prisma.kehadiranGuru.findMany({ where: { idGuru } }),
+        prisma.jadwalMengajar.findMany({ where: { idGuru } }),
+        prisma.kelas.findMany({ where: { idGuru } }),
+        prisma.kelasDanMapel.findMany({ where: { idGuru } }),
+        prisma.perizinanGuru.findMany({ where: { idGuru } }),
       ]);
 
     return {
@@ -120,7 +120,6 @@ export const dashboardOverview = async () => {
       },
       select: {
         jamMasuk: true,
-        nipGuru: true,
         Guru: {
           select: {
             nama: true,
@@ -178,6 +177,47 @@ export const dashboardKelasMapel = async (idKelas) => {
       siswaKelas,
       materiKelas,
       tugasKelas,
+    };
+  } catch (error) {
+    console.error("Dashboard Error:", error);
+    throw new Error(prismaErrorHandler(error));
+  }
+};
+
+export const dashboardWaliKelas = async (idKelas) => {
+  try {
+    const catatan = await prisma.catatanPerkembanganSiswa.findMany({
+      where: {
+        idKelas: idKelas,
+      },
+      include: {
+        Siswa: {
+          select: {
+            id: true,
+            nama: true,
+            nis: true,
+          },
+        },
+      },
+    });
+
+    const pengumuman = await prisma.pengumumanKelas.findMany({
+      where: {
+        idKelas: idKelas,
+      },
+    });
+
+    const catatanMap = catatan.map((c) => ({
+      id: c.id,
+      idSiswa: c.Siswa.id,
+      nisSiswa: c.Siswa.nis,
+      nama: c.Siswa.nama,
+      catatan: c.content,
+    }));
+
+    return {
+      pengumuman,
+      catatanMap,
     };
   } catch (error) {
     console.error("Dashboard Error:", error);

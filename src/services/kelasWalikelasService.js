@@ -2,15 +2,17 @@ import { PrismaClient } from "@prisma/client";
 const prisma = new PrismaClient();
 
 export const createKelasWaliKelas = async (data) => {
-  const { nip, nama, ruangKelas } = data;
+  const { idGuru, nama, ruangKelas, namaGuru, nipGuru } = data;
   try {
     const tahunAjaran = await prisma.sekolah.findFirst();
     await prisma.$transaction(async (tx) => {
       await tx.kelas.create({
         data: {
-          nipGuru: nip,
+          idGuru: idGuru,
           nama,
           ruangKelas,
+          namaGuru,
+          nipGuru,
           tahunAjaran: tahunAjaran.tahunAjaran,
         },
       });
@@ -39,6 +41,18 @@ export const updateKelasWaliKelas = async (id, data) => {
 export const deleteKelasWaliKelas = async (id) => {
   try {
     await prisma.$transaction(async (tx) => {
+      tx.daftarSiswaKelas.deleteMany({
+        where: {
+          idKelas: id,
+        },
+      });
+
+      tx.pengumumanKelas.findMany({
+        where: {
+          idKelas: id,
+        },
+      });
+
       await tx.kelas.delete({ where: { id } });
     });
   } catch (error) {
@@ -55,15 +69,40 @@ export const getKelasWaliKelasById = async (id) => {
 };
 
 export const addSiswatoKelasWaliKelas = async (data) => {
-  const { nis, idKelas } = data;
+  const { idKelas, namaSiswa, nisSiswa, idSiswa } = data;
   try {
     await prisma.$transaction(async (tx) => {
+      const existing = await tx.daftarSiswaKelas.findFirst({
+        where: { idKelas, idSiswa },
+      });
+
+      if (existing) {
+        throw new Error("Siswa sudah terdaftar di kelas ini");
+      }
+
       await tx.daftarSiswaKelas.create({
-        data: { nis, idKelas },
+        data: { nisSiswa, idKelas, namaSiswa, idSiswa },
       });
     });
   } catch (error) {
-    throw new Error(error.message);
+    console.log(error);
+
+    throw new Error(error.message || "Gagal menambahkan siswa ke kelas");
+  }
+};
+
+export const getSiswaByIdKelas = async (idKelas) => {
+  try {
+    const siswaList = await prisma.daftarSiswaKelas.findMany({
+      where: { idKelas },
+      include: {
+        Siswa: true, // Asumsikan relasi ke model siswa bernama `siswa`
+      },
+    });
+
+    return siswaList;
+  } catch (error) {
+    throw new Error("Gagal mengambil data siswa dari kelas");
   }
 };
 
@@ -75,6 +114,8 @@ export const deleteSiswatoKelasWaliKelas = async (id) => {
       });
     });
   } catch (error) {
+    console.log(error);
+
     throw new Error(error.message);
   }
 };
