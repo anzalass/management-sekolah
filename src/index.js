@@ -32,6 +32,8 @@ import arsipRoutes from "./routes/arsipRoutes.js";
 import kehadiranSiswaRoutes from "./routes/kehadiranSiswaRoutes.js";
 import catatahnPerkembanganSiswa from "./routes/catatanPerkembanganSiswaRoutes.js";
 import pengumumanKelasRoutes from "./routes/pengumumanKelasRoutes.js";
+import listKelasRoutes from "./routes/listKelasRoutes.js";
+import pembayaranRoutes from "./routes/pembayaranRoutes.js";
 
 import { fileURLToPath } from "url";
 import path from "path";
@@ -95,6 +97,8 @@ app.use("/api/v1", arsipRoutes);
 app.use("/api/v1", kehadiranSiswaRoutes);
 app.use("/api/v1", catatahnPerkembanganSiswa);
 app.use("/api/v1", pengumumanKelasRoutes);
+app.use("/api/v1", listKelasRoutes);
+app.use("/api/v1", pembayaranRoutes);
 
 app.get("/api/v1/view-image/:imageName", (req, res) => {
   const { imageName } = req.params;

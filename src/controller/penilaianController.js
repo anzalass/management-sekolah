@@ -4,6 +4,7 @@ import {
   getAllNilaiSiswaByIdKelas,
   getJenisNilaiByKelasMapel,
   getRekapNilaiKelasBaru,
+  updateJenisNilai,
   updateNilaiSiswa,
 } from "../services/penilaianService.js";
 
@@ -26,6 +27,19 @@ export const deleteJenisNilaiController = async (req, res) => {
     const { id } = req.params;
     const deleted = await deleteJenisNilai(id);
     res.json(deleted);
+  } catch (error) {
+    res
+      .status(400)
+      .json({ error: error.message || "Gagal menghapus jenis nilai" });
+  }
+};
+
+export const updateJenisNilaiController = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const update = await updateJenisNilai(id, req.body);
+    res.json(update);
   } catch (error) {
     res
       .status(400)

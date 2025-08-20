@@ -60,6 +60,36 @@ export const createJenisNilai = async (data) => {
   }
 };
 
+export const updateJenisNilai = async (id, data) => {
+  const { jenis, bobot } = data;
+  try {
+    return await prisma.$transaction(async (tx) => {
+      // Hapus dulu semua nilai siswa yang terkait dengan jenis nilai ini
+      await tx.nilaiSiswa.updateMany({
+        where: {
+          idJenisNilai: id,
+        },
+        data: { jenisNilai: jenis },
+      });
+      // Baru hapus jenis nilainya
+      const deleted = await tx.jenisNilai.update({
+        where: { id },
+        data: {
+          jenis,
+          bobot,
+        },
+      });
+
+      return deleted;
+    });
+  } catch (error) {
+    console.log(error);
+
+    const errorMessage = prismaErrorHandler(error);
+    throw new Error(errorMessage);
+  }
+};
+
 export const deleteJenisNilai = async (id) => {
   try {
     return await prisma.$transaction(async (tx) => {

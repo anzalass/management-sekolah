@@ -173,9 +173,12 @@ model NilaiSiswa {
   idJenisNilai    String
   jenisNilai      String
   nilai           Int
+
   Siswa           Siswa @relation(fields: [idSiswa], references: [id])
   KelasDanMapel   KelasDanMapel @relation(fields: [idKelasDanMapel], references: [id])
   JenisNilai      JenisNilai @relation(fields: [idJenisNilai], references: [id])
+
+  @@unique([idSiswa, idJenisNilai])
 }
 
 model KehadiranSiswa {
@@ -200,7 +203,7 @@ model Siswa {
   tempatLahir   String
   namaAyah      String
   namaIbu       String
-  tahunLulus    String
+  tahunLulus    String?
   poin          Int?
   alamat        String?
   agama         String
@@ -230,7 +233,8 @@ model Siswa {
 
 model Konseling  {
   id             String @id @default(uuid())
-  idSiswa            String
+  idSiswa        String
+  nisSiswa String
   namaSiswa String
   tanggal DateTime
   keterangan String
@@ -240,6 +244,7 @@ model Konseling  {
 
 model Pelanggaran_Dan_Prestasi_Siswa {
   id             String @id @default(uuid())
+  nisSiswa String
   idSiswa        String
   waktu          DateTime
   poin           Int
@@ -395,6 +400,7 @@ model Buku_Perpustakaan {
 model Peminjaman_dan_Pengembalian {
   id              String @id @default(uuid())
   idSiswa         String
+  nisSiswa  String
   idBuku          String?
   namaBuku        String
   waktuPinjam     DateTime
@@ -409,6 +415,11 @@ enum StatusPeminjamanBuku {
   dipinjam
   dikembalikan
 
+}
+
+model ListKelas {
+  id      String @id @default(uuid())
+  namaKelas    String @unique
 }
 
 model Mata_Pelajaran {
@@ -435,6 +446,7 @@ model Tagihan {
   status      String
   keterangan  String
   nominal     Int
+  RiwayatPembayaran RiwayatPembayaran[]
   Siswa Siswa? @relation(fields: [idSiswa], references: [id])
 }
 
@@ -443,9 +455,13 @@ model RiwayatPembayaran {
   namaSiswa   String
   nisSiswa    String
   idSiswa     String?
-  idTagihan   String
+  idTagihan   String 
   waktuBayar  DateTime
+  status  String
+  metodeBayar String
   Siswa Siswa? @relation(fields: [idSiswa], references: [id])
+  Tagihan Tagihan? @relation(fields: [idTagihan], references: [id])
+
 }
 
 

@@ -159,6 +159,7 @@ export const dashboardKelasMapel = async (idKelas) => {
           id: true,
           Siswa: {
             select: {
+              id: true,
               nama: true,
               nis: true,
             },

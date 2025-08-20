@@ -262,6 +262,7 @@ const createSiswa = async (siswa, foto) => {
     nik,
     nama,
     jurusan,
+    kelas,
     tanggalLahir,
     tempatLahir,
     namaAyah,
@@ -293,6 +294,7 @@ const createSiswa = async (siswa, foto) => {
           nis,
           nik,
           nama,
+          kelas,
           jurusan,
           tanggalLahir: new Date(`${tanggalLahir}T00:00:00Z`),
           tempatLahir,
@@ -325,6 +327,7 @@ const updateSiswa = async (id, siswa, foto) => {
     nik,
     nis,
     nama,
+    kelas,
     jurusan,
     tanggalLahir,
     tempatLahir,
@@ -374,6 +377,7 @@ const updateSiswa = async (id, siswa, foto) => {
           nik,
           nis,
           nama,
+          kelas,
           jurusan,
           tanggalLahir: tanggalLahir
             ? new Date(`${tanggalLahir}T00:00:00Z`)
