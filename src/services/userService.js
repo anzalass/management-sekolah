@@ -7,7 +7,6 @@ import {
   deleteFromCloudinary,
   deleteFromImageKit,
   uploadToCloudinary,
-  uploadToImageKit,
 } from "../utils/ImageHandler.js";
 import { prismaErrorHandler } from "../utils/errorHandlerPrisma.js";
 
@@ -34,12 +33,8 @@ const createGuru = async (guru, foto) => {
 
     let imageUploadResult = null;
 
-    if (foto && foto.path) {
-      if (!foto.buffer || foto.buffer.length === 0) {
-        throw new Error("File kosong saat dibaca dari disk");
-      }
-
-      imageUploadResult = await uploadToCloudinary(fileBuffer, "guru", nip);
+    if (foto && foto.buffer && foto.buffer.length > 0) {
+      imageUploadResult = await uploadToCloudinary(foto.buffer, "guru", nip);
     }
 
     console.log("url", imageUploadResult?.secure_url);
@@ -278,14 +273,14 @@ const createSiswa = async (siswa, foto) => {
     ekstraKulikulerPeminatan,
     ekstraKulikulerWajib,
   } = siswa;
+  let imageUploadResult;
 
-  if (foto && foto.path) {
-    if (!foto.buffer || foto.buffer.length === 0) {
-      throw new Error("File kosong saat dibaca dari disk");
-    }
-
-    imageUploadResult = await uploadToCloudinary(fileBuffer, "siswa", nip);
+  if (foto && foto.buffer && foto.buffer.length > 0) {
+    imageUploadResult = await uploadToCloudinary(foto.buffer, "siswa", nis);
   }
+
+  console.log("foto service", foto);
+  console.log("cloud", imageUploadResult);
 
   try {
     await prisma.$transaction(async (tx) => {
@@ -310,13 +305,15 @@ const createSiswa = async (siswa, foto) => {
           email,
           ekstraKulikulerPeminatan,
           ekstraKulikulerWajib,
-          foto: imageUploadResult?.url,
-          fotoId: imageUploadResult?.fileId,
+          foto: imageUploadResult?.secure_url,
+          fotoId: imageUploadResult?.public_id,
         },
       });
     });
     return;
   } catch (error) {
+    console.log("error", error);
+
     const errorMessage = prismaErrorHandler(error);
     throw new Error(errorMessage);
   }
@@ -365,7 +362,7 @@ const updateSiswa = async (id, siswa, foto) => {
           console.warn("Gagal hapus foto lama:", err.message);
         }
       }
-      imageUploadResult = await uploadToCloudinary(foto.buffer, "siswa", nip);
+      imageUploadResult = await uploadToCloudinary(foto.buffer, "siswa", nis);
       console.log("Foto baru di-upload:", imageUploadResult);
     }
 
@@ -394,8 +391,8 @@ const updateSiswa = async (id, siswa, foto) => {
           email,
           ekstraKulikulerPeminatan,
           ekstraKulikulerWajib,
-          foto: imageUploadResult?.url || existingSiswa.foto,
-          fotoId: imageUploadResult?.fileId || existingSiswa.fotoId,
+          foto: imageUploadResult?.secure_url || existingSiswa.foto,
+          fotoId: imageUploadResult?.public_id || existingSiswa.fotoId,
         },
       });
 

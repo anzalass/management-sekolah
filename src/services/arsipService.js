@@ -100,10 +100,13 @@ export const getAllArsip = async ({
       skip,
       take,
     });
+
+    const totalData = await prisma.arsip.count();
     return {
       data,
       page,
       pageSize,
+      totalData,
     };
   } catch (error) {
     console.log(error);

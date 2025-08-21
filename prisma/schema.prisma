@@ -468,6 +468,7 @@ model RiwayatPembayaran {
 model Testimoni {
   id          String   @id @default(uuid())
   image       String
+  imageId     String
   parentName  String
   description String
   guruId      String?
@@ -479,6 +480,7 @@ model News {
   title       String
   content     String
   image       String
+  imageId     String
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
   guruId      String?
@@ -488,6 +490,7 @@ model News {
 model Gallery {
   id          String   @id @default(uuid())
   image       String
+  imageId     String
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
   guruId      String?
@@ -498,6 +501,7 @@ model GuruTemplate {
   id        String   @id @default(uuid())
   name      String
   image     String
+  imageId   String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   guruId    String?

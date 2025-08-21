@@ -5,7 +5,9 @@ import {
   getJenisNilaiByKelasMapel,
   getRekapNilaiKelasBaru,
   updateJenisNilai,
+  deleteNilaiSiswa,
   updateNilaiSiswa,
+  createNilaiSiswa,
 } from "../services/penilaianService.js";
 
 // POST /jenis-nilai
@@ -78,6 +80,30 @@ export const updateNilaiSiswaController = async (req, res) => {
     res
       .status(400)
       .json({ error: error.message || "Gagal memperbarui nilai siswa" });
+  }
+};
+
+export const createNilaiSiswaController = async (req, res) => {
+  try {
+    const data = req.body;
+    const updated = await createNilaiSiswa(data);
+    res.json(updated);
+  } catch (error) {
+    res
+      .status(400)
+      .json({ error: error.message || "Gagal menambah nilai siswa" });
+  }
+};
+
+export const deletedNilaiSiswaController = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const deletedd = await deleteNilaiSiswa(id);
+    res.json(deletedd);
+  } catch (error) {
+    res
+      .status(400)
+      .json({ error: error.message || "Gagal menghapus nilai siswa" });
   }
 };
 

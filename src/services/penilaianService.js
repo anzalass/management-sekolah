@@ -128,6 +128,32 @@ export const getJenisNilaiByKelasMapel = async (idKelasMapel) => {
   }
 };
 
+export const createNilaiSiswa = async (data) => {
+  try {
+    const jenisNilai = await prisma.jenisNilai.findUnique({
+      where: {
+        id: data.idJenisNilai,
+      },
+    });
+    const result = await prisma.$transaction(async (tx) => {
+      const created = await tx.nilaiSiswa.create({
+        data: {
+          jenisNilai: jenisNilai?.jenis,
+          idSiswa: data.idSiswa,
+          idKelasDanMapel: data.idKelasDanMapel,
+          idJenisNilai: data.idJenisNilai,
+          nilai: data.nilai,
+        },
+      });
+      return created;
+    });
+    return result;
+  } catch (error) {
+    console.error("Error updating NilaiSiswa:", error);
+    throw new Error("Gagal memperbarui nilai siswa");
+  }
+};
+
 export const updateNilaiSiswa = async (id, data) => {
   try {
     const result = await prisma.$transaction(async (tx) => {
@@ -138,6 +164,21 @@ export const updateNilaiSiswa = async (id, data) => {
         },
       });
       return updated;
+    });
+    return result;
+  } catch (error) {
+    console.error("Error updating NilaiSiswa:", error);
+    throw new Error("Gagal memperbarui nilai siswa");
+  }
+};
+
+export const deleteNilaiSiswa = async (id) => {
+  try {
+    const result = await prisma.$transaction(async (tx) => {
+      const deleted = await tx.nilaiSiswa.delete({
+        where: { id },
+      });
+      return deleted;
     });
     return result;
   } catch (error) {

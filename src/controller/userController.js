@@ -91,10 +91,12 @@ export const getGuruByIDController = async (req, res, next) => {
 };
 
 export const createSiswaController = async (req, res, next) => {
-  upload.single("foto")(req, res, async (err) => {
+  memoryUpload.single("foto")(req, res, async (err) => {
     if (err) {
       return res.status(400).json({ message: err.message });
     }
+    console.log("foto ctrlr", req.file);
+
     try {
       const result = await createSiswa(req.body, req.file);
       return res
@@ -107,7 +109,7 @@ export const createSiswaController = async (req, res, next) => {
 };
 
 export const updateSiswaController = async (req, res, next) => {
-  upload.single("foto")(req, res, async (err) => {
+  memoryUpload.single("foto")(req, res, async (err) => {
     if (err) {
       return res
         .status(400)

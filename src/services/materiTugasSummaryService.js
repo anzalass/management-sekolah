@@ -32,7 +32,7 @@ export const createMateriMapel = async (data, file) => {
         tanggal: new Date(),
         idKelasMapel: data.idKelasMapel,
         iframeGoogleSlide: data.iframeGoogleSlide,
-        iframeYoutube: data.iframeGoogleSlide,
+        iframeYoutube: data.iframeYoutube,
         konten: data.konten,
         pdfUrl: UploadResult?.secure_url || null,
         pdfUrlId: UploadResult?.public_id || null,
@@ -187,7 +187,7 @@ export const createTugasMapel = async (data, file) => {
         deadline: new Date(`${data.deadline}T00:00:00Z`),
         idKelasMapel: data.idKelasMapel,
         iframeGoogleSlide: data.iframeGoogleSlide,
-        iframeYoutube: data.iframeGoogleSlide,
+        iframeYoutube: data.iframeYoutube,
         konten: data.konten,
         pdfUrl: UploadResult?.secure_url || null,
         pdfUrlId: UploadResult?.public_id || null,
@@ -261,11 +261,11 @@ export const getMateriAndSummaryByMateriID = async (id) => {
       where: {
         id,
       },
+
       include: {
         SummaryMateri: {
           select: {
             id: true,
-            nisSiswa: true,
             content: true,
             waktu: true,
             Siswa: {

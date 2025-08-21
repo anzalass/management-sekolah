@@ -1,15 +1,22 @@
 import { PrismaClient } from "@prisma/client";
 import { prismaErrorHandler } from "../utils/errorHandlerPrisma.js";
+import { uploadToCloudinary } from "../utils/ImageHandler.js";
 
 const prisma = new PrismaClient();
 
 export const createGallery = async (data) => {
-  const { image, guruId, file } = data;
+  const { image, guruId } = data;
 
   try {
+    let imageUploadResult;
+
+    if (image && image.buffer && image.buffer.length > 0) {
+      imageUploadResult = await uploadToCloudinary(image.buffer, "cms", guruId);
+    }
     const result = await prisma.gallery.create({
       data: {
-        image,
+        image: imageUploadResult?.secure_url || "",
+        imageId: imageUploadResult?.public_id || "",
         guruId,
       },
     });
@@ -52,10 +59,29 @@ export const updateGallery = async (id, data) => {
   const { image } = data;
 
   try {
+    let imageUploadResult = null;
+
+    const gallery = await prisma.gallery.findUnique({
+      where: {
+        id: id,
+      },
+    });
+
+    if (image && image.buffer && image.buffer.length > 0) {
+      if (gallery.imageId) {
+        try {
+          await deleteFromCloudinary(gallery.imageId);
+        } catch (err) {
+          console.warn("Gagal hapus foto lama:", err.message);
+        }
+      }
+      imageUploadResult = await uploadToCloudinary(image.buffer, "cms", id);
+    }
     const updatedGallery = await prisma.gallery.update({
       where: { id },
       data: {
-        image,
+        image: imageUploadResult?.secure_url || "",
+        imageId: imageUploadResult?.public_id || "",
       },
     });
 
@@ -63,13 +89,23 @@ export const updateGallery = async (id, data) => {
   } catch (error) {
     console.error(error);
     const errorMessage =
-      prismaErrorHandler(error) || "Gagal memperbarui testimoni";
+      prismaErrorHandler(error) || "Gagal memperbarui gallery";
     throw new Error(errorMessage);
   }
 };
 
 export const deletedGallery = async (id) => {
   try {
+    const gallery = await prisma.gallery.findUnique({
+      where: { id },
+    });
+    if (gallery.imageId) {
+      try {
+        await deleteFromCloudinary(gallery.imageId);
+      } catch (error) {
+        console.log(error);
+      }
+    }
     const deletedGallery = await prisma.gallery.delete({
       where: { id },
     });

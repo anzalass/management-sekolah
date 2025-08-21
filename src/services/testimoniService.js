@@ -1,5 +1,9 @@
 import { PrismaClient } from "@prisma/client";
 import { prismaErrorHandler } from "../utils/errorHandlerPrisma.js";
+import {
+  deleteFromCloudinary,
+  uploadToCloudinary,
+} from "../utils/ImageHandler.js";
 
 const prisma = new PrismaClient();
 
@@ -7,9 +11,23 @@ export const createTestimoni = async (data) => {
   const { parentName, image, description, guruId } = data;
 
   try {
+    let imageUploadResult;
+
+    if (image && image.buffer && image.buffer.length > 0) {
+      imageUploadResult = await uploadToCloudinary(
+        image.buffer,
+        "cms",
+        parentName
+      );
+    }
+
+    console.log("service img", image);
+    console.log("service img res", imageUploadResult);
+
     const result = await prisma.testimoni.create({
       data: {
-        image,
+        image: imageUploadResult?.secure_url || "",
+        imageId: imageUploadResult?.public_id || "",
         parentName,
         description,
         guruId,
@@ -77,13 +95,38 @@ export const getTestimoniById = async (id) => {
 };
 
 export const updateTestimoni = async (id, data) => {
-  const { image, description } = data;
+  const { image, description, parentName } = data;
 
   try {
+    let imageUploadResult = null;
+
+    const oldTesti = await prisma.testimoni.findUnique({
+      where: {
+        id: id,
+      },
+    });
+
+    if (image && image.buffer && image.buffer.length > 0) {
+      if (oldTesti.imageId) {
+        try {
+          await deleteFromCloudinary(oldTesti.imageId);
+        } catch (err) {
+          console.warn("Gagal hapus foto lama:", err.message);
+        }
+      }
+      imageUploadResult = await uploadToCloudinary(
+        image.buffer,
+        "cms",
+        parentName
+      );
+    }
+
     const updatedTestimoni = await prisma.testimoni.update({
       where: { id },
       data: {
-        image,
+        image: imageUploadResult?.secure_url,
+        imageId: imageUploadResult?.public_id,
+        parentName,
         description,
       },
     });
@@ -99,11 +142,20 @@ export const updateTestimoni = async (id, data) => {
 
 export const deleteTestimoni = async (id) => {
   try {
-    const deletedTestimoni = await prisma.testimoni.delete({
+    const oldTesti = await prisma.testimoni.findUnique({
       where: { id },
     });
+    if (oldTesti.imageId) {
+      try {
+        await deleteFromCloudinary(oldTesti.imageId);
+      } catch (error) {
+        console.log(error);
+      }
+    }
 
-    return deletedTestimoni;
+    await prisma.testimoni.delete({
+      where: { id },
+    });
   } catch (error) {
     console.error(error);
     const errorMessage =

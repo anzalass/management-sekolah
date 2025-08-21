@@ -6,16 +6,13 @@ import {
   deleteTestimoni,
 } from "../services/testimoniService.js";
 import fs from "fs";
-import upload from "../utils/multer.js";
 import { fileURLToPath } from "url";
 import path from "path";
 import localUpload from "../utils/localupload.js";
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+import memoryUpload from "../utils/multer.js";
 
 export const createTestimoniController = async (req, res) => {
-  localUpload.single("image")(req, res, async (err) => {
+  memoryUpload.single("image")(req, res, async (err) => {
     if (err) {
       return res.status(400).json({ message: err.message });
     }
@@ -28,10 +25,8 @@ export const createTestimoniController = async (req, res) => {
         return res.status(400).json({ message: "Gambar wajib diunggah" });
       }
 
-      const imagePath = req.file.path.replace(/\\/g, "/");
-
       const newTestimoni = await createTestimoni({
-        image: imagePath,
+        image: req.file,
         description,
         guruId: guruId,
         parentName,
@@ -84,7 +79,7 @@ export const getTestimoniByIdController = async (req, res) => {
 export const updateTestimoniController = async (req, res) => {
   const { id } = req.params;
 
-  localUpload.single("image")(req, res, async (err) => {
+  memoryUpload.single("image")(req, res, async (err) => {
     if (err) {
       return res.status(400).json({ message: err.message });
     }
@@ -96,40 +91,18 @@ export const updateTestimoniController = async (req, res) => {
         return res.status(404).json({ message: "Testimoni tidak ditemukan" });
       }
 
-      const { description } = req.body;
-      let imagePath = testimoni.image;
-      if (req.file) {
-        const oldImagePath = path.join(
-          __dirname,
-          "../../uploads",
-          path.basename(imagePath)
-        );
-        fs.access(oldImagePath, fs.constants.F_OK, (err) => {
-          if (!err) {
-            fs.unlink(oldImagePath, (err) => {
-              if (err) {
-                console.error("Failed to delete old image:", err);
-              } else {
-                console.log("Old image deleted successfully.");
-              }
-            });
-          }
-        });
-
-        imagePath = req.file.path.replace(/\\/g, "/");
-      }
+      const { description, parentName } = req.body;
 
       const updatedTestimoni = await updateTestimoni(id, {
         description,
-        image: imagePath,
+        parentName,
+        image: req.file,
       });
 
-      return res
-        .status(200)
-        .json({
-          message: "Testimoni berhasil diperbarui",
-          data: updatedTestimoni,
-        });
+      return res.status(200).json({
+        message: "Testimoni berhasil diperbarui",
+        data: updatedTestimoni,
+      });
     } catch (error) {
       return res.status(500).json({ message: error.message });
     }
@@ -146,33 +119,9 @@ export const deleteTestimoniController = async (req, res) => {
       return res.status(404).json({ message: "Testimoni tidak ditemukan" });
     }
 
-    const imagePath = testimoni.image;
-    const filePath = path.join(
-      __dirname,
-      "../../uploads",
-      path.basename(imagePath)
-    );
-    fs.access(filePath, fs.constants.F_OK, (err) => {
-      if (err) {
-        console.error("File does not exist:", err);
-        return res.status(404).json({ message: "File tidak ditemukan" });
-      }
-
-      fs.unlink(filePath, (err) => {
-        if (err) {
-          return res.status(500).json({ message: "Gagal menghapus file" });
-        }
-
-        deleteTestimoni(id)
-          .then(() => {
-            return res
-              .status(200)
-              .json({ message: "Testimoni dan gambar berhasil dihapus" });
-          })
-          .catch((dbError) => {
-            return res.status(500).json({ message: dbError.message });
-          });
-      });
+    await deleteTestimoni(id);
+    return res.status(200).json({
+      message: "Testimoni berhasil dihapus",
     });
   } catch (error) {
     return res.status(500).json({ message: error.message });

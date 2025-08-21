@@ -1,6 +1,8 @@
 import express from "express";
 import {
   createJenisNilaiController,
+  createNilaiSiswaController,
+  deletedNilaiSiswaController,
   deleteJenisNilaiController,
   getJenisNilaiAndNilaiSiswaByKelasMapelController,
   getRekapNilaiKelasBaruController,
@@ -20,6 +22,8 @@ router.get(
 );
 
 router.put("/nilai-siswa/:id", updateNilaiSiswaController);
+router.post("/nilai-siswa", createNilaiSiswaController);
+router.delete("/nilai-siswa/:id", deletedNilaiSiswaController);
 router.get("/rekap-nilai-siswa/:idKelas", getRekapNilaiKelasBaruController);
 
 export default router;

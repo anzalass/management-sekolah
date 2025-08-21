@@ -76,9 +76,6 @@ export const getAllMataPelajaran = async ({
       skip,
       take,
       where,
-      include: {
-        Guru: true, // ambil guru nya juga
-      },
     });
 
     const total = await prisma.mata_Pelajaran.count({ where });
