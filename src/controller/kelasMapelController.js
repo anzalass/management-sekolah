@@ -9,7 +9,9 @@ import {
 export const createKelasMapelController = async (req, res, next) => {
   try {
     const data = {
-      nip: req.user.nip,
+      namaGuru: req.user.nama,
+      nipGuru: req.user.nip,
+      idGuru: req.user.idGuru,
       namaMapel: req.body.namaMapel,
       ruangKelas: req.body.ruangKelas,
       kelas: req.body.kelas,

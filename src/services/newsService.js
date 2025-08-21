@@ -1,16 +1,23 @@
 import { PrismaClient } from "@prisma/client";
 import { prismaErrorHandler } from "../utils/errorHandlerPrisma.js";
+import {
+  deleteFromCloudinary,
+  uploadToCloudinary,
+} from "../utils/ImageHandler.js";
 
 const prisma = new PrismaClient();
 
-
 export const createNews = async (data) => {
-  const { image, title, content,guruId } = data;
-
+  const { image, title, content, guruId } = data;
   try {
+    let imageUploadResult;
+    if (image && image.buffer && image.buffer.length > 0) {
+      imageUploadResult = await uploadToCloudinary(image.buffer, "cms", title);
+    }
     const result = await prisma.news.create({
       data: {
-        image,
+        image: imageUploadResult?.secure_url || "",
+        imageId: imageUploadResult?.public_id || "",
         title,
         content,
         guruId,
@@ -25,8 +32,6 @@ export const createNews = async (data) => {
   }
 };
 
-
-
 export const getAllNews = async (page, pageSize, search) => {
   const skip = (page - 1) * pageSize;
 
@@ -34,11 +39,11 @@ export const getAllNews = async (page, pageSize, search) => {
     where: {
       title: {
         contains: search,
-        mode: "insensitive", 
+        mode: "insensitive",
       },
     },
-    skip: skip, 
-    take: pageSize, 
+    skip: skip,
+    take: pageSize,
   });
 
   const totalNews = await prisma.news.count({
@@ -59,7 +64,6 @@ export const getAllNews = async (page, pageSize, search) => {
   };
 };
 
-
 export const getNewsById = async (id) => {
   try {
     const testimoni = await prisma.news.findUnique({
@@ -68,45 +72,77 @@ export const getNewsById = async (id) => {
     return testimoni;
   } catch (error) {
     console.error(error);
-    const errorMessage = prismaErrorHandler(error) || "Gagal mendapatkan testimoni";
+    const errorMessage =
+      prismaErrorHandler(error) || "Gagal mendapatkan testimoni";
     throw new Error(errorMessage);
   }
 };
 
-
-
 export const updateNews = async (id, data) => {
-  const { image, title,content } = data;
+  const { image, title, content } = data;
 
   try {
+    let imageUploadResult = null;
+
+    const oldNews = await prisma.news.findUnique({
+      where: {
+        id: id,
+      },
+    });
+
+    if (image && image.buffer && image.buffer.length > 0) {
+      if (oldNews.imageId) {
+        try {
+          await deleteFromCloudinary(oldNews.imageId);
+        } catch (err) {
+          console.warn("Gagal hapus foto lama:", err.message);
+        }
+      }
+      imageUploadResult = await uploadToCloudinary(image.buffer, "cms", title);
+    }
+
     const updatedTestimoni = await prisma.news.update({
       where: { id },
       data: {
-        image,
+        image: imageUploadResult.secure_url || "",
+        imageId: imageUploadResult.public_id || "",
         title,
-        content
+        content,
       },
     });
 
     return updatedTestimoni;
   } catch (error) {
     console.error(error);
-    const errorMessage = prismaErrorHandler(error) || "Gagal memperbarui testimoni";
+    const errorMessage =
+      prismaErrorHandler(error) || "Gagal memperbarui testimoni";
     throw new Error(errorMessage);
   }
 };
 
-
 export const deleteNews = async (id) => {
   try {
-    const deletedTestimoni = await prisma.news.delete({
-      where: { id },
+    const news = await prisma.news.findUnique({
+      where: {
+        id: id,
+      },
     });
 
-    return deletedTestimoni;
+    if (news.imageId) {
+      try {
+        await deleteFromCloudinary(oldTesti.imageId);
+      } catch (error) {
+        console.log(error);
+      }
+    }
+
+    await prisma.news.delete({
+      where: { id },
+    });
   } catch (error) {
     console.error(error);
-    const errorMessage = prismaErrorHandler(error) || "Gagal menghapus testimoni";
+    const errorMessage =
+      prismaErrorHandler(error) || "Gagal menghapus testimoni";
     throw new Error(errorMessage);
   }
 };

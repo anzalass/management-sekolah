@@ -3,7 +3,11 @@ import {
   deleteJenisNilai,
   getAllNilaiSiswaByIdKelas,
   getJenisNilaiByKelasMapel,
+  getRekapNilaiKelasBaru,
+  updateJenisNilai,
+  deleteNilaiSiswa,
   updateNilaiSiswa,
+  createNilaiSiswa,
 } from "../services/penilaianService.js";
 
 // POST /jenis-nilai
@@ -25,6 +29,19 @@ export const deleteJenisNilaiController = async (req, res) => {
     const { id } = req.params;
     const deleted = await deleteJenisNilai(id);
     res.json(deleted);
+  } catch (error) {
+    res
+      .status(400)
+      .json({ error: error.message || "Gagal menghapus jenis nilai" });
+  }
+};
+
+export const updateJenisNilaiController = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const update = await updateJenisNilai(id, req.body);
+    res.json(update);
   } catch (error) {
     res
       .status(400)
@@ -66,6 +83,30 @@ export const updateNilaiSiswaController = async (req, res) => {
   }
 };
 
+export const createNilaiSiswaController = async (req, res) => {
+  try {
+    const data = req.body;
+    const updated = await createNilaiSiswa(data);
+    res.json(updated);
+  } catch (error) {
+    res
+      .status(400)
+      .json({ error: error.message || "Gagal menambah nilai siswa" });
+  }
+};
+
+export const deletedNilaiSiswaController = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const deletedd = await deleteNilaiSiswa(id);
+    res.json(deletedd);
+  } catch (error) {
+    res
+      .status(400)
+      .json({ error: error.message || "Gagal menghapus nilai siswa" });
+  }
+};
+
 // // GET /nilai-siswa/kelas/:idKelasDanMapel
 // export const getAllNilaiSiswaByIdKelasController = async (req, res) => {
 //   try {
@@ -78,3 +119,12 @@ export const updateNilaiSiswaController = async (req, res) => {
 //       .json({ error: error.message || "Gagal mengambil nilai siswa" });
 //   }
 // };
+
+export const getRekapNilaiKelasBaruController = async (req, res) => {
+  try {
+    const result = await getRekapNilaiKelasBaru(req.params.idKelas);
+    return res.status(200).json(result);
+  } catch (error) {
+    return res.status(500).json({ message: error.message });
+  }
+};

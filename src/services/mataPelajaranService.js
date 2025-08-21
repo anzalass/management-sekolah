@@ -9,7 +9,7 @@ export const createMataPelajaran = async (data) => {
       data: {
         nama,
         kelas,
-        guruId, 
+        idGuru: guruId,
       },
     });
     return result;
@@ -76,9 +76,6 @@ export const getAllMataPelajaran = async ({
       skip,
       take,
       where,
-      include: {
-        Guru: true, // ambil guru nya juga
-      },
     });
 
     const total = await prisma.mata_Pelajaran.count({ where });

@@ -8,68 +8,85 @@ const computeEffect = (jenis, poin) => {
 };
 
 export const createPelanggaranPrestasi = async ({
-  nisSiswa,
+  idSiswa,
   waktu = new Date(),
   poin,
   jenis,
   keterangan,
 }) => {
   try {
+    console.log("dt", idSiswa, waktu, poin, jenis, keterangan);
+
     return await prisma.$transaction(async (tx) => {
       const siswa = await tx.siswa.findUnique({
-        where: { nis: nisSiswa },
-        select: { poin: true },
+        where: { id: idSiswa },
+        select: { poin: true, nis: true },
       });
       if (!siswa) throw new Error("Siswa tidak ditemukan");
 
       const record = await tx.pelanggaran_Dan_Prestasi_Siswa.create({
-        data: { nisSiswa, waktu, poin, jenis, keterangan },
+        data: {
+          idSiswa,
+          nisSiswa: siswa.nis,
+          waktu,
+          poin,
+          jenis,
+          keterangan,
+        },
       });
 
       const effect = computeEffect(jenis, poin);
       const currentPoin = typeof siswa.poin === "number" ? siswa.poin : 0;
 
       await tx.siswa.update({
-        where: { nis: nisSiswa },
+        where: { id: idSiswa },
         data: { poin: currentPoin + effect },
       });
 
       return record;
     });
   } catch (err) {
-    console.log(error);
+    console.log(err);
 
-    const errorMessage = prismaErrorHandler(error);
+    const errorMessage = prismaErrorHandler(err);
     throw new Error(errorMessage);
   }
 };
 
+// service
 export const getPelanggaranPrestasiList = async ({
   nisSiswa = "",
   jenis = "",
-  dateFrom,
-  dateTo,
+  namaSiswa = "",
+  waktu = "",
   page = 1,
   pageSize = 10,
 }) => {
   try {
-    const skip = (page - 1) * pageSize;
-    const where = {};
+    const take = parseInt(pageSize, 10) || 10; // default 10
+    const skip = ((parseInt(page, 10) || 1) - 1) * take;
 
-    if (nisSiswa) where.nisSiswa = nisSiswa;
-    if (jenis) where.jenis = { contains: jenis, mode: "insensitive" };
-    if (dateFrom || dateTo) {
-      where.waktu = {};
-      if (dateFrom) where.waktu.gte = new Date(dateFrom);
-      if (dateTo) where.waktu.lte = new Date(dateTo);
-    }
+    // Bangun where clause
+    const where = {
+      AND: [
+        nisSiswa ? { nisSiswa } : undefined,
+        jenis ? { jenis: { contains: jenis, mode: "insensitive" } } : undefined,
+        namaSiswa
+          ? { Siswa: { nama: { contains: namaSiswa, mode: "insensitive" } } }
+          : undefined,
+        waktu ? { waktu: new Date(`${waktu}T00:00:00Z`) } : undefined,
+      ].filter(Boolean),
+    };
 
     const [data, total] = await Promise.all([
       prisma.pelanggaran_Dan_Prestasi_Siswa.findMany({
         where,
         orderBy: { waktu: "desc" },
+        take,
         skip,
-        take: pageSize,
+        include: {
+          Siswa: { select: { nama: true } },
+        },
       }),
       prisma.pelanggaran_Dan_Prestasi_Siswa.count({ where }),
     ]);
@@ -78,13 +95,12 @@ export const getPelanggaranPrestasiList = async ({
       data,
       total,
       page,
-      pageSize,
-      totalPages: Math.ceil(total / pageSize),
+      pageSize: take,
+      totalPages: Math.ceil(total / take),
     };
   } catch (err) {
-    console.log(error);
-
-    const errorMessage = prismaErrorHandler(error);
+    console.error(err);
+    const errorMessage = prismaErrorHandler(err);
     throw new Error(errorMessage);
   }
 };
@@ -195,8 +211,20 @@ export const deletePelanggaranPrestasi = async (id) => {
 // Create Konseling
 export const createKonseling = async (data) => {
   try {
+    const siswa = await prisma.siswa.findUnique({
+      where: {
+        id: data.idSiswa,
+      },
+    });
+
     const konseling = await prisma.konseling.create({
-      data,
+      data: {
+        namaSiswa: data.namaSiswa,
+        keterangan: data.keterangan,
+        idSiswa: data.idSiswa,
+        nisSiswa: siswa.nis,
+        tanggal: new Date(`${data.tanggal}T00:00:00Z`),
+      },
     });
     return konseling;
   } catch (error) {
@@ -227,9 +255,20 @@ export const getKonselingById = async (id) => {
 // Update Konseling
 export const updateKonseling = async (id, data) => {
   try {
+    const siswa = await prisma.siswa.findUnique({
+      where: {
+        id: data.idSiswa,
+      },
+    });
     return await prisma.konseling.update({
       where: { id },
-      data,
+      data: {
+        idSiswa: data.idSiswa,
+        keterangan: data.keterangan,
+        nisSiswa: data.nisSiswa,
+        namaSiswa: data.namaSiswa,
+        tanggal: new Date(`${data.tanggal}T00:00:00Z`),
+      },
     });
   } catch (error) {
     console.log(error);
@@ -253,45 +292,63 @@ export const deleteKonseling = async (id) => {
   }
 };
 
-export const getAllKonseling = async (filters = {}) => {
+export const getAllKonseling = async (
+  filters = {},
+  page = 1,
+  pageSize = 10
+) => {
   const { nama, nis, tanggal } = filters;
 
   try {
+    // Filter utama
+    const whereClause = {
+      AND: [
+        nama
+          ? {
+              Siswa: {
+                nama: {
+                  contains: nama,
+                  mode: "insensitive",
+                },
+              },
+            }
+          : undefined,
+        nis ? { nisSiswa: nis } : undefined,
+        tanggal
+          ? {
+              tanggal: {
+                equals: new Date(tanggal),
+              },
+            }
+          : undefined,
+      ].filter(Boolean),
+    };
+
+    // Hitung total data
+    const total = await prisma.konseling.count({ where: whereClause });
+
+    // Ambil data sesuai page & pageSize
     const konselingList = await prisma.konseling.findMany({
-      where: {
-        AND: [
-          nama
-            ? {
-                Siswa: {
-                  nama: {
-                    contains: nama,
-                    mode: "insensitive",
-                  },
-                },
-              }
-            : undefined,
-          nis ? { nisSiswa: nis } : undefined,
-          tanggal
-            ? {
-                tanggal: {
-                  equals: new Date(tanggal),
-                },
-              }
-            : undefined,
-        ].filter(Boolean),
-      },
+      where: whereClause,
       include: {
         Siswa: true,
       },
       orderBy: {
         tanggal: "desc",
       },
+      skip: (page - 1) * pageSize,
+      take: pageSize,
     });
 
-    return konselingList;
+    return {
+      data: konselingList,
+      total,
+      page,
+      pageSize,
+      totalPages: Math.ceil(total / pageSize),
+    };
   } catch (error) {
     console.log(error);
-
     const errorMessage = prismaErrorHandler(error);
     throw new Error(errorMessage);
   }

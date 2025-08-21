@@ -1,6 +1,8 @@
 import { PrismaClient } from "@prisma/client";
-import fs from "fs/promises";
-import { uploadToCloudinary } from "../utils/ImageHandler.js";
+import {
+  deleteFromCloudinary,
+  uploadToCloudinary,
+} from "../utils/ImageHandler.js";
 import { prismaErrorHandler } from "../utils/errorHandlerPrisma.js";
 
 const prisma = new PrismaClient();
@@ -11,19 +13,15 @@ export const createBuku = async (data, file) => {
   let UploadResult = null;
 
   try {
-    if (file && file.path) {
-      const fileBuffer = await fs.readFile(file.path);
+    if (file && file.buffer) {
+      if (!file.buffer || file.buffer.length === 0) {
+        throw new Error("File kosong saat dibaca dari buffer");
+      }
 
-      if (fileBuffer.length === 0)
-        throw new Error("File kosong saat dibaca dari disk");
-
-      // Validasi ukuran file maksimal 5MB
-      const maxSize = 5 * 1024 * 1024;
-      if (fileBuffer.length > maxSize)
-        throw new Error("Ukuran file melebihi 5MB");
-
-      UploadResult = await uploadToCloudinary(fileBuffer, "buku", nama);
+      UploadResult = await uploadToCloudinary(file.buffer, "buku", nama);
     }
+
+    console.log("srvice", file);
 
     const result = await prisma.buku_Perpustakaan.create({
       data: {
@@ -34,6 +32,61 @@ export const createBuku = async (data, file) => {
         keterangan,
         stok: parseInt(stok),
         filepdf: UploadResult?.secure_url || null,
+        filePdfid: UploadResult?.public_id,
+      },
+    });
+
+    return result;
+  } catch (error) {
+    console.log(error);
+    const errorMessage = prismaErrorHandler(error);
+    throw new Error(errorMessage);
+  }
+};
+
+export const updateBuku = async (id, data, file) => {
+  const { nama, pengarang, penerbit, tahunTerbit, keterangan, stok } = data;
+  let UploadResult = null;
+
+  try {
+    // cek buku dulu
+    const buku = await prisma.buku_Perpustakaan.findUnique({
+      where: { id },
+    });
+
+    if (!buku) {
+      throw new Error("Buku tidak ditemukan");
+    }
+
+    // kalau ada file baru
+    if (file && file.buffer) {
+      if (!file.buffer || file.buffer.length === 0) {
+        throw new Error("File kosong saat dibaca dari buffer");
+      }
+
+      // hapus file lama di cloudinary kalau ada
+      if (buku.filePdfid) {
+        await deleteFromCloudinary(buku.filePdfid);
+      }
+
+      // upload file baru
+      UploadResult = await uploadToCloudinary(file.buffer, "buku", nama);
+    }
+
+    // update ke db
+    const result = await prisma.buku_Perpustakaan.update({
+      where: { id },
+      data: {
+        nama,
+        pengarang,
+        penerbit,
+        tahunTerbit: parseInt(tahunTerbit),
+        keterangan,
+        stok: parseInt(stok),
+        ...(UploadResult && {
+          filepdf: UploadResult.secure_url,
+          filePdfid: UploadResult.public_id,
+        }),
       },
     });
 
@@ -46,15 +99,33 @@ export const createBuku = async (data, file) => {
 };
 
 // ===== GET ALL BUKU (dengan filter nama) =====
-export const getAllBuku = async ({ nama }) => {
+export const getAllBuku = async ({ nama = "", page = 1, pageSize = 10 }) => {
   try {
-    const where = nama
-      ? { nama: { contains: nama, mode: "insensitive" } }
-      : undefined;
+    const skip = (page - 1) * pageSize;
 
-    return await prisma.buku_Perpustakaan.findMany({ where });
+    const where = nama ? { nama: { contains: nama, mode: "insensitive" } } : {};
+
+    const [data, total] = await Promise.all([
+      prisma.buku_Perpustakaan.findMany({
+        where,
+        skip,
+        take: pageSize,
+        orderBy: { nama: "asc" }, // biar rapi
+      }),
+      prisma.buku_Perpustakaan.count({ where }),
+    ]);
+
+    return {
+      data,
+      pagination: {
+        total,
+        page,
+        pageSize,
+        totalPages: Math.ceil(total / pageSize),
+      },
+    };
   } catch (error) {
-    console.log(error);
+    console.error(error);
     const errorMessage = prismaErrorHandler(error);
     throw new Error(errorMessage);
   }
@@ -63,7 +134,18 @@ export const getAllBuku = async ({ nama }) => {
 // ===== HAPUS BUKU =====
 export const deleteBuku = async (id) => {
   try {
-    return await prisma.buku_Perpustakaan.delete({ where: { id } });
+    const buku = await prisma.buku_Perpustakaan.findUnique({
+      where: {
+        id: id,
+      },
+    });
+
+    if (!buku) {
+      throw new Error("Buku tidak ditemukan");
+    }
+
+    await deleteFromCloudinary(buku.filePdfid);
+    await prisma.buku_Perpustakaan.delete({ where: { id: buku.id } });
   } catch (error) {
     console.log(error);
     const errorMessage = prismaErrorHandler(error);
@@ -71,9 +153,26 @@ export const deleteBuku = async (id) => {
   }
 };
 
+export const getBukuById = async (id) => {
+  try {
+    return await prisma.buku_Perpustakaan.findUnique({ where: { id } });
+  } catch (error) {
+    console.log(error);
+    const errorMessage = prismaErrorHandler(error);
+    throw new Error(errorMessage);
+  }
+};
 // ===== PINJAM BUKU =====
 export const pinjamBuku = async (data) => {
-  const { nisSiswa, idBuku, waktuPinjam, waktuKembali, keterangan } = data;
+  const {
+    nisSiswa,
+    namaBuku,
+    idSiswa,
+    idBuku,
+    waktuPinjam,
+    waktuKembali,
+    keterangan,
+  } = data;
 
   try {
     return await prisma.$transaction(async (tx) => {
@@ -85,6 +184,8 @@ export const pinjamBuku = async (data) => {
       const peminjaman = await tx.peminjaman_dan_Pengembalian.create({
         data: {
           nisSiswa,
+          idSiswa,
+          namaBuku,
           idBuku,
           waktuPinjam: new Date(waktuPinjam),
           waktuKembali: new Date(waktuKembali),
@@ -156,6 +257,55 @@ export const deletePeminjamanDanPengembalian = async (id) => {
   } catch (error) {
     console.error("Gagal hapus peminjaman:", error);
     console.log(error);
+    const errorMessage = prismaErrorHandler(error);
+    throw new Error(errorMessage);
+  }
+};
+
+export const getAllPeminjamanPengembalian = async ({
+  nis = "",
+  status = "",
+  namaBuku = "",
+  page = 1,
+  pageSize = 10,
+}) => {
+  try {
+    const skip = (page - 1) * pageSize;
+
+    const where = {
+      AND: [
+        nis ? { Siswa: { nis: { contains: nis, mode: "insensitive" } } } : {},
+        status ? { status: { equals: status } } : {},
+        namaBuku
+          ? { Buku: { nama: { contains: namaBuku, mode: "insensitive" } } }
+          : {},
+      ],
+    };
+
+    const [data, total] = await Promise.all([
+      prisma.peminjaman_dan_Pengembalian.findMany({
+        where,
+        include: {
+          Siswa: true,
+          Buku_Perpustakaan: true,
+        },
+        skip,
+        take: pageSize,
+      }),
+      prisma.peminjaman_dan_Pengembalian.count({ where }),
+    ]);
+
+    return {
+      data,
+      meta: {
+        total,
+        page,
+        pageSize,
+        totalPages: Math.ceil(total / pageSize),
+      },
+    };
+  } catch (error) {
+    console.error(error);
     const errorMessage = prismaErrorHandler(error);
     throw new Error(errorMessage);
   }

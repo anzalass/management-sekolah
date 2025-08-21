@@ -10,5 +10,5 @@ const router = express.Router();
 
 router.post("/absen-masuk", AuthMiddleware, absenMasukGuruController);
 router.post("/absen-pulang", AuthMiddleware, absenPulangGuruController);
-router.get("/kehadiran-guru", AuthMiddleware, getKehadiranGuruController);
+router.get("/kehadiran-guru", getKehadiranGuruController);
 export default router;

@@ -71,9 +71,9 @@ export const updateAnggaran = async (idAnggaran, data) => {
 
       // 2. Update kas sekolah sesuai dengan jenis dan jumlah baru
       if (jenis === "pemasukan") {
-        kasBaru += jumlah;
+        kasBaru += parseInt(jumlah);
       } else {
-        kasBaru -= jumlah;
+        kasBaru -= parseInt(jumlah);
       }
 
       // 3. Cek apakah kas mencukupi
@@ -87,7 +87,7 @@ export const updateAnggaran = async (idAnggaran, data) => {
           keterangan,
           tanggal: new Date(`${tanggal}T00:00:00Z`),
           jenis,
-          jumlah,
+          jumlah: parseInt(jumlah),
         },
       });
 
@@ -144,8 +144,6 @@ export const deleteAnggaran = async (idAnggaran) => {
     throw new Error(errorMessage);
   }
 };
-;
-
 export const getAnggaranById = async (id) => {
   const anggaran = await prisma.riwayatAnggaran.findUnique({ where: { id } });
   if (!anggaran) {

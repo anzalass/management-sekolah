@@ -11,18 +11,18 @@ export const absenMasukGuruController = (req, res) => {
       return res.status(400).json({ message: "Gagal upload foto masuk" });
 
     try {
-      const nipGuru = req.user?.nip;
+      const idGuru = req.user?.idGuru;
       const { lat, long } = req.body;
 
       console.log("fotooo", req.file);
 
       if (!lat || !long)
         return res.status(400).json({ message: "Koordinat wajib diisi" });
-      if (!nipGuru)
-        return res.status(401).json({ message: "NIP tidak ditemukan" });
+      if (!idGuru)
+        return res.status(401).json({ message: "idGuru tidak ditemukan" });
 
       const result = await absenMasukGuru({
-        nipGuru,
+        idGuru,
         fotoMasuk: req.file, // file buffer dari multer
         lokasi: {
           lat: parseFloat(lat),
@@ -43,16 +43,16 @@ export const absenMasukGuruController = (req, res) => {
 
 export const absenPulangGuruController = async (req, res) => {
   try {
-    const nipGuru = req.user?.nip;
+    const idGuru = req.user?.idGuru;
     const { lat, long } = req.body;
 
     if (!lat || !long)
       return res.status(400).json({ message: "Koordinat wajib diisi" });
-    if (!nipGuru)
+    if (!idGuru)
       return res.status(401).json({ message: "NIP tidak ditemukan" });
 
     const result = await absenPulangGuru({
-      nipGuru,
+      idGuru,
       lokasi: {
         lat: parseFloat(lat),
         long: parseFloat(long),

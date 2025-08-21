@@ -45,8 +45,8 @@ export const getPengumumanByIdController = async (req, res, next) => {
 export const getAllPengumumanController = async (req, res, next) => {
   try {
     const result = await getAllPengumuman({
-      page: parseInt(req.query.page),
-      pageSize: parseInt(req.query.pageSize),
+      page: parseInt(req.query.page) || 1,
+      pageSize: parseInt(req.query.pageSize) || 10,
       title: req.query.title,
       time: req.query.time,
     });

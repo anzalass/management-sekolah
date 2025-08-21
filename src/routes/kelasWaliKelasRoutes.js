@@ -5,6 +5,7 @@ import {
   deleteKelasWaliKelasController,
   deleteSiswatoKelasWaliKelasController,
   getKelasWaliKelasByIdController,
+  getSiswaByIdKelasHandler,
   updateKelasWaliKelasController,
 } from "../controller/kelasWalikelasController.js";
 import { AuthMiddleware } from "../utils/authMiddleware.js";
@@ -23,5 +24,6 @@ router.post(
   "/kelas-walikelas/remove/:id",
   deleteSiswatoKelasWaliKelasController
 );
+router.get("/kelas-walikelas/siswa/:idKelas", getSiswaByIdKelasHandler);
 
 export default router;

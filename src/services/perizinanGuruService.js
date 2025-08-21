@@ -5,7 +5,7 @@ const prisma = new PrismaClient();
 export const createPerizinanGuru = async (data, foto) => {
   try {
     const existingGuru = await prisma.guru.findUnique({
-      where: { nip: data.nip },
+      where: { id: data.idGuru },
     });
     if (!existingGuru) {
       throw new Error(`Guru dengan NIP ${data.nip} tidak ditemukan`);
@@ -16,13 +16,13 @@ export const createPerizinanGuru = async (data, foto) => {
       imageUploadResult = await uploadToCloudinary(
         foto.buffer,
         "izinguru",
-        data.nip
+        data.idGuru
       );
     }
 
     await prisma.perizinanGuru.create({
       data: {
-        nipGuru: data.nip,
+        idGuru: data.idGuru,
         keterangan: data.keterangan,
         time: new Date(`${data.time}T00:00:00Z`),
         status: "menunggu",
@@ -78,7 +78,16 @@ export const getPerizinanGuru = async ({
 
   const where = {
     AND: [
-      nip ? { nipGuru: { contains: nip } } : {},
+      nip
+        ? {
+            Guru: {
+              nip: {
+                contains: nip,
+                mode: "insensitive",
+              },
+            },
+          }
+        : {},
       nama
         ? {
             Guru: {
