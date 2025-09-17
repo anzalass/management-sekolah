@@ -3,6 +3,7 @@ import {
   addSiswatoKelasKelasMapelController,
   createKelasMapelController,
   deleteKelasMapelController,
+  getDetailKelasMapelController,
   removeSiswaFromKelasMapelController,
   updateKelasMapelController,
 } from "../controller/kelasMapelController.js";
@@ -18,5 +19,7 @@ router.delete(
   "/kelas-mapel/remove-siswa/:id",
   removeSiswaFromKelasMapelController
 );
+
+router.get("/kelas-mapel/:id", AuthMiddleware, getDetailKelasMapelController);
 
 export default router;

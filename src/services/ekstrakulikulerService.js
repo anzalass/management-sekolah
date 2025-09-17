@@ -1,4 +1,5 @@
 import { PrismaClient } from "@prisma/client";
+import { prismaErrorHandler } from "../utils/errorHandlerPrisma.js";
 const prisma = new PrismaClient();
 
 export const createEkstraKulikuler = async (data) => {
@@ -12,7 +13,9 @@ export const createEkstraKulikuler = async (data) => {
 
     return ekstraKulikuler;
   } catch (error) {
-    throw new Error(error.message);
+    console.log(error);
+    const errorMessage = prismaErrorHandler(error);
+    throw new Error(errorMessage);
   }
 };
 
@@ -26,7 +29,9 @@ export const updateEkstraKulikuler = async (id, data) => {
       });
     });
   } catch (error) {
-    throw new Error(error.message);
+    console.log(error);
+    const errorMessage = prismaErrorHandler(error);
+    throw new Error(errorMessage);
   }
 };
 
@@ -36,7 +41,9 @@ export const deleteEkstraKulikuler = async (id) => {
       await prisma.ekstraKulikuler.delete({ where: { id } });
     });
   } catch (error) {
-    throw new Error(error.message);
+    console.log(error);
+    const errorMessage = prismaErrorHandler(error);
+    throw new Error(errorMessage);
   }
 };
 

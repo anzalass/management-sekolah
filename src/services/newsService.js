@@ -10,7 +10,8 @@ const prisma = new PrismaClient();
 export const createNews = async (data) => {
   const { image, title, content, guruId } = data;
   try {
-    let imageUploadResult;
+    let imageUploadResult = null;
+
     if (image && image.buffer && image.buffer.length > 0) {
       imageUploadResult = await uploadToCloudinary(image.buffer, "cms", title);
     }
@@ -26,8 +27,8 @@ export const createNews = async (data) => {
 
     return result;
   } catch (error) {
-    console.error(error);
-    const errorMessage = prismaErrorHandler(error) || "Gagal membuat berita";
+    console.log(error);
+    const errorMessage = prismaErrorHandler(error);
     throw new Error(errorMessage);
   }
 };
@@ -71,9 +72,8 @@ export const getNewsById = async (id) => {
     });
     return testimoni;
   } catch (error) {
-    console.error(error);
-    const errorMessage =
-      prismaErrorHandler(error) || "Gagal mendapatkan testimoni";
+    console.log(error);
+    const errorMessage = prismaErrorHandler(error);
     throw new Error(errorMessage);
   }
 };
@@ -83,6 +83,7 @@ export const updateNews = async (id, data) => {
 
   try {
     let imageUploadResult = null;
+    console.log("img", image);
 
     const oldNews = await prisma.news.findUnique({
       where: {
@@ -101,11 +102,13 @@ export const updateNews = async (id, data) => {
       imageUploadResult = await uploadToCloudinary(image.buffer, "cms", title);
     }
 
+    console.log(imageUploadResult);
+
     const updatedTestimoni = await prisma.news.update({
       where: { id },
       data: {
-        image: imageUploadResult.secure_url || "",
-        imageId: imageUploadResult.public_id || "",
+        image: imageUploadResult?.secure_url || "",
+        imageId: imageUploadResult?.public_id || "",
         title,
         content,
       },
@@ -113,9 +116,8 @@ export const updateNews = async (id, data) => {
 
     return updatedTestimoni;
   } catch (error) {
-    console.error(error);
-    const errorMessage =
-      prismaErrorHandler(error) || "Gagal memperbarui testimoni";
+    console.log(error);
+    const errorMessage = prismaErrorHandler(error);
     throw new Error(errorMessage);
   }
 };
@@ -140,9 +142,8 @@ export const deleteNews = async (id) => {
       where: { id },
     });
   } catch (error) {
-    console.error(error);
-    const errorMessage =
-      prismaErrorHandler(error) || "Gagal menghapus testimoni";
+    console.log(error);
+    const errorMessage = prismaErrorHandler(error);
     throw new Error(errorMessage);
   }
 };

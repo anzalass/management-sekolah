@@ -20,6 +20,7 @@ export const createKegiatanSekolah = async (data) => {
       });
     });
   } catch (error) {
+    console.log(error);
     const errorMessage = prismaErrorHandler(error);
     throw new Error(errorMessage);
   }
@@ -44,7 +45,6 @@ export const updateKegiatanSekolah = async (id, data) => {
     });
   } catch (error) {
     console.log(error);
-
     const errorMessage = prismaErrorHandler(error);
     throw new Error(errorMessage);
   }
@@ -56,6 +56,7 @@ export const deleteKegiatanSekolah = async (id) => {
       await tx.kegiatanSekolah.delete({ where: { id } });
     });
   } catch (error) {
+    console.log(error);
     const errorMessage = prismaErrorHandler(error);
     throw new Error(errorMessage);
   }
@@ -78,6 +79,7 @@ export const updateStatusKegiatan = async (id, status) => {
       data: { status },
     });
   } catch (error) {
+    console.log(error);
     const errorMessage = prismaErrorHandler(error);
     throw new Error(errorMessage);
   }
@@ -118,6 +120,7 @@ export const getAllKegiatanSekolah = async ({
       page,
     };
   } catch (error) {
+    console.log(error);
     const errorMessage = prismaErrorHandler(error);
     throw new Error(errorMessage);
   }

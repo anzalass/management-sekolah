@@ -146,7 +146,6 @@ export const deleteSummaryMateri = async (id) => {
     });
   } catch (error) {
     console.log(error);
-
     const errorMessage = prismaErrorHandler(error);
     throw new Error(errorMessage);
   }
@@ -163,7 +162,6 @@ export const getSummaryByMateriId = async (idMateri) => {
     });
   } catch (error) {
     console.log(error);
-
     const errorMessage = prismaErrorHandler(error);
     throw new Error(errorMessage);
   }
@@ -266,6 +264,7 @@ export const getMateriAndSummaryByMateriID = async (id) => {
         SummaryMateri: {
           select: {
             id: true,
+            idSiswa: true,
             content: true,
             waktu: true,
             Siswa: {
@@ -284,7 +283,7 @@ export const getMateriAndSummaryByMateriID = async (id) => {
     // Format summary jadi versi yang kamu mau
     const formattedSummary = materi.SummaryMateri.map((item) => ({
       id: item.id,
-      nisSiswa: item.nisSiswa,
+      idSiswa: item.idSiswa,
       nama: item.Siswa.nama,
       content: item.content,
       fotoSiswa: item.Siswa?.foto || null,
@@ -314,8 +313,8 @@ export const getTugasAndSummaryByTugasID = async (id) => {
         SummaryTugas: {
           select: {
             id: true,
-            nisSiswa: true,
             content: true,
+            idSiswa: true,
             waktu: true,
             Siswa: {
               select: {
@@ -333,7 +332,7 @@ export const getTugasAndSummaryByTugasID = async (id) => {
     // Format summary jadi versi yang kamu mau
     const formattedSummary = tugas.SummaryTugas.map((item) => ({
       id: item.id,
-      nisSiswa: item.nisSiswa,
+      idSiswa: item.idSiswa,
       nama: item.Siswa.nama,
       content: item.content,
       fotoSiswa: item.Siswa?.foto || null,
@@ -347,6 +346,69 @@ export const getTugasAndSummaryByTugasID = async (id) => {
     };
   } catch (error) {
     console.error(error);
+    const errorMessage = prismaErrorHandler(error);
+    throw new Error(errorMessage);
+  }
+};
+
+export const createSummaryTugas = async (data) => {
+  try {
+    return await prisma.summaryTugas.create({ data });
+  } catch (error) {
+    console.log(error);
+    const errorMessage = prismaErrorHandler(error);
+    throw new Error(errorMessage);
+  }
+};
+
+export const getAllSummarTugas = async () => {
+  try {
+    return await prisma.summaryTugas.findMany({
+      include: { Siswa: true, TugasMapel: true },
+    });
+  } catch (error) {
+    console.log(error);
+    const errorMessage = prismaErrorHandler(error);
+    throw new Error(errorMessage);
+  }
+};
+
+export const getSummaryTugasById = async (id) => {
+  try {
+    return await prisma.summaryTugas.findUnique({
+      where: { id },
+      include: { Siswa: true, TugasMapelMapel: true },
+    });
+  } catch (error) {
+    console.log(error);
+    const errorMessage = prismaErrorHandler(error);
+    throw new Error(errorMessage);
+  }
+};
+
+export const deleteSummaryTugas = async (id) => {
+  try {
+    return await prisma.summaryTugas.delete({
+      where: { id },
+    });
+  } catch (error) {
+    console.log(error);
+    const errorMessage = prismaErrorHandler(error);
+    throw new Error(errorMessage);
+  }
+};
+
+export const getSummaryByTugasId = async (idTugas) => {
+  try {
+    return await prisma.summaryTugas.findMany({
+      where: { idTugas },
+      include: {
+        Siswa: true,
+        TugasMapel: true,
+      },
+    });
+  } catch (error) {
+    console.log(error);
     const errorMessage = prismaErrorHandler(error);
     throw new Error(errorMessage);
   }

@@ -11,39 +11,47 @@ import {
   updatePelanggaranPrestasi,
 } from "../services/bkservice.js";
 
+const tipeController = "konseling / pelanggaran, prestasi";
+
 export const createKonselingController = async (req, res) => {
   try {
-    const result = await createKonseling(req.body);
-    res.status(201).json(result);
-  } catch (err) {
-    res.status(400).json({ error: err.message });
+    await createKonseling(req.body);
+    return res
+      .status(201)
+      .json({ message: `Berhasil membuat ${tipeController}`, success: true });
+  } catch (error) {
+    return res.status(500).json({ message: error.message, success: false });
   }
 };
 
 export const getByIdKonselingController = async (req, res) => {
   try {
     const result = await getKonselingById(req.params.id);
-    res.status(200).json(result);
-  } catch (err) {
+    return res.status(200).json(result);
+  } catch (error) {
     res.status(404).json({ error: err.message });
   }
 };
 
 export const updateKonselingController = async (req, res) => {
   try {
-    const result = await updateKonseling(req.params.id, req.body);
-    res.status(200).json(result);
-  } catch (err) {
-    res.status(400).json({ error: err.message });
+    await updateKonseling(req.params.id, req.body);
+    return res
+      .status(201)
+      .json({ message: `Berhasil mengubah ${tipeController}`, success: true });
+  } catch (error) {
+    return res.status(500).json({ message: error.message, success: false });
   }
 };
 
 export const removeKonselingController = async (req, res) => {
   try {
-    const result = await deleteKonseling(req.params.id);
-    res.status(200).json(result);
-  } catch (err) {
-    res.status(404).json({ error: err.message });
+    await deleteKonseling(req.params.id);
+    return res
+      .status(201)
+      .json({ message: `Berhasil menghapus ${tipeController}`, success: true });
+  } catch (error) {
+    return res.status(500).json({ message: error.message, success: false });
   }
 };
 
@@ -57,27 +65,24 @@ export const getAllKonselingController = async (req, res) => {
       Number(pageSize)
     );
 
-    res.status(200).json({
+    return res.status(200).json({
       success: true,
       message: "Data konseling berhasil diambil",
       ...result,
     });
-  } catch (err) {
-    console.error(err);
-    const errorMessage = prismaErrorHandler(err);
-    res.status(500).json({
-      success: false,
-      message: errorMessage,
-    });
+  } catch (error) {
+    return res.status(500).json({ message: error.message, success: false });
   }
 };
 
 export const createPelanggaranPrestasiController = async (req, res) => {
   try {
-    const result = await createPelanggaranPrestasi(req.body);
-    res.status(201).json(result);
-  } catch (err) {
-    res.status(400).json({ error: err.message });
+    await createPelanggaranPrestasi(req.body);
+    return res
+      .status(201)
+      .json({ message: `Berhasil membuat ${tipeController}`, success: true });
+  } catch (error) {
+    return res.status(500).json({ message: error.message, success: false });
   }
 };
 
@@ -92,13 +97,13 @@ export const getAllPelanggaranPrestasiController = async (req, res) => {
       page: parseInt(req.query.page) || 1,
       pageSize: parseInt(req.query.pageSize) || 10,
     });
-    res.status(200).json({
+    return res.status(200).json({
       success: true,
       message: "Berhasil mengambil data pelanggaran & prestasi siswa",
       result,
     });
-  } catch (err) {
-    res.status(400).json({
+  } catch (error) {
+    return res.status(400).json({
       success: false,
       message: err.message || "Terjadi kesalahan",
     });
@@ -108,26 +113,30 @@ export const getAllPelanggaranPrestasiController = async (req, res) => {
 export const getByIdPelanggaranPrestasiController = async (req, res) => {
   try {
     const result = await getPelanggaranPrestasiById(req.params.id);
-    res.status(200).json(result);
-  } catch (err) {
-    res.status(404).json({ error: err.message });
+    return res.status(200).json(result);
+  } catch (error) {
+    return res.status(500).json({ message: error.message, success: false });
   }
 };
 
 export const updatePelanggaranPrestasiController = async (req, res) => {
   try {
-    const result = await updatePelanggaranPrestasi(req.params.id, req.body);
-    res.status(200).json(result);
-  } catch (err) {
-    res.status(400).json({ error: err.message });
+    await updatePelanggaranPrestasi(req.params.id, req.body);
+    return res
+      .status(201)
+      .json({ message: `Berhasil mengubah ${tipeController}`, success: true });
+  } catch (error) {
+    return res.status(500).json({ message: error.message, success: false });
   }
 };
 
 export const removePelanggaranPrestasiController = async (req, res) => {
   try {
-    const result = await deletePelanggaranPrestasi(req.params.id);
-    res.status(200).json(result);
-  } catch (err) {
-    res.status(404).json({ error: err.message });
+    await deletePelanggaranPrestasi(req.params.id);
+    return res
+      .status(201)
+      .json({ message: `Berhasil menghapus ${tipeController}`, success: true });
+  } catch (error) {
+    return res.status(500).json({ message: error.message, success: false });
   }
 };

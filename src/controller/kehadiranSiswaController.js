@@ -1,7 +1,9 @@
 import {
   createKehadiranSiswa,
+  createKehadiranSiswaManual,
   deleteKehadiranSiswa,
   getAbsensiTableByKelas,
+  getAbsesniSiswaByKelas,
   getRekapAbsensiByKelas,
   getSiswaByKelasWithKehadiranHariIni,
   updateKeteranganKehadiran,
@@ -11,9 +13,19 @@ export const createKehadiranHandler = async (req, res) => {
   try {
     const data = req.body;
     const result = await createKehadiranSiswa(data);
-    res.status(201).json(result);
+    return res.status(201).json(result);
   } catch (error) {
-    res.status(400).json({ error: error.message });
+    return res.status(500).json({ message: error.message, success: false });
+  }
+};
+
+export const createKehadiranManualHandler = async (req, res) => {
+  try {
+    const data = req.body;
+    const result = await createKehadiranSiswaManual(data);
+    return res.status(201).json(result);
+  } catch (error) {
+    return res.status(500).json({ message: error.message, success: false });
   }
 };
 
@@ -21,11 +33,11 @@ export const deleteKehadiranHandler = async (req, res) => {
   try {
     const { id } = req.params;
     const result = await deleteKehadiranSiswa(id);
-    res
+    return res
       .status(200)
       .json({ message: "Kehadiran berhasil dihapus", data: result });
   } catch (error) {
-    res.status(400).json({ error: error.message });
+    return res.status(500).json({ message: error.message, success: false });
   }
 };
 
@@ -34,7 +46,7 @@ export const getSiswaByKelasWithKehadiranHariIniHandler = async (req, res) => {
     const siswaList = await getSiswaByKelasWithKehadiranHariIni(
       req.params.idKelas
     );
-    res.status(200).json({ data: siswaList });
+    return res.status(200).json({ data: siswaList });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -45,9 +57,9 @@ export const updateKeteranganHandler = async (req, res) => {
     const { id } = req.params;
     const { keterangan } = req.body;
     const updated = await updateKeteranganKehadiran(id, keterangan);
-    res.status(200).json(updated);
+    return res.status(200).json(updated);
   } catch (error) {
-    res.status(400).json({ error: error.message });
+    return res.status(500).json({ message: error.message, success: false });
   }
 };
 
@@ -62,8 +74,7 @@ export const getAbsensiByKelas = async (req, res) => {
     const data = await getAbsensiTableByKelas(idKelas);
     return res.status(200).json(data);
   } catch (error) {
-    console.error("Error getAbsensiByKelas:", error);
-    return res.status(500).json({ message: "Gagal mengambil data absensi" });
+    return res.status(500).json({ message: error.message, success: false });
   }
 };
 
@@ -78,7 +89,17 @@ export const getRekapAbsensiByKelasController = async (req, res) => {
     const data = await getRekapAbsensiByKelas(idKelas);
     return res.status(200).json(data);
   } catch (error) {
-    console.error("Error getAbsensiByKelas:", error);
-    return res.status(500).json({ message: "Gagal mengambil data absensi" });
+    return res.status(500).json({ message: error.message, success: false });
+  }
+};
+
+export const getAbsensiSiswaByKelasController = async (req, res) => {
+  const idKelas = req.params.idKelas;
+  const idSiswa = req.params.idSiswa;
+  try {
+    const data = await getAbsesniSiswaByKelas(idSiswa, idKelas);
+    return res.status(200).json(data);
+  } catch (error) {
+    return res.status(500).json({ message: error.message, success: false });
   }
 };

@@ -95,7 +95,6 @@ export const createSiswaController = async (req, res, next) => {
     if (err) {
       return res.status(400).json({ message: err.message });
     }
-    console.log("foto ctrlr", req.file);
 
     try {
       const result = await createSiswa(req.body, req.file);

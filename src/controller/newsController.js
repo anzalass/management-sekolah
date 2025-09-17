@@ -11,9 +11,6 @@ import { fileURLToPath } from "url";
 import path from "path";
 import localUpload from "../utils/localupload.js";
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
 export const createNewsController = async (req, res) => {
   memoryUpload.single("image")(req, res, async (err) => {
     if (err) {
@@ -101,6 +98,7 @@ export const updateNewsController = async (req, res) => {
       }
 
       const { title, content } = req.body;
+      console.log("img ctrle", req.file);
 
       const updatedNews = await updateNews(id, {
         title,

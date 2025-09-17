@@ -9,99 +9,111 @@ const LNG_SEKOLAH = 106.51911493230111;
 const MAX_RADIUS = 100; // meter
 
 export const absenMasukGuru = async ({ idGuru, fotoMasuk, lokasi }) => {
-  const { lat, long } = lokasi;
-  console.log("idgr", idGuru);
+  try {
+    const { lat, long } = lokasi;
+    console.log("idgr", idGuru);
 
-  const guru = await prisma.guru.findUnique({ where: { id: idGuru } });
-  if (!guru) {
-    throw new Error("Guru tidak ditemukan di database");
+    const guru = await prisma.guru.findUnique({ where: { id: idGuru } });
+    if (!guru) {
+      throw new Error("Guru tidak ditemukan di database");
+    }
+
+    const jarak = hitungJarak(lat, long, LAT_SEKOLAH, LNG_SEKOLAH);
+    if (jarak > MAX_RADIUS) {
+      throw new Error(
+        `Lokasi terlalu jauh dari sekolah: ${Math.round(jarak)} meter`
+      );
+    }
+
+    let imageUploadResult = null;
+
+    if (fotoMasuk && fotoMasuk.buffer) {
+      imageUploadResult = await uploadToCloudinary(
+        fotoMasuk.buffer,
+        "presensiguru",
+        idGuru
+      );
+    }
+
+    const now = new Date();
+    const tanggalHariIni = new Date();
+    tanggalHariIni.setHours(0, 0, 0, 0);
+
+    const sudahAbsen = await prisma.kehadiranGuru.findFirst({
+      where: {
+        idGuru,
+        tanggal: { gte: tanggalHariIni },
+      },
+    });
+
+    if (sudahAbsen?.jamMasuk && sudahAbsen?.jamPulang) {
+      throw new Error("Anda sudah absen masuk dan pulang hari ini");
+    }
+
+    if (sudahAbsen?.jamMasuk) {
+      throw new Error("Anda sudah melakukan absen masuk hari ini");
+    }
+
+    return await prisma.kehadiranGuru.create({
+      data: {
+        idGuru: idGuru,
+        tanggal: new Date(`${now.toISOString().split("T")[0]}T00:00:00Z`), // <-- ini
+        jamMasuk: now,
+        fotoMasuk: imageUploadResult?.secure_url,
+        lokasiMasuk: JSON.stringify(lokasi),
+        status: "",
+      },
+    });
+  } catch (error) {
+    console.log(error);
+    const errorMessage = prismaErrorHandler(error);
+    throw new Error(errorMessage);
   }
-
-  const jarak = hitungJarak(lat, long, LAT_SEKOLAH, LNG_SEKOLAH);
-  if (jarak > MAX_RADIUS) {
-    throw new Error(
-      `Lokasi terlalu jauh dari sekolah: ${Math.round(jarak)} meter`
-    );
-  }
-
-  let imageUploadResult = null;
-
-  if (fotoMasuk && fotoMasuk.buffer) {
-    imageUploadResult = await uploadToCloudinary(
-      fotoMasuk.buffer,
-      "presensiguru",
-      idGuru
-    );
-  }
-
-  const now = new Date();
-  const tanggalHariIni = new Date();
-  tanggalHariIni.setHours(0, 0, 0, 0);
-
-  const sudahAbsen = await prisma.kehadiranGuru.findFirst({
-    where: {
-      idGuru,
-      tanggal: { gte: tanggalHariIni },
-    },
-  });
-
-  if (sudahAbsen?.jamMasuk && sudahAbsen?.jamPulang) {
-    throw new Error("Anda sudah absen masuk dan pulang hari ini");
-  }
-
-  if (sudahAbsen?.jamMasuk) {
-    throw new Error("Anda sudah melakukan absen masuk hari ini");
-  }
-
-  return await prisma.kehadiranGuru.create({
-    data: {
-      idGuru: idGuru,
-      tanggal: new Date(`${now.toISOString().split("T")[0]}T00:00:00Z`), // <-- ini
-      jamMasuk: now,
-      fotoMasuk: imageUploadResult?.secure_url,
-      lokasiMasuk: JSON.stringify(lokasi),
-      status: "",
-    },
-  });
 };
 
 export const absenPulangGuru = async ({ idGuru, lokasi }) => {
-  const { lat, long } = lokasi;
+  try {
+    const { lat, long } = lokasi;
 
-  const jarak = hitungJarak(lat, long, LAT_SEKOLAH, LNG_SEKOLAH);
-  if (jarak > MAX_RADIUS) {
-    throw new Error(
-      `Lokasi terlalu jauh dari sekolah: ${Math.round(jarak)} meter`
-    );
+    const jarak = hitungJarak(lat, long, LAT_SEKOLAH, LNG_SEKOLAH);
+    if (jarak > MAX_RADIUS) {
+      throw new Error(
+        `Lokasi terlalu jauh dari sekolah: ${Math.round(jarak)} meter`
+      );
+    }
+
+    const now = new Date();
+    const tanggalHariIni = new Date();
+    tanggalHariIni.setHours(0, 0, 0, 0);
+
+    const absenHariIni = await prisma.kehadiranGuru.findFirst({
+      where: {
+        idGuru,
+        tanggal: { gte: tanggalHariIni },
+      },
+    });
+
+    if (!absenHariIni) {
+      throw new Error("Anda belum melakukan absen masuk hari ini");
+    }
+
+    if (absenHariIni.jamPulang) {
+      throw new Error("Anda sudah melakukan absen pulang hari ini");
+    }
+
+    return await prisma.kehadiranGuru.update({
+      where: { id: absenHariIni.id },
+      data: {
+        jamPulang: now,
+        lokasiPulang: JSON.stringify(lokasi),
+        status: "hadir",
+      },
+    });
+  } catch (error) {
+    console.log(error);
+    const errorMessage = prismaErrorHandler(error);
+    throw new Error(errorMessage);
   }
-
-  const now = new Date();
-  const tanggalHariIni = new Date();
-  tanggalHariIni.setHours(0, 0, 0, 0);
-
-  const absenHariIni = await prisma.kehadiranGuru.findFirst({
-    where: {
-      idGuru,
-      tanggal: { gte: tanggalHariIni },
-    },
-  });
-
-  if (!absenHariIni) {
-    throw new Error("Anda belum melakukan absen masuk hari ini");
-  }
-
-  if (absenHariIni.jamPulang) {
-    throw new Error("Anda sudah melakukan absen pulang hari ini");
-  }
-
-  return await prisma.kehadiranGuru.update({
-    where: { id: absenHariIni.id },
-    data: {
-      jamPulang: now,
-      lokasiPulang: JSON.stringify(lokasi),
-      status: "hadir",
-    },
-  });
 };
 
 export const getAllKehadiranGuru = async ({
@@ -180,4 +192,19 @@ export const getAllKehadiranGuru = async ({
     })),
     total,
   };
+};
+
+export const getKehadiranGuruByIdGuru = async (idGuru) => {
+  try {
+    const data = await prisma.kehadiranGuru.findMany({
+      where: {
+        idGuru,
+      },
+    });
+    return data;
+  } catch (error) {
+    console.log(error);
+    const errorMessage = prismaErrorHandler(error);
+    throw new Error(errorMessage);
+  }
 };

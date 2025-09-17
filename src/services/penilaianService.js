@@ -46,6 +46,7 @@ export const createJenisNilai = async (data) => {
         idJenisNilai: newJenis.id,
         jenisNilai: data.jenis,
         nilai: 0,
+        createdAt: new Date(),
       }));
 
       // Simpan semua nilai siswa
@@ -54,7 +55,7 @@ export const createJenisNilai = async (data) => {
       return newJenis;
     });
   } catch (error) {
-    console.error(error);
+    console.log(error);
     const errorMessage = prismaErrorHandler(error);
     throw new Error(errorMessage);
   }
@@ -84,7 +85,6 @@ export const updateJenisNilai = async (id, data) => {
     });
   } catch (error) {
     console.log(error);
-
     const errorMessage = prismaErrorHandler(error);
     throw new Error(errorMessage);
   }
@@ -107,7 +107,6 @@ export const deleteJenisNilai = async (id) => {
     });
   } catch (error) {
     console.log(error);
-
     const errorMessage = prismaErrorHandler(error);
     throw new Error(errorMessage);
   }
@@ -122,7 +121,6 @@ export const getJenisNilaiByKelasMapel = async (idKelasMapel) => {
     });
   } catch (error) {
     console.log(error);
-
     const errorMessage = prismaErrorHandler(error);
     throw new Error(errorMessage);
   }
@@ -143,14 +141,16 @@ export const createNilaiSiswa = async (data) => {
           idKelasDanMapel: data.idKelasDanMapel,
           idJenisNilai: data.idJenisNilai,
           nilai: data.nilai,
+          createdAt: new Date(),
         },
       });
       return created;
     });
     return result;
   } catch (error) {
-    console.error("Error updating NilaiSiswa:", error);
-    throw new Error("Gagal memperbarui nilai siswa");
+    console.log(error);
+    const errorMessage = prismaErrorHandler(error);
+    throw new Error(errorMessage);
   }
 };
 
@@ -161,14 +161,16 @@ export const updateNilaiSiswa = async (id, data) => {
         where: { id },
         data: {
           nilai: data.nilai,
+          createdAt: new Date(),
         },
       });
       return updated;
     });
     return result;
   } catch (error) {
-    console.error("Error updating NilaiSiswa:", error);
-    throw new Error("Gagal memperbarui nilai siswa");
+    console.log(error);
+    const errorMessage = prismaErrorHandler(error);
+    throw new Error(errorMessage);
   }
 };
 
@@ -182,8 +184,9 @@ export const deleteNilaiSiswa = async (id) => {
     });
     return result;
   } catch (error) {
-    console.error("Error updating NilaiSiswa:", error);
-    throw new Error("Gagal memperbarui nilai siswa");
+    console.log(error);
+    const errorMessage = prismaErrorHandler(error);
+    throw new Error(errorMessage);
   }
 };
 
@@ -217,8 +220,9 @@ export const getAllNilaiSiswaByIdKelas = async (idKelasDanMapel) => {
       nilai: item.nilai,
     }));
   } catch (error) {
-    console.error(error);
-    throw new Error("Gagal mengambil data nilai siswa");
+    console.log(error);
+    const errorMessage = prismaErrorHandler(error);
+    throw new Error(errorMessage);
   }
 };
 

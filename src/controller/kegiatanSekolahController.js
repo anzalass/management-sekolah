@@ -4,6 +4,7 @@ import {
   getAllKegiatanSekolah,
   getKegiatanSekolahById,
   updateKegiatanSekolah,
+  updateStatusKegiatan,
 } from "../services/kegiatanSekolahService.js";
 
 export const createKegiatanSekolahController = async (req, res, next) => {
@@ -11,9 +12,9 @@ export const createKegiatanSekolahController = async (req, res, next) => {
     await createKegiatanSekolah(req.body);
     return res
       .status(201)
-      .json({ message: "Berhasil membuat kegiatan sekolah" });
+      .json({ message: "Berhasil membuat kegiatan sekolah", success: true });
   } catch (error) {
-    return res.status(500).json({ message: error.message });
+    return res.status(500).json({ message: error.message, success: false });
   }
 };
 
@@ -22,9 +23,20 @@ export const updateKegiatanSekolahController = async (req, res, next) => {
     await updateKegiatanSekolah(req.params.id, req.body);
     return res
       .status(200)
-      .json({ message: "Berhasil mengupdate kegiatan sekolah" });
+      .json({ message: "Berhasil mengupdate kegiatan sekolah", success: true });
   } catch (error) {
-    return res.status(500).json({ message: error.message });
+    return res.status(500).json({ message: error.message, success: false });
+  }
+};
+
+export const updateStatusKegiatanSekolahController = async (req, res, next) => {
+  try {
+    await updateStatusKegiatan(req.params.id, req.body.status);
+    return res
+      .status(200)
+      .json({ message: "Berhasil mengupdate kegiatan sekolah", success: true });
+  } catch (error) {
+    return res.status(500).json({ message: error.message, success: false });
   }
 };
 
@@ -33,9 +45,9 @@ export const deleteKegiatanSekolahController = async (req, res, next) => {
     await deleteKegiatanSekolah(req.params.id);
     return res
       .status(200)
-      .json({ message: "Berhasil menghapus kegiatan sekolah" });
+      .json({ message: "Berhasil menghapus kegiatan sekolah", success: true });
   } catch (error) {
-    return res.status(500).json({ message: error.message });
+    return res.status(500).json({ message: error.message, success: false });
   }
 };
 
@@ -47,7 +59,7 @@ export const getKegiatanSekolahByIdController = async (req, res, next) => {
       data: kegiatanSekolah,
     });
   } catch (error) {
-    return res.status(500).json({ message: error.message });
+    return res.status(500).json({ message: error.message, success: false });
   }
 };
 
@@ -65,6 +77,6 @@ export const getAllKegiatanSekolahController = async (req, res) => {
       result,
     });
   } catch (error) {
-    return res.status(500).json({ message: error.message });
+    return res.status(500).json({ message: error.message, success: false });
   }
 };

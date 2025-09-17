@@ -112,9 +112,7 @@ export const deleteFromCloudinary = async (publicId) => {
       return true;
     }
     console.log(`Gagal menghapus file ${publicId}.`);
-    return false;
   } catch (error) {
     console.error("Error deleting file from Cloudinary:", error);
-    return false;
   }
 };

@@ -1,10 +1,14 @@
 import * as catatanService from "../services/catatanPerkembanganSiswaService.js";
 
+const tipeController = "catatan perkembangan siswa";
+
 export const createCatatan = async (req, res, next) => {
   try {
     const data = req.body;
-    const result = await catatanService.createCatatan(data);
-    res.status(201).json({ message: "Catatan berhasil dibuat", data: result });
+    await catatanService.createCatatan(data);
+    return res
+      .status(201)
+      .json({ message: `Berhasil membuat ${tipeController}`, success: true });
   } catch (error) {
     next(error);
   }
@@ -45,8 +49,10 @@ export const updateCatatan = async (req, res, next) => {
   try {
     const { id } = req.params;
     const data = req.body;
-    const result = await catatanService.updateCatatan(id, data);
-    res.json({ message: "Catatan berhasil diperbarui", data: result });
+    await catatanService.updateCatatan(id, data);
+    return res
+      .status(201)
+      .json({ message: `Berhasil mengubah ${tipeController}`, success: true });
   } catch (error) {
     next(error);
   }
@@ -56,7 +62,9 @@ export const deleteCatatan = async (req, res, next) => {
   try {
     const { id } = req.params;
     await catatanService.deleteCatatan(id);
-    res.json({ message: "Catatan berhasil dihapus" });
+    return res
+      .status(201)
+      .json({ message: `Berhasil menghapus ${tipeController}`, success: true });
   } catch (error) {
     next(error);
   }

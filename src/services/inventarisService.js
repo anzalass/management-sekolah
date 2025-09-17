@@ -19,7 +19,6 @@ export const createInventaris = async (data) => {
     });
   } catch (error) {
     console.log(error);
-
     const errorMessage = prismaErrorHandler(error);
     throw new Error(errorMessage);
   }
@@ -42,7 +41,6 @@ export const updateInventaris = async (id, data) => {
     });
   } catch (error) {
     console.log(error);
-
     const errorMessage = prismaErrorHandler(error);
     throw new Error(errorMessage);
   }
@@ -115,7 +113,6 @@ export const getAllInventaris = async ({
     };
   } catch (error) {
     console.log(error);
-
     const errorMessage = prismaErrorHandler(error);
     throw new Error(errorMessage);
   }
@@ -131,7 +128,6 @@ export const createJenisInventaris = async (data) => {
     });
   } catch (error) {
     console.log(error);
-
     const errorMessage = prismaErrorHandler(error);
     throw new Error(errorMessage);
   }
@@ -147,6 +143,7 @@ export const updateJenisInventaris = async (id, data) => {
       });
     });
   } catch (error) {
+    console.log(error);
     const errorMessage = prismaErrorHandler(error);
     throw new Error(errorMessage);
   }
@@ -158,6 +155,7 @@ export const deleteJenisInventaris = async (id) => {
       await prisma.jenis_Inventaris.delete({ where: { id } });
     });
   } catch (error) {
+    console.log(error);
     const errorMessage = prismaErrorHandler(error);
     throw new Error(errorMessage);
   }
@@ -252,7 +250,8 @@ export const createPemeliharaanInventaris = async (data) => {
     });
   } catch (error) {
     console.log(error);
-    throw new Error("Gagal menambahkan pemeliharaan inventaris");
+    const errorMessage = prismaErrorHandler(error);
+    throw new Error(errorMessage);
   }
 };
 
@@ -266,6 +265,7 @@ export const updatePemeliharaanInventaris = async (id, data) => {
       });
     });
   } catch (error) {
+    console.log(error);
     const errorMessage = prismaErrorHandler(error);
     throw new Error(errorMessage);
   }
@@ -277,6 +277,7 @@ export const deletePemeliharaanInventaris = async (id) => {
       await prisma.pemeliharaan_Inventaris.delete({ where: { id } });
     });
   } catch (error) {
+    console.log(error);
     const errorMessage = prismaErrorHandler(error);
     throw new Error(errorMessage);
   }
@@ -334,8 +335,8 @@ export const getAllPemeliharaanInventaris = async ({
       count: await prisma.pemeliharaan_Inventaris.count(),
     };
   } catch (error) {
-    const errorMessage = prismaErrorHandler(error);
     console.log(error);
+    const errorMessage = prismaErrorHandler(error);
     throw new Error(errorMessage);
   }
 };

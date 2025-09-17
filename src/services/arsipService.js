@@ -16,11 +16,7 @@ export const createArsip = async (data, file) => {
         throw new Error("File kosong saat dibaca dari buffer");
       }
 
-      UploadResult = await uploadToCloudinary(
-        file.buffer,
-        "materi",
-        data.judul
-      );
+      UploadResult = await uploadToCloudinary(file.buffer, "arsip", data.judul);
     }
 
     console.log("upload res", UploadResult);
@@ -43,7 +39,6 @@ export const createArsip = async (data, file) => {
     });
   } catch (error) {
     console.log(error);
-
     const errorMessage = prismaErrorHandler(error);
     throw new Error(errorMessage);
   }
@@ -60,14 +55,12 @@ export const deleteArsip = async (id) => {
     const deleteArsipFromCloudinary = await deleteFromCloudinary(
       dataArsip.url_id
     );
-    if (deleteArsipFromCloudinary) {
-      await prisma.$transaction(async (tx) => {
-        tx.arsip.delete({ where: { id: id } });
-      });
-    }
+
+    await prisma.$transaction(async (tx) => {
+      await tx.arsip.delete({ where: { id: id } });
+    });
   } catch (error) {
     console.log(error);
-
     const errorMessage = prismaErrorHandler(error);
     throw new Error(errorMessage);
   }
@@ -110,7 +103,6 @@ export const getAllArsip = async ({
     };
   } catch (error) {
     console.log(error);
-
     const errorMessage = prismaErrorHandler(error);
     throw new Error(errorMessage);
   }

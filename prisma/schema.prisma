@@ -56,6 +56,7 @@ model Guru {
   guruTemplate  GuruTemplate[]
   jadwalMengajar jadwalMengajar[]
   PerizinanGuru PerizinanGuru[]
+  JanjiTemu JanjiTemu[]
 
 }
 
@@ -97,6 +98,8 @@ model Kelas {
   nama              String
   namaGuru          String
   nipGuru           String
+  banner            String?
+  bannerId      String?
   ruangKelas        String
   tahunAjaran       String
   KehadiranSiswa    KehadiranSiswa[]
@@ -105,7 +108,22 @@ model Kelas {
   PerizinanSiswa    PerizinanSiswa[]
   PengumumanKelas   PengumumanKelas[]
   CatatanPerkembanganSiswa CatatanPerkembanganSiswa[]
+  JadwalPelajaran     JadwalPelajaran[]
 }
+
+
+model JadwalPelajaran {
+  id                String             @id @default(uuid())
+  idKelas           String
+  hari              String
+  namaMapel         String
+  jamMulai String
+  jamSelesai String
+  Kelas               Kelas  @relation(fields: [idKelas], references: [id])
+
+}
+
+
 model RiwayatPendidikanGuru {
   id                String @id @default(uuid())
   idGuru            String
@@ -125,13 +143,18 @@ model KelasDanMapel {
   nipGuru        String
   ruangKelas     String
   kelas          String
+  banner         String?
+  bannerId       String?
   tahunAjaran    String
   Guru           Guru?            @relation(fields: [idGuru], references: [id])
   DaftarSiswa    DaftarSiswaMapel[]
+  SummaryTugas   SummaryTugas[]
+  SummaryMateri SummaryMateri[]
   NilaiSiswa     NilaiSiswa[]
   MateriMapel    MateriMapel[]
   TugasMapel     TugasMapel[]
   JenisNilai     JenisNilai[]
+  CatatanAkhirSiswa CatatanAkhirSiswa[]
 
 }
 
@@ -141,6 +164,8 @@ model DaftarSiswaMapel {
   idSiswa       String
   namaSiswa     String
   nisSiswa      String
+  banner        String?
+  bannerId      String?
   KelasDanMapel KelasDanMapel @relation(fields: [idKelas], references: [id])
   Siswa         Siswa @relation(fields: [idSiswa], references: [id])
   @@unique([idSiswa, idKelas])
@@ -149,6 +174,7 @@ model DaftarSiswaMapel {
 model DaftarSiswaKelas {
   id              String @id @default(uuid())
   idKelas         String
+  rapotSiswa      String?
   idSiswa         String
   namaSiswa       String
   nisSiswa        String
@@ -173,6 +199,8 @@ model NilaiSiswa {
   idJenisNilai    String
   jenisNilai      String
   nilai           Int
+  createdAt       DateTime?
+
 
   Siswa           Siswa @relation(fields: [idSiswa], references: [id])
   KelasDanMapel   KelasDanMapel @relation(fields: [idKelasDanMapel], references: [id])
@@ -199,6 +227,7 @@ model Siswa {
   nik           String
   nama          String
   jurusan       String?
+  password      String?
   tanggalLahir  DateTime
   tempatLahir   String
   namaAyah      String
@@ -229,6 +258,9 @@ model Siswa {
   SummaryTugas                  SummaryTugas[]
   Konseling                     Konseling[]
   CatatanPerkembanganSiswa      CatatanPerkembanganSiswa[]
+  CatatanAkhirSiswa      CatatanAkhirSiswa[]
+  JanjiTemu   JanjiTemu[]
+
 }
 
 model Konseling  {
@@ -329,7 +361,6 @@ model PerizinanSiswa {
   id         String @id @default(uuid())
   idSiswa    String
   idKelas    String?
-  jenis      String
   keterangan String
   time       DateTime
   bukti      String
@@ -383,9 +414,23 @@ model CatatanPerkembanganSiswa  {
 
 }
 
+model CatatanAkhirSiswa {
+  id          String @id @default(uuid())
+  idKelasMapel     String?
+  idSiswa     String
+  content     String
+  KelasdanMapel       KelasDanMapel?  @relation(fields: [idKelasMapel], references: [id])
+  Siswa       Siswa  @relation(fields: [idSiswa], references: [id])
+
+  @@unique([idSiswa, idKelasMapel])
+
+}
+
 model Buku_Perpustakaan {
   id         String @id @default(uuid())
   nama       String
+  cover      String?
+  cover_id   String?
   filepdf    String?
   filePdfid  String?
   pengarang  String
@@ -541,11 +586,14 @@ model MateriMapel {
 model SummaryMateri  {
   id   String @id @default(uuid())
   idSiswa String
+  idKelasMapel String
   idMateri String
   content String
   waktu DateTime
   MateriMapel MateriMapel   @relation(fields: [idMateri], references: [id])
   Siswa Siswa   @relation(fields: [idSiswa], references: [id])
+  KelasMapel KelasDanMapel   @relation(fields: [idKelasMapel], references: [id])
+
 
 }
 
@@ -565,13 +613,14 @@ model TugasMapel {
 
 model SummaryTugas {
   id   String @id @default(uuid())
+  idKelasMapel String
   idSiswa String
   idTugas String
   content String
   waktu DateTime
   TugasMapel TugasMapel   @relation(fields: [idTugas], references: [id])
   Siswa Siswa   @relation(fields: [idSiswa], references: [id])
-
+  KelasMapel KelasDanMapel   @relation(fields: [idKelasMapel], references: [id])
 
 }
 
@@ -583,4 +632,15 @@ model Arsip {
    tanggal DateTime
    url String
    url_id String
+}
+
+model JanjiTemu {
+   id   String @id @default(uuid())
+   idSiswa String
+   idGuru String
+   waktu DateTime
+   status String
+   deskripsi String
+  Siswa Siswa   @relation(fields: [idSiswa], references: [id])
+  Guru Guru   @relation(fields: [idGuru], references: [id])
 }

@@ -12,17 +12,16 @@ export const createRuangController = async (req, res, next) => {
     await createRuang(req.body);
     return res.status(201).json({ message: "Berhasil membuat ruang " });
   } catch (error) {
-    return res.status(500).json({ message: error.message });
+    return res.status(500).json({ message: error.message, success: false });
   }
 };
 
 export const updateRuangController = async (req, res, next) => {
   try {
-    console.log("body", req.body);
     await updateRuang(req.params.id, req.body);
     return res.status(200).json({ message: "Berhasil mengubah ruang " });
   } catch (error) {
-    return res.status(500).json({ message: error.message });
+    return res.status(500).json({ message: error.message, success: false });
   }
 };
 
@@ -31,7 +30,7 @@ export const deleteRuangController = async (req, res, next) => {
     await deleteRuang(req.params.id);
     return res.status(200).json({ message: "Berhasil menghapus ruang " });
   } catch (error) {
-    return res.status(500).json({ message: error.message });
+    return res.status(500).json({ message: error.message, success: false });
   }
 };
 
@@ -40,7 +39,7 @@ export const getRuangByIdController = async (req, res, next) => {
     const ruang = await getRuangById(req.params.id);
     return res.status(200).json(ruang);
   } catch (error) {
-    return res.status(500).json({ message: error.message });
+    return res.status(500).json({ message: error.message, success: false });
   }
 };
 
@@ -52,7 +51,7 @@ export const getAllRuangController = async (req, res, next) => {
     const result = await getAllRuang({ page, pageSize, nama });
     return res.status(200).json(result);
   } catch (error) {
-    return res.status(500).json({ message: error.message });
+    return res.status(500).json({ message: error.message, success: false });
   }
 };
 
@@ -61,6 +60,6 @@ export const getAllRuangController2 = async (req, res, next) => {
     const ruang = await getAllRuang2();
     return res.status(200).json({ data: ruang });
   } catch (error) {
-    return res.status(500).json({ message: error.message });
+    return res.status(500).json({ message: error.message, success: false });
   }
 };

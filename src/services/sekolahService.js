@@ -86,6 +86,7 @@ export const updateSekolah = async (id, data, foto) => {
       },
     });
   } catch (error) {
+    console.log(error);
     const errorMessage = prismaErrorHandler(error);
     throw new Error(errorMessage);
   }

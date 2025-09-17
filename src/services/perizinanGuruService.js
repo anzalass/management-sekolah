@@ -1,5 +1,6 @@
 import { PrismaClient } from "@prisma/client";
 import { uploadToCloudinary } from "../utils/ImageHandler.js";
+import { prismaErrorHandler } from "../utils/errorHandlerPrisma.js";
 const prisma = new PrismaClient();
 
 export const createPerizinanGuru = async (data, foto) => {
@@ -31,8 +32,9 @@ export const createPerizinanGuru = async (data, foto) => {
       },
     });
   } catch (error) {
-    console.log("a", error);
-    throw new Error(error.message);
+    console.log(error);
+    const errorMessage = prismaErrorHandler(error);
+    throw new Error(errorMessage);
   }
 };
 
@@ -43,7 +45,9 @@ export const updateStatusPerizinanGuru = async (id, status) => {
       data: { status },
     });
   } catch (error) {
-    throw new Error(error.message);
+    console.log(error);
+    const errorMessage = prismaErrorHandler(error);
+    throw new Error(errorMessage);
   }
 };
 
@@ -53,7 +57,9 @@ export const deletePerizinanGuru = async (id) => {
       await prisma.perizinanGuru.delete({ where: { id } });
     });
   } catch (error) {
-    throw new Error(error.message);
+    console.log(error);
+    const errorMessage = prismaErrorHandler(error);
+    throw new Error(errorMessage);
   }
 };
 

@@ -15,8 +15,8 @@ export const createCatatan = async (data) => {
     });
   } catch (error) {
     console.log(error);
-
-    throw prismaErrorHandler(error);
+    const errorMessage = prismaErrorHandler(error);
+    throw new Error(errorMessage);
   }
 };
 
@@ -27,7 +27,9 @@ export const getAllCatatan = async () => {
       orderBy: { time: "desc" },
     });
   } catch (error) {
-    throw prismaErrorHandler(error);
+    console.log(error);
+    const errorMessage = prismaErrorHandler(error);
+    throw new Error(errorMessage);
   }
 };
 
@@ -38,7 +40,9 @@ export const getCatatanById = async (id) => {
       include: { Kelas: true, Siswa: true },
     });
   } catch (error) {
-    throw prismaErrorHandler(error);
+    console.log(error);
+    const errorMessage = prismaErrorHandler(error);
+    throw new Error(errorMessage);
   }
 };
 
@@ -64,7 +68,9 @@ export const getCatatanByIdKelas = async (idKelas) => {
       nis: item.Siswa?.nis || null,
     }));
   } catch (error) {
-    throw prismaErrorHandler(error);
+    console.log(error);
+    const errorMessage = prismaErrorHandler(error);
+    throw new Error(errorMessage);
   }
 };
 
@@ -75,7 +81,9 @@ export const updateCatatan = async (id, data) => {
       data,
     });
   } catch (error) {
-    throw prismaErrorHandler(error);
+    console.log(error);
+    const errorMessage = prismaErrorHandler(error);
+    throw new Error(errorMessage);
   }
 };
 
@@ -85,6 +93,8 @@ export const deleteCatatan = async (id) => {
       where: { id },
     });
   } catch (error) {
-    throw prismaErrorHandler(error);
+    console.log(error);
+    const errorMessage = prismaErrorHandler(error);
+    throw new Error(errorMessage);
   }
 };

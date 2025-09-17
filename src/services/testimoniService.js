@@ -75,7 +75,7 @@ export const getAllTestimoni = async (page, pageSize, search) => {
   } catch (error) {
     console.error(error);
     const errorMessage =
-      prismaErrorHandler(error) || "Gagal mendapatkan testimonies";
+      prismaErrorHandler(error) || "Gagal mendapatkan testimoni";
     throw new Error(errorMessage);
   }
 };

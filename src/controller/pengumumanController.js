@@ -9,27 +9,33 @@ import {
 export const createPengumumanController = async (req, res, next) => {
   try {
     await createPengumuman(req.body);
-    return res.status(201).json({ message: "Berhasil membuat pengumuman" });
+    return res
+      .status(201)
+      .json({ message: "Berhasil membuat pengumuman", success: true });
   } catch (error) {
-    return res.status(500).json({ message: error.message });
+    return res.status(500).json({ message: error.message, success: false });
   }
 };
 
 export const updatePengumumanController = async (req, res, next) => {
   try {
     await updatePengumuman(req.params.id, req.body);
-    return res.status(200).json({ message: "Berhasil mengupdate pengumuman" });
+    return res
+      .status(200)
+      .json({ message: "Berhasil mengupdate pengumuman", success: true });
   } catch (error) {
-    return res.status(500).json({ message: error.message });
+    return res.status(500).json({ message: error.message, success: false });
   }
 };
 
 export const deletePengumumanController = async (req, res, next) => {
   try {
     await deletePengumuman(req.params.id);
-    return res.status(200).json({ message: "Berhasil menghapus pengumuman" });
+    return res
+      .status(200)
+      .json({ message: "Berhasil menghapus pengumuman", success: true });
   } catch (error) {
-    return res.status(500).json({ message: error.message });
+    return res.status(500).json({ message: error.message, success: false });
   }
 };
 
@@ -38,7 +44,7 @@ export const getPengumumanByIdController = async (req, res, next) => {
     const pengumuman = await getPengumumanById(req.params.id);
     return res.status(200).json(pengumuman);
   } catch (error) {
-    return res.status(500).json({ message: error.message });
+    return res.status(500).json({ message: error.message, success: false });
   }
 };
 
@@ -52,6 +58,6 @@ export const getAllPengumumanController = async (req, res, next) => {
     });
     return res.status(200).json(result);
   } catch (error) {
-    return res.status(500).json({ message: error.message });
+    return res.status(500).json({ message: error.message, success: false });
   }
 };

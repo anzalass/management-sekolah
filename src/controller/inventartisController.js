@@ -23,7 +23,7 @@ export const createInventarisController = async (req, res) => {
     await createInventaris(req.body);
     return res.status(201).json({ message: "Berhasil membuat inventaris" });
   } catch (error) {
-    return res.status(500).json({ message: error.message });
+    return res.status(500).json({ message: error.message, success: false });
   }
 };
 
@@ -32,7 +32,7 @@ export const updateInventarisController = async (req, res) => {
     await updateInventaris(req.params.id, req.body);
     return res.status(200).json({ message: "Berhasil mengupdate inventaris" });
   } catch (error) {
-    return res.status(500).json({ message: error.message });
+    return res.status(500).json({ message: error.message, success: false });
   }
 };
 
@@ -41,7 +41,7 @@ export const deleteInventarisController = async (req, res) => {
     await deleteInventaris(req.params.id);
     return res.status(200).json({ message: "Berhasil menghapus inventaris" });
   } catch (error) {
-    return res.status(500).json({ message: error.message });
+    return res.status(500).json({ message: error.message, success: false });
   }
 };
 
@@ -52,7 +52,7 @@ export const getInventarisByIdController = async (req, res) => {
       .status(200)
       .json({ message: "Berhasil mendapatkan inventaris", data: inventaris });
   } catch (error) {
-    return res.status(500).json({ message: error.message });
+    return res.status(500).json({ message: error.message, success: false });
   }
 };
 
@@ -70,7 +70,7 @@ export const getAllInventarisController = async (req, res) => {
       .status(200)
       .json({ message: "Berhasil mendapatkan inventaris", data: result });
   } catch (error) {
-    return res.status(500).json({ message: error.message });
+    return res.status(500).json({ message: error.message, success: false });
   }
 };
 
@@ -81,7 +81,7 @@ export const createJenisInventarisController = async (req, res) => {
       .status(201)
       .json({ message: "Berhasil membuat jenis inventaris" });
   } catch (error) {
-    return res.status(500).json({ message: error.message });
+    return res.status(500).json({ message: error.message, success: false });
   }
 };
 
@@ -92,7 +92,7 @@ export const updateJenisInventarisController = async (req, res) => {
       .status(200)
       .json({ message: "Berhasil mengupdate jenis inventaris" });
   } catch (error) {
-    return res.status(500).json({ message: error.message });
+    return res.status(500).json({ message: error.message, success: false });
   }
 };
 
@@ -103,7 +103,7 @@ export const deleteJenisInventarisController = async (req, res) => {
       .status(200)
       .json({ message: "Berhasil menghapus jenis inventaris" });
   } catch (error) {
-    return res.status(500).json({ message: error.message });
+    return res.status(500).json({ message: error.message, success: false });
   }
 };
 
@@ -115,7 +115,7 @@ export const getJenisInventarisByIdController = async (req, res) => {
       data: jenisInventaris,
     });
   } catch (error) {
-    return res.status(500).json({ message: error.message });
+    return res.status(500).json({ message: error.message, success: false });
   }
 };
 
@@ -131,7 +131,7 @@ export const getAllJenisInventarisController = async (req, res) => {
       data: jenisInventaris,
     });
   } catch (error) {
-    return res.status(500).json({ message: error.message });
+    return res.status(500).json({ message: error.message, success: false });
   }
 };
 
@@ -143,7 +143,7 @@ export const getAllJenisInventarisController2 = async (req, res) => {
       data: result,
     });
   } catch (error) {
-    return res.status(500).json({ message: error.message });
+    return res.status(500).json({ message: error.message, success: false });
   }
 };
 
@@ -154,7 +154,7 @@ export const createPemeliharaanInventarisController = async (req, res) => {
       .status(201)
       .json({ message: "Berhasil membuat pemeliharaan inventaris" });
   } catch (error) {
-    return res.status(500).json({ message: error.message });
+    return res.status(500).json({ message: error.message, success: false });
   }
 };
 
@@ -168,7 +168,7 @@ export const getPemeliharaanInventarisByIdController = async (req, res) => {
       data: pemeliharaanInventaris,
     });
   } catch (error) {
-    return res.status(500).json({ message: error.message });
+    return res.status(500).json({ message: error.message, success: false });
   }
 };
 
@@ -179,7 +179,7 @@ export const updatePemeliharaanInventarisController = async (req, res) => {
       .status(200)
       .json({ message: "Berhasil mengupdate pemeliharaan inventaris" });
   } catch (error) {
-    return res.status(500).json({ message: error.message });
+    return res.status(500).json({ message: error.message, success: false });
   }
 };
 
@@ -190,7 +190,7 @@ export const deletePemeliharaanInventarisController = async (req, res) => {
       .status(200)
       .json({ message: "Berhasil menghapus pemeliharaan inventaris" });
   } catch (error) {
-    return res.status(500).json({ message: error.message });
+    return res.status(500).json({ message: error.message, success: false });
   }
 };
 
@@ -209,7 +209,7 @@ export const getAllPemeliharaanInventarisController = async (req, res) => {
       data: pemeliharaanInventaris,
     });
   } catch (error) {
-    return res.status(500).json({ message: error.message });
+    return res.status(500).json({ message: error.message, success: false });
   }
 };
 
@@ -220,6 +220,6 @@ export const updateStatusPemeliharaanController = async (req, res) => {
       .status(200)
       .json({ message: "Berhasil mengupdate status pemeliharaan" });
   } catch (error) {
-    return res.status(500).json({ message: error.message });
+    return res.status(500).json({ message: error.message, success: false });
   }
 };

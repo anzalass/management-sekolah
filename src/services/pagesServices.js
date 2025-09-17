@@ -52,8 +52,9 @@ export const dashboardMengajarServicePage = async (idGuru) => {
       perizinan,
     };
   } catch (error) {
-    console.error("Dashboard Error:", error);
-    throw new Error(prismaErrorHandler(error));
+    console.log(error);
+    const errorMessage = prismaErrorHandler(error);
+    throw new Error(errorMessage);
   }
 };
 
@@ -145,8 +146,9 @@ export const dashboardOverview = async () => {
       guruMasukPalingPagi: guruMasukTercepat,
     };
   } catch (error) {
-    console.error("Dashboard Error:", error);
-    throw new Error(prismaErrorHandler(error));
+    console.log(error);
+    const errorMessage = prismaErrorHandler(error);
+    throw new Error(errorMessage);
   }
 };
 
@@ -180,8 +182,9 @@ export const dashboardKelasMapel = async (idKelas) => {
       tugasKelas,
     };
   } catch (error) {
-    console.error("Dashboard Error:", error);
-    throw new Error(prismaErrorHandler(error));
+    console.log(error);
+    const errorMessage = prismaErrorHandler(error);
+    throw new Error(errorMessage);
   }
 };
 
@@ -221,7 +224,99 @@ export const dashboardWaliKelas = async (idKelas) => {
       catatanMap,
     };
   } catch (error) {
-    console.error("Dashboard Error:", error);
-    throw new Error(prismaErrorHandler(error));
+    console.log(error);
+    const errorMessage = prismaErrorHandler(error);
+    throw new Error(errorMessage);
+  }
+};
+
+export const getSideBarGuru = async (idGuru, jabatan) => {
+  try {
+    // Ambil data dari DB
+    const kelasWaliKelas = await prisma.kelas.findMany({
+      where: { idGuru },
+      select: {
+        id: true,
+        nama: true,
+        tahunAjaran: true,
+      },
+    });
+
+    const kelasMapel = await prisma.kelasDanMapel.findMany({
+      where: { idGuru },
+      select: {
+        id: true,
+        namaMapel: true,
+        tahunAjaran: true,
+      },
+    });
+
+    // Generate dynamic items untuk sidebar
+    const data = [
+      {
+        title: "Dashboard",
+        url: "/mengajar",
+        icon: "dashboard",
+        isActive: false,
+        shortcut: ["d", "d"],
+        items: [],
+      },
+      {
+        title: "Kelas",
+        url: "",
+        icon: "dashboard",
+        isActive: false,
+        shortcut: ["d", "d"],
+        items: kelasWaliKelas.map((k) => ({
+          title: `${k.nama} - ${k.tahunAjaran}`,
+          url: `/mengajar/walikelas/${k.id}`,
+          icon: "userPen",
+          shortcut: ["n", "n"],
+        })),
+      },
+      {
+        title: "Mata Pelajaran",
+        url: "",
+        icon: "dashboard",
+        isActive: false,
+        shortcut: ["d", "d"],
+        items: kelasMapel.map((km) => ({
+          title: `${km.namaMapel} -${km.tahunAjaran}`,
+          url: `/mengajar/kelas-mapel/${km.id}`,
+          icon: "userPen",
+          shortcut: ["n", "n"],
+        })),
+      },
+      {
+        title: "Jadwal Mengajar",
+        url: "/mengajar/jadwal-mengajar",
+        icon: "dashboard",
+        isActive: false,
+        shortcut: ["d", "d"],
+        items: [],
+      },
+      {
+        title: "Janji Temu",
+        url: "/mengajar/janji-temu",
+        icon: "dashboard",
+        isActive: false,
+        shortcut: ["d", "d"],
+        items: [],
+      },
+      {
+        title: "Perizinan & Kehadiran",
+        url: "/mengajar/perizinan-kehadiran",
+        icon: "dashboard",
+        isActive: false,
+        shortcut: ["d", "d"],
+        items: [],
+      },
+    ];
+
+    return data;
+  } catch (error) {
+    console.error(error);
+    const errorMessage = prismaErrorHandler(error);
+    throw new Error(errorMessage);
   }
 };

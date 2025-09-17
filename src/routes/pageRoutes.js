@@ -4,6 +4,7 @@ import {
   getDashboardMengajar,
   getDashboardOverview,
   getDashboardWaliKelas,
+  getSidebarMengajar,
 } from "../controller/pageController.js";
 import { AuthMiddleware } from "../utils/authMiddleware.js";
 
@@ -19,8 +20,10 @@ router.get(
 
 router.get(
   "/dashboard-walikelas/:idKelas",
-
+  AuthMiddleware,
   getDashboardWaliKelas
 );
+
+router.get("/sidebar", AuthMiddleware, getSidebarMengajar);
 
 export default router;
