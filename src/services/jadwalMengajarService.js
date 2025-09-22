@@ -31,8 +31,8 @@ export const createJadwalMengajar = async (data, idGuru) => {
     return result;
   } catch (error) {
     console.log(error);
-
-    throw prismaErrorHandler(error);
+    const errorMessage = prismaErrorHandler(error);
+    throw new Error(errorMessage);
   }
 };
 
@@ -69,7 +69,9 @@ export const updateJadwalMengajar = async (id, data) => {
 
     return result;
   } catch (error) {
-    throw prismaErrorHandler(error);
+    console.log(error);
+    const errorMessage = prismaErrorHandler(error);
+    throw new Error(errorMessage);
   }
 };
 
@@ -89,6 +91,24 @@ export const deleteJadwalMengajar = async (id) => {
 
     return result;
   } catch (error) {
-    throw prismaErrorHandler(error);
+    console.log(error);
+    const errorMessage = prismaErrorHandler(error);
+    throw new Error(errorMessage);
+  }
+};
+
+export const getJadwalMengajarbyIDGuru = async (idGuru) => {
+  try {
+    const res = await prisma.jadwalMengajar.findMany({
+      where: {
+        idGuru,
+      },
+    });
+
+    return res;
+  } catch (error) {
+    console.log(error);
+    const errorMessage = prismaErrorHandler(error);
+    throw new Error(errorMessage);
   }
 };

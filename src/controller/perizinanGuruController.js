@@ -32,46 +32,36 @@ export const createPerizinanGuruController = async (req, res, next) => {
 
       return res.status(201).json({
         message: "Berhasil membuat perizinan guru",
+        success: true,
       });
     } catch (error) {
-      console.error("Error createPerizinanGuruController:", error);
-      return res.status(500).json({ message: error.message });
+      return res.status(500).json({ message: error.message, success: false });
     }
   });
 };
 export const approvePerizinanGuru = async (req, res) => {
   const { id } = req.params;
   try {
-    const updated = await updateStatusPerizinanGuru(id, "disetujui");
-    res.status(200).json({
+    await updateStatusPerizinanGuru(id, "disetujui");
+    return res.status(200).json({
       success: true,
       message: "Perizinan berhasil disetujui",
-      data: updated,
     });
   } catch (error) {
-    console.error("Gagal approve perizinan:", error);
-    res.status(500).json({
-      success: false,
-      message: "Gagal menyetujui perizinan",
-    });
+    return res.status(500).json({ message: error.message, success: false });
   }
 };
 
 export const rejectPerizinanGuru = async (req, res) => {
   const { id } = req.params;
   try {
-    const updated = await updateStatusPerizinanGuru(id, "ditolak");
+    await updateStatusPerizinanGuru(id, "ditolak");
     res.status(200).json({
       success: true,
       message: "Perizinan berhasil ditolak",
-      data: updated,
     });
   } catch (error) {
-    console.error("Gagal reject perizinan:", error);
-    res.status(500).json({
-      success: false,
-      message: "Gagal menolak perizinan",
-    });
+    return res.status(500).json({ message: error.message, success: false });
   }
 };
 
@@ -80,9 +70,9 @@ export const deletePerizinanGuruController = async (req, res, next) => {
     await deletePerizinanGuru(req.params.id);
     return res
       .status(200)
-      .json({ message: "Berhasil menghapus perizinan guru" });
+      .json({ message: "Berhasil menghapus perizinan guru", success: true });
   } catch (error) {
-    return res.status(500).json({ message: error.message });
+    return res.status(500).json({ message: error.message, success: false });
   }
 };
 
@@ -91,7 +81,7 @@ export const getPerizinanGuruByIdController = async (req, res, next) => {
     const perizinanGuru = await getPerizinanGuruById(req.params.id);
     return res.status(200).json(perizinanGuru);
   } catch (error) {
-    return res.status(500).json({ message: error.message });
+    return res.status(500).json({ message: error.message, success: false });
   }
 };
 
@@ -113,16 +103,12 @@ export const getPerizinanGuruController = async (req, res) => {
       pageSize: parseInt(pageSize),
     });
 
-    res.json({
+    return res.json({
       success: true,
       message: "Data perizinan guru berhasil diambil",
       ...result,
     });
   } catch (error) {
-    console.error("Gagal mengambil data perizinan guru:", error);
-    res.status(500).json({
-      success: false,
-      message: "Terjadi kesalahan pada server",
-    });
+    return res.status(500).json({ message: error.message, success: false });
   }
 };

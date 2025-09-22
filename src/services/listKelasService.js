@@ -1,52 +1,69 @@
 import { PrismaClient } from "@prisma/client";
+import { prismaErrorHandler } from "../utils/errorHandlerPrisma.js";
 const prisma = new PrismaClient();
 
 // Create ListKelas
 export const createListKelas = async (namaKelas) => {
-  return await prisma.listKelas.create({
-    data: { namaKelas },
-  });
+  try {
+    return await prisma.listKelas.create({
+      data: { namaKelas },
+    });
+  } catch (error) {
+    console.log(error);
+    const errorMessage = prismaErrorHandler(error);
+    throw new Error(errorMessage);
+  }
 };
 
 // Delete ListKelas
 export const deleteListKelas = async (id) => {
-  return await prisma.listKelas.delete({
-    where: { id },
-  });
+  try {
+    return await prisma.listKelas.delete({
+      where: { id },
+    });
+  } catch (error) {
+    console.log(error);
+    const errorMessage = prismaErrorHandler(error);
+    throw new Error(errorMessage);
+  }
 };
 
-// Get All ListKelas (tambahan biar bisa dipakai di UI)
 export const getAllListKelas = async ({
   namaKelas = "",
   page = 1,
   pageSize = 10,
 } = {}) => {
-  const skip = (page - 1) * pageSize;
+  try {
+    const skip = (page - 1) * pageSize;
+    const where = namaKelas
+      ? {
+          namaKelas: {
+            contains: namaKelas,
+            mode: "insensitive",
+          },
+        }
+      : {};
 
-  const where = namaKelas
-    ? {
-        namaKelas: {
-          contains: namaKelas,
-          mode: "insensitive",
-        },
-      }
-    : {};
+    const [data, total] = await Promise.all([
+      prisma.listKelas.findMany({
+        where,
+        orderBy: { namaKelas: "asc" },
+        skip,
+        take: pageSize,
+      }),
+      prisma.listKelas.count({ where }),
+    ]);
 
-  const [data, total] = await Promise.all([
-    prisma.listKelas.findMany({
-      where,
-      orderBy: { namaKelas: "asc" },
-      skip,
-      take: pageSize,
-    }),
-    prisma.listKelas.count({ where }),
-  ]);
-
-  return {
-    data,
-    total,
-    page,
-    pageSize,
-    totalPages: Math.ceil(total / pageSize),
-  };
+    return {
+      data,
+      total,
+      page,
+      pageSize,
+      totalPages: Math.ceil(total / pageSize),
+    };
+  } catch (error) {
+    console.log(error);
+    const errorMessage = prismaErrorHandler(error);
+    throw new Error(errorMessage);
+  }
 };

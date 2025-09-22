@@ -3,6 +3,7 @@ import {
   dashboardOverview,
   dashboardKelasMapel,
   dashboardWaliKelas,
+  getSideBarGuru,
 } from "../services/pagesServices.js";
 
 export const getDashboardMengajar = async (req, res) => {
@@ -19,8 +20,7 @@ export const getDashboardMengajar = async (req, res) => {
       data: result,
     });
   } catch (error) {
-    console.error("Dashboard Controller Error:", error);
-    return res.status(500).json({ message: error.message });
+    return res.status(500).json({ message: error.message, success: false });
   }
 };
 
@@ -32,8 +32,7 @@ export const getDashboardOverview = async (req, res) => {
       data: result,
     });
   } catch (error) {
-    console.error("Dashboard Controller Error:", error);
-    return res.status(500).json({ message: error.message });
+    return res.status(500).json({ message: error.message, success: false });
   }
 };
 
@@ -45,8 +44,7 @@ export const getDashboardKelasMapel = async (req, res) => {
       data: result,
     });
   } catch (error) {
-    console.error("Dashboard Controller Error:", error);
-    return res.status(500).json({ message: error.message });
+    return res.status(500).json({ message: error.message, success: false });
   }
 };
 
@@ -58,7 +56,18 @@ export const getDashboardWaliKelas = async (req, res) => {
       data: result,
     });
   } catch (error) {
-    console.error("Dashboard Controller Error:", error);
-    return res.status(500).json({ message: error.message });
+    return res.status(500).json({ message: error.message, success: false });
+  }
+};
+
+export const getSidebarMengajar = async (req, res) => {
+  try {
+    const result = await getSideBarGuru(req.user.idGuru, req.user.jabatan);
+    return res.status(200).json({
+      message: "Berhasil mendapatkan data dashboard",
+      data: result,
+    });
+  } catch (error) {
+    return res.status(500).json({ message: error.message, success: false });
   }
 };

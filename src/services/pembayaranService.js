@@ -13,13 +13,13 @@ export const createTagihan = async (data) => {
 
       if (opsi === "semua") {
         siswaTarget = await tx.siswa.findMany({
-          where: { tahunLulus: null },
+          where: { tahunLulus: "" || null },
         });
       } else if (opsi === "kelas") {
         siswaTarget = await tx.siswa.findMany({
           where: {
             kelas: { contains: tagihanData.kelas || "", mode: "insensitive" },
-            tahunLulus: null,
+            tahunLulus: "",
           },
         });
       } else if (opsi === "individu") {
@@ -112,8 +112,9 @@ export const getAllTagihan = async (query) => {
       totalPages: Math.ceil(total / pageSize),
     };
   } catch (error) {
-    console.error(error);
-    throw new Error(prismaErrorHandler(error));
+    console.log(error);
+    const errorMessage = prismaErrorHandler(error);
+    throw new Error(errorMessage);
   }
 };
 
@@ -152,50 +153,56 @@ export const updateTagihan = async (id, data) => {
 };
 
 export const bayarTagihan = async (idTagihan, metodeBayar) => {
-  return await prisma.$transaction(async (tx) => {
-    const riwayatPembayaran = await tx.riwayatPembayaran.findFirst({
-      where: {
-        idTagihan: idTagihan,
-      },
+  try {
+    return await prisma.$transaction(async (tx) => {
+      const riwayatPembayaran = await tx.riwayatPembayaran.findFirst({
+        where: {
+          idTagihan: idTagihan,
+        },
+      });
+
+      if (riwayatPembayaran) {
+        throw new Error("Tagihan sudah dibayarkan");
+      }
+      // 1. Ambil data tagihan
+      const tagihan = await tx.tagihan.findUnique({
+        where: { id: idTagihan },
+      });
+
+      if (!tagihan) {
+        throw new Error("Tagihan tidak ditemukan");
+      }
+
+      if (tagihan.status === "Dibayar") {
+        throw new Error("Tagihan sudah dibayar");
+      }
+
+      // 2. Update status tagihan menjadi Dibayar
+      const updatedTagihan = await tx.tagihan.update({
+        where: { id: idTagihan },
+        data: { status: "Dibayar" },
+      });
+
+      // 3. Tambahkan riwayat pembayaran
+      const riwayat = await tx.riwayatPembayaran.create({
+        data: {
+          idTagihan: tagihan.id,
+          idSiswa: tagihan.idSiswa || null,
+          namaSiswa: tagihan.namaSiswa,
+          nisSiswa: tagihan.nisSiswa,
+          waktuBayar: new Date(),
+          metodeBayar,
+          status: "Sukses",
+        },
+      });
+
+      return { updatedTagihan, riwayat };
     });
-
-    if (riwayatPembayaran) {
-      throw new Error("Tagihan sudah dibayarkan");
-    }
-    // 1. Ambil data tagihan
-    const tagihan = await tx.tagihan.findUnique({
-      where: { id: idTagihan },
-    });
-
-    if (!tagihan) {
-      throw new Error("Tagihan tidak ditemukan");
-    }
-
-    if (tagihan.status === "Dibayar") {
-      throw new Error("Tagihan sudah dibayar");
-    }
-
-    // 2. Update status tagihan menjadi Dibayar
-    const updatedTagihan = await tx.tagihan.update({
-      where: { id: idTagihan },
-      data: { status: "Dibayar" },
-    });
-
-    // 3. Tambahkan riwayat pembayaran
-    const riwayat = await tx.riwayatPembayaran.create({
-      data: {
-        idTagihan: tagihan.id,
-        idSiswa: tagihan.idSiswa || null,
-        namaSiswa: tagihan.namaSiswa,
-        nisSiswa: tagihan.nisSiswa,
-        waktuBayar: new Date(),
-        metodeBayar,
-        status: "Sukses",
-      },
-    });
-
-    return { updatedTagihan, riwayat };
-  });
+  } catch (error) {
+    console.log(error);
+    const errorMessage = prismaErrorHandler(error);
+    throw new Error(errorMessage);
+  }
 };
 
 export const getAllRiwayatPembayaran = async ({
@@ -243,6 +250,8 @@ export const getAllRiwayatPembayaran = async ({
     };
   } catch (error) {
     console.log(error);
+    const errorMessage = prismaErrorHandler(error);
+    throw new Error(errorMessage);
   }
 };
 

@@ -1,17 +1,22 @@
 import {
   createMateriMapel,
   createSummaryMateri,
+  createSummaryTugas,
   createTugasMapel,
   deleteMateriMapel,
   deleteSummaryMateri,
+  deleteSummaryTugas,
   deleteTugasMapel,
   getAllMateriMapel,
+  getAllSummarTugas,
   getAllSummaryMateri,
   getAllTugasMapel,
   getMateriAndSummaryByMateriID,
   getMateriMapelById,
   getSummaryByMateriId,
+  getSummaryByTugasId,
   getSummaryMateriById,
+  getSummaryTugasById,
   getTugasAndSummaryByTugasID,
   getTugasMapelById,
 } from "../services/materiTugasSummaryService.js";
@@ -23,9 +28,13 @@ export const handleCreateMateriMapel = async (req, res) => {
       console.log("pdf ctrlr", req.file);
 
       const result = await createMateriMapel(req.body, req.file);
-      res.status(201).json({ success: true, data: result });
+      return res.status(201).json({
+        message: "Berhasil membuat materi",
+        success: true,
+        data: result,
+      });
     } catch (error) {
-      res.status(500).json({ success: false, message: error.message });
+      return res.status(500).json({ success: false, message: error.message });
     }
   });
 };
@@ -33,18 +42,22 @@ export const handleCreateMateriMapel = async (req, res) => {
 export const handleGetAllMateriMapel = async (req, res) => {
   try {
     const result = await getAllMateriMapel();
-    res.status(200).json({ success: true, data: result });
+    return res.status(200).json({ success: true, data: result });
   } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+    return res.status(500).json({
+      message: "Berhasil mendapatkan materi",
+      success: false,
+      message: error.message,
+    });
   }
 };
 
 export const handleGetMateriMapelById = async (req, res) => {
   try {
     const result = await getMateriMapelById(req.params.id);
-    res.status(200).json({ success: true, data: result });
+    return res.status(200).json({ success: true, data: result });
   } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+    return res.status(500).json({ success: false, message: error.message });
   }
 };
 
@@ -55,34 +68,34 @@ export const handleDeleteMateriMapel = async (req, res) => {
       .status(200)
       .json({ success: true, message: "Materi deleted", data: result });
   } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+    return res.status(500).json({ success: false, message: error.message });
   }
 };
 
 export const handleCreateSummaryMateri = async (req, res) => {
   try {
     const result = await createSummaryMateri(req.body);
-    res.status(201).json({ success: true, data: result });
+    return res.status(201).json({ success: true, data: result });
   } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+    return res.status(500).json({ success: false, message: error.message });
   }
 };
 
 export const handleGetAllSummaryMateri = async (req, res) => {
   try {
     const result = await getAllSummaryMateri();
-    res.status(200).json({ success: true, data: result });
+    return res.status(200).json({ success: true, data: result });
   } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+    return res.status(500).json({ success: false, message: error.message });
   }
 };
 
 export const handleGetSummaryMateriById = async (req, res) => {
   try {
     const result = await getSummaryMateriById(req.params.id);
-    res.status(200).json({ success: true, data: result });
+    return res.status(200).json({ success: true, data: result });
   } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+    return res.status(500).json({ success: false, message: error.message });
   }
 };
 
@@ -93,28 +106,29 @@ export const handleDeleteSummaryMateri = async (req, res) => {
       .status(200)
       .json({ success: true, message: "Summary deleted", data: result });
   } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+    return res.status(500).json({ success: false, message: error.message });
   }
 };
 
 export const handleGetSummaryByMateriId = async (req, res) => {
   try {
     const result = await getSummaryByMateriId(req.params.idMateri);
-    res.status(200).json({ success: true, data: result });
+    return res.status(200).json({ success: true, data: result });
   } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+    return res.status(500).json({ success: false, message: error.message });
   }
 };
 
 export const handleCreateTugasMapel = async (req, res) => {
   fileUpload.single("pdf")(req, res, async (err) => {
     try {
-      console.log("pdf ctrlr", req.file);
-
-      const result = await createTugasMapel(req.body, req.file);
-      res.status(201).json({ success: true, data: result });
+      await createTugasMapel(req.body, req.file);
+      return res.status(201).json({
+        message: "Berhasil membuat tugas",
+        success: true,
+      });
     } catch (error) {
-      res.status(500).json({ success: false, message: error.message });
+      return res.status(500).json({ success: false, message: error.message });
     }
   });
 };
@@ -122,46 +136,91 @@ export const handleCreateTugasMapel = async (req, res) => {
 export const handleGetAllTugasMapel = async (req, res) => {
   try {
     const result = await getAllTugasMapel();
-    res.status(200).json({ success: true, data: result });
+    return res.status(200).json({ success: true, data: result });
   } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+    return res.status(500).json({ success: false, message: error.message });
   }
 };
 
 export const handleGetTugasMapelById = async (req, res) => {
   try {
     const result = await getTugasMapelById(req.params.id);
-    res.status(200).json({ success: true, data: result });
+    return res.status(200).json({ success: true, data: result });
   } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+    return res.status(500).json({ success: false, message: error.message });
   }
 };
 
 export const handleDeleteTugasMapel = async (req, res) => {
   try {
-    const result = await deleteTugasMapel(req.params.id);
-    res
-      .status(200)
-      .json({ success: true, message: "Tugas deleted", data: result });
+    await deleteTugasMapel(req.params.id);
+    res.status(200).json({ success: true, message: "Tugas deleted" });
   } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+    return res.status(500).json({ success: false, message: error.message });
   }
 };
 
 export const handleGetMateriAndSummaryByMateriID = async (req, res) => {
   try {
     const result = await getMateriAndSummaryByMateriID(req.params.id);
-    res.status(200).json({ success: true, data: result });
+    return res.status(200).json({ success: true, data: result });
   } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+    return res.status(500).json({ success: false, message: error.message });
   }
 };
 
 export const handleGetTugasAndSummaryByTugasiID = async (req, res) => {
   try {
     const result = await getTugasAndSummaryByTugasID(req.params.id);
-    res.status(200).json({ success: true, data: result });
+    return res.status(200).json({ success: true, data: result });
   } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+    return res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+export const handleCreateSummaryTugas = async (req, res) => {
+  try {
+    const result = await createSummaryTugas(req.body);
+    return res.status(201).json({ success: true, data: result });
+  } catch (error) {
+    return res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+export const handleGetAllSummaryTugas = async (req, res) => {
+  try {
+    const result = await getAllSummarTugas();
+    return res.status(200).json({ success: true, data: result });
+  } catch (error) {
+    return res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+export const handleGetSummaryTugasById = async (req, res) => {
+  try {
+    const result = await getSummaryTugasById(req.params.id);
+    return res.status(200).json({ success: true, data: result });
+  } catch (error) {
+    return res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+export const handleDeleteSummaryTugas = async (req, res) => {
+  try {
+    const result = await deleteSummaryTugas(req.params.id);
+    res
+      .status(200)
+      .json({ success: true, message: "Summary deleted", data: result });
+  } catch (error) {
+    return res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+export const handleGetSummaryByTugasId = async (req, res) => {
+  try {
+    const result = await getSummaryByTugasId(req.params.idTugas);
+    return res.status(200).json({ success: true, data: result });
+  } catch (error) {
+    return res.status(500).json({ success: false, message: error.message });
   }
 };

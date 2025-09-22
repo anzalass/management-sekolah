@@ -36,7 +36,6 @@ export const createAnggaran = async (data) => {
     });
   } catch (error) {
     console.log(error);
-
     const errorMessage = prismaErrorHandler(error);
     throw new Error(errorMessage);
   }
@@ -99,7 +98,6 @@ export const updateAnggaran = async (idAnggaran, data) => {
     return { message: "Anggaran berhasil diperbarui" };
   } catch (error) {
     console.log(error);
-
     const errorMessage = prismaErrorHandler(error);
     throw new Error(errorMessage);
   }
@@ -189,6 +187,7 @@ export const getAllAnggaran = async ({
       total: await prisma.riwayatAnggaran.count({ where }),
     };
   } catch (error) {
+    console.log(error);
     const errorMessage = prismaErrorHandler(error);
     throw new Error(errorMessage);
   }

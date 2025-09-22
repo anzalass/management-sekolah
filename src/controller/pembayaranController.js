@@ -11,10 +11,10 @@ import {
 export const CreateTagihanController = async (req, res) => {
   try {
     const data = req.body;
-    const result = await createTagihan(data);
-    res.status(201).json({ message: "Tagihan berhasil dibuat", result });
+    await createTagihan(data);
+    res.status(201).json({ message: "Tagihan berhasil dibuat" });
   } catch (error) {
-    res.status(400).json({ message: error.message });
+    return res.status(500).json({ message: error.message, success: false });
   }
 };
 
@@ -22,9 +22,9 @@ export const GetAllTagihanController = async (req, res) => {
   try {
     const query = req.query;
     const result = await getAllTagihan(query);
-    res.status(200).json(result);
+    return res.status(200).json(result);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    return res.status(500).json({ message: error.message, success: false });
   }
 };
 
@@ -35,9 +35,9 @@ export const GetTagihanByIdController = async (req, res) => {
     if (!result) {
       return res.status(404).json({ message: "Tagihan tidak ditemukan" });
     }
-    res.status(200).json(result);
+    return res.status(200).json(result);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    return res.status(500).json({ message: error.message, success: false });
   }
 };
 
@@ -45,30 +45,30 @@ export const UpdateTagihanController = async (req, res) => {
   try {
     const id = req.params.id;
     const data = req.body;
-    const result = await updateTagihan(id, data);
-    res.status(200).json({ message: "Tagihan berhasil diupdate", result });
+    await updateTagihan(id, data);
+    return res.status(200).json({ message: "Tagihan berhasil diupdate" });
   } catch (error) {
-    res.status(400).json({ message: error.message });
+    return res.status(500).json({ message: error.message, success: false });
   }
 };
 
 export const DeleteTagihanController = async (req, res) => {
   try {
     const id = req.params.id;
-    const result = await deleteTagihan(id);
-    res.status(200).json({ message: "Tagihan berhasil dihapus", result });
+    await deleteTagihan(id);
+    return res.status(200).json({ message: "Tagihan berhasil dihapus" });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    return res.status(500).json({ message: error.message, success: false });
   }
 };
 
 export const BayarTagihanController = async (req, res) => {
   try {
     const id = req.params.id;
-    const result = await bayarTagihan(id, req.body.metodeBayar);
-    res.status(200).json({ message: "Tagihan berhasil Dibayar", result });
+    await bayarTagihan(id, req.body.metodeBayar);
+    return res.status(200).json({ message: "Tagihan berhasil Dibayar" });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    return res.status(500).json({ message: error.message, success: false });
   }
 };
 
@@ -85,6 +85,6 @@ export const GetAllRiwayatPembayaranController = async (req, res) => {
       .status(200)
       .json({ message: "Berhasil Mendapatkan Data Tagihan", result });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    return res.status(500).json({ message: error.message, success: false });
   }
 };

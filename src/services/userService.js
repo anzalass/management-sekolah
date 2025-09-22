@@ -5,7 +5,6 @@ import fs from "fs/promises";
 import bcrypt from "bcryptjs";
 import {
   deleteFromCloudinary,
-  deleteFromImageKit,
   uploadToCloudinary,
 } from "../utils/ImageHandler.js";
 import { prismaErrorHandler } from "../utils/errorHandlerPrisma.js";
@@ -37,20 +36,6 @@ const createGuru = async (guru, foto) => {
       imageUploadResult = await uploadToCloudinary(foto.buffer, "guru", nip);
     }
 
-    console.log("url", imageUploadResult?.secure_url);
-
-    // if (file && file.buffer) {
-    //   if (!file.buffer || file.buffer.length === 0) {
-    //     throw new Error("File kosong saat dibaca dari buffer");
-    //   }
-
-    //   UploadResult = await uploadToCloudinary(
-    //     file.buffer,
-    //     "materi",
-    //     data.judul
-    //   );
-    // }
-
     const newGuru = await prisma.guru.create({
       data: {
         nip,
@@ -73,8 +58,9 @@ const createGuru = async (guru, foto) => {
 
     return newGuru;
   } catch (error) {
-    console.error("Error in createGuru:", error);
-    throw new Error(error.message || "Gagal membuat guru");
+    console.log(error);
+    const errorMessage = prismaErrorHandler(error);
+    throw new Error(errorMessage);
   }
 };
 
@@ -94,6 +80,7 @@ const createRiwayatPendidikan = async (nip, data) => {
       }
     });
   } catch (error) {
+    console.log(error);
     const errorMessage = prismaErrorHandler(error);
     throw new Error(errorMessage);
   }
@@ -178,8 +165,9 @@ const updateGuru = async (id, guru, foto) => {
       });
     });
   } catch (error) {
-    console.error("Update guru error:", error);
-    throw new Error("Gagal mengupdate guru: " + error.message);
+    console.log(error);
+    const errorMessage = prismaErrorHandler(error);
+    throw new Error(errorMessage);
   }
 };
 
@@ -263,7 +251,7 @@ const createSiswa = async (siswa, foto) => {
     namaAyah,
     namaIbu,
     tahunLulus,
-    poin,
+    password,
     noTeleponOrtu,
     alamat,
     agama,
@@ -279,8 +267,7 @@ const createSiswa = async (siswa, foto) => {
     imageUploadResult = await uploadToCloudinary(foto.buffer, "siswa", nis);
   }
 
-  console.log("foto service", foto);
-  console.log("cloud", imageUploadResult);
+  const passwordHash = await bcrypt.hash(password, 10);
 
   try {
     await prisma.$transaction(async (tx) => {
@@ -294,6 +281,7 @@ const createSiswa = async (siswa, foto) => {
           tanggalLahir: new Date(`${tanggalLahir}T00:00:00Z`),
           tempatLahir,
           namaAyah,
+          password: passwordHash,
           namaIbu,
           tahunLulus,
           alamat,
@@ -312,8 +300,7 @@ const createSiswa = async (siswa, foto) => {
     });
     return;
   } catch (error) {
-    console.log("error", error);
-
+    console.log(error);
     const errorMessage = prismaErrorHandler(error);
     throw new Error(errorMessage);
   }
@@ -331,6 +318,7 @@ const updateSiswa = async (id, siswa, foto) => {
     namaAyah,
     namaIbu,
     tahunLulus,
+    password,
     poin,
     alamat,
     agama,
@@ -343,6 +331,10 @@ const updateSiswa = async (id, siswa, foto) => {
 
   try {
     let imageUploadResult = null;
+
+    const passwordHash = password?.trim()
+      ? await bcrypt.hash(password, 10)
+      : "";
 
     // Ambil data siswa dari database, wajib di luar blok `if (foto)`
     const existingSiswa = await prisma.siswa.findUnique({
@@ -376,6 +368,7 @@ const updateSiswa = async (id, siswa, foto) => {
           nama,
           kelas,
           jurusan,
+          password: password ? passwordHash : existingSiswa.password,
           tanggalLahir: tanggalLahir
             ? new Date(`${tanggalLahir}T00:00:00Z`)
             : undefined,
@@ -395,14 +388,11 @@ const updateSiswa = async (id, siswa, foto) => {
           fotoId: imageUploadResult?.public_id || existingSiswa.fotoId,
         },
       });
-
-      // Update semua tabel terkait berdasarkan NIS lama
     });
 
     return;
   } catch (error) {
     console.log(error);
-
     const errorMessage = prismaErrorHandler(error);
     throw new Error(errorMessage);
   }
@@ -448,14 +438,38 @@ const deleteSiswa = async (id) => {
     });
   } catch (error) {
     console.error("Error saat delete siswa:", error);
-
     const errorMessage = prismaErrorHandler(error);
     throw new Error(errorMessage);
   }
 };
 
 const getSiswaByID = async (id) => {
-  const siswa = await prisma.siswa.findUnique({ where: { id: id } });
+  const siswa = await prisma.siswa.findUnique({
+    where: { id: id },
+    select: {
+      id: true,
+      nis: true,
+      nik: true,
+      nama: true,
+      jurusan: true,
+      tanggalLahir: true,
+      tempatLahir: true,
+      namaAyah: true,
+      namaIbu: true,
+      tahunLulus: true,
+      alamat: true,
+      alamat: true,
+      agama: true,
+      kelas: true,
+      jenisKelamin: true,
+      foto: true,
+      noTelepon: true,
+      noTeleponOrtu: true,
+      email: true,
+      ekstraKulikulerPeminatan: true,
+      ekstraKulikulerWajib: true,
+    },
+  });
   if (!siswa) {
     throw new Error("Siswa dengan NIS tersebut tidak ditemukan");
   } else {

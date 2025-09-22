@@ -25,9 +25,8 @@ export const createPendaftaran = async (data) => {
     });
     return result;
   } catch (error) {
-    console.error("Error creating Pendaftaran:", error);
-    const errorMessage =
-      prismaErrorHandler(error) || "Gagal membuat pendaftaran";
+    console.log(error);
+    const errorMessage = prismaErrorHandler(error);
     throw new Error(errorMessage);
   }
 };
@@ -69,9 +68,8 @@ export const getAllPendaftaran = async (
       totalPages: Math.ceil(totalPendaftaran / pageSize),
     };
   } catch (error) {
-    console.error("Error fetching all pendaftaran:", error);
-    const errorMessage =
-      prismaErrorHandler(error) || "Gagal mengambil data pendaftaran";
+    console.log(error);
+    const errorMessage = prismaErrorHandler(error);
     throw new Error(errorMessage);
   }
 };
@@ -88,9 +86,8 @@ export const getPendaftaranById = async (id) => {
 
     return pendaftaran;
   } catch (error) {
-    console.error("Error fetching pendaftaran by ID:", error);
-    const errorMessage =
-      prismaErrorHandler(error) || "Gagal mendapatkan pendaftaran";
+    console.log(error);
+    const errorMessage = prismaErrorHandler(error);
     throw new Error(errorMessage);
   }
 };
@@ -116,9 +113,8 @@ export const updatePendaftaran = async (id, data) => {
 
     return updatedPendaftaran;
   } catch (error) {
-    console.error("Error updating pendaftaran:", error);
-    const errorMessage =
-      prismaErrorHandler(error) || "Gagal memperbarui pendaftaran";
+    console.log(error);
+    const errorMessage = prismaErrorHandler(error);
     throw new Error(errorMessage);
   }
 };
@@ -131,9 +127,8 @@ export const deletePendaftaran = async (id) => {
 
     return deletedPendaftaran;
   } catch (error) {
-    console.error("Error deleting pendaftaran:", error);
-    const errorMessage =
-      prismaErrorHandler(error) || "Gagal menghapus pendaftaran";
+    console.log(error);
+    const errorMessage = prismaErrorHandler(error);
     throw new Error(errorMessage);
   }
 };

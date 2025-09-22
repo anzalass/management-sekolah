@@ -2,17 +2,22 @@ import express from "express";
 import {
   handleCreateMateriMapel,
   handleCreateSummaryMateri,
+  handleCreateSummaryTugas,
   handleCreateTugasMapel,
   handleDeleteMateriMapel,
   handleDeleteSummaryMateri,
+  handleDeleteSummaryTugas,
   handleDeleteTugasMapel,
   handleGetAllMateriMapel,
   handleGetAllSummaryMateri,
+  handleGetAllSummaryTugas,
   handleGetAllTugasMapel,
   handleGetMateriAndSummaryByMateriID,
   handleGetMateriMapelById,
   handleGetSummaryByMateriId,
+  handleGetSummaryByTugasId,
   handleGetSummaryMateriById,
+  handleGetSummaryTugasById,
   handleGetTugasAndSummaryByTugasiID,
   handleGetTugasMapelById,
 } from "../controller/materiTugasSummaryController.js";
@@ -37,6 +42,13 @@ router.get("/summary", handleGetAllSummaryMateri);
 router.get("/summary/:id", handleGetSummaryMateriById);
 router.delete("/summary/:id", handleDeleteSummaryMateri);
 router.get("/summary/materi/:idMateri", handleGetSummaryByMateriId);
+
+// Summary Tugas
+router.post("/summary-tugas", handleCreateSummaryTugas);
+router.get("/summary-tugas", handleGetAllSummaryTugas);
+router.get("/summary-tugas/:id", handleGetSummaryTugasById);
+router.delete("/summary-tugas/:id", handleDeleteSummaryTugas);
+router.get("/summary-tugas/materi/:idTugas", handleGetSummaryByTugasId);
 
 router.get("/materi-summary/:id", handleGetMateriAndSummaryByMateriID);
 router.get("/tugas-summary/:id", handleGetTugasAndSummaryByTugasiID);

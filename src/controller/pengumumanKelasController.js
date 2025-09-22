@@ -14,9 +14,7 @@ export const createPengumumanKelas = async (req, res, next) => {
       data: result,
     });
   } catch (error) {
-    console.log(error);
-
-    next(error);
+    return res.status(500).json({ message: error.message, success: false });
   }
 };
 
@@ -25,7 +23,7 @@ export const getAllPengumumanKelas = async (req, res, next) => {
     const result = await pengumumanKelasService.getAllPengumumanKelas();
     res.json(result);
   } catch (error) {
-    next(error);
+    return res.status(500).json({ message: error.message, success: false });
   }
 };
 
@@ -40,7 +38,7 @@ export const getPengumumanKelasById = async (req, res, next) => {
     }
     res.json(result);
   } catch (error) {
-    next(error);
+    return res.status(500).json({ message: error.message, success: false });
   }
 };
 
@@ -57,7 +55,7 @@ export const getPengumumanKelasByKelasId = async (req, res, next) => {
     }
     res.json(result);
   } catch (error) {
-    next(error);
+    return res.status(500).json({ message: error.message, success: false });
   }
 };
 
@@ -76,7 +74,7 @@ export const updatePengumumanKelas = async (req, res, next) => {
       data: result,
     });
   } catch (error) {
-    next(error);
+    return res.status(500).json({ message: error.message, success: false });
   }
 };
 
@@ -86,6 +84,6 @@ export const deletePengumumanKelas = async (req, res, next) => {
     await pengumumanKelasService.deletePengumumanKelas(id);
     res.json({ message: "Pengumuman kelas berhasil dihapus" });
   } catch (error) {
-    next(error);
+    return res.status(500).json({ message: error.message, success: false });
   }
 };

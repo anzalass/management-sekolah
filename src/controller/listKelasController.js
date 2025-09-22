@@ -18,10 +18,7 @@ export const createListKelasController = async (req, res) => {
       data: newKelas,
     });
   } catch (error) {
-    return res.status(500).json({
-      message: "Gagal membuat kelas",
-      error: error.message,
-    });
+    return res.status(500).json({ message: error.message, success: false });
   }
 };
 
@@ -32,10 +29,7 @@ export const deleteListKelasController = async (req, res) => {
     await deleteListKelas(id);
     return res.json({ message: "Kelas berhasil dihapus" });
   } catch (error) {
-    return res.status(500).json({
-      message: "Gagal menghapus kelas",
-      error: error.message,
-    });
+    return res.status(500).json({ message: error.message, success: false });
   }
 };
 
@@ -49,9 +43,6 @@ export const getAllListKelasController = async (req, res) => {
     });
     return res.json(kelas);
   } catch (error) {
-    return res.status(500).json({
-      message: "Gagal mengambil data kelas",
-      error: error.message,
-    });
+    return res.status(500).json({ message: error.message, success: false });
   }
 };

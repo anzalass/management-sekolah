@@ -63,7 +63,8 @@ export const getGuruTemplate = async (page, pageSize, search) => {
     };
   } catch (error) {
     console.error(error);
-    throw new Error("Gagal mengambil data guru template");
+    const errorMessage = prismaErrorHandler(error) || "Gagal membuat testimoni";
+    throw new Error(errorMessage);
   }
 };
 

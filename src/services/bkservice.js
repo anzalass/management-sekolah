@@ -4,7 +4,7 @@ const prisma = new PrismaClient();
 
 const computeEffect = (jenis, poin) => {
   if (!jenis) return 0;
-  return jenis.toLowerCase() === "pelanggaran" ? poin : -poin;
+  return jenis.toLowerCase() === "pelanggaran" ? -poin : poin;
 };
 
 export const createPelanggaranPrestasi = async ({
@@ -15,8 +15,6 @@ export const createPelanggaranPrestasi = async ({
   keterangan,
 }) => {
   try {
-    console.log("dt", idSiswa, waktu, poin, jenis, keterangan);
-
     return await prisma.$transaction(async (tx) => {
       const siswa = await tx.siswa.findUnique({
         where: { id: idSiswa },
@@ -47,7 +45,6 @@ export const createPelanggaranPrestasi = async ({
     });
   } catch (err) {
     console.log(err);
-
     const errorMessage = prismaErrorHandler(err);
     throw new Error(errorMessage);
   }
@@ -126,17 +123,20 @@ export const updatePelanggaranPrestasi = async (
 ) => {
   try {
     return await prisma.$transaction(async (tx) => {
+      // Cek record lama
       const existing = await tx.pelanggaran_Dan_Prestasi_Siswa.findUnique({
         where: { id },
       });
       if (!existing) throw new Error("Record tidak ditemukan");
 
+      // Cek siswa
       const siswa = await tx.siswa.findUnique({
         where: { nis: existing.nisSiswa },
         select: { poin: true },
       });
       if (!siswa) throw new Error("Siswa tidak ditemukan");
 
+      // Hitung efek lama dan baru
       const prevEffect = computeEffect(existing.jenis, existing.poin);
       const basePoin = typeof siswa.poin === "number" ? siswa.poin : 0;
 
@@ -144,11 +144,14 @@ export const updatePelanggaranPrestasi = async (
       const newPoin = typeof poin === "number" ? poin : existing.poin;
       const newEffect = computeEffect(newJenis, newPoin);
 
+      // Balikin poin lama dulu, baru masukin poin baru
       const adjustedPoin = basePoin - prevEffect + newEffect;
 
+      // Update record pelanggaran/prestasi
       const updated = await tx.pelanggaran_Dan_Prestasi_Siswa.update({
         where: { id },
         data: {
+          idSiswa: existing.idSiswa,
           poin: newPoin,
           jenis: newJenis,
           keterangan: keterangan ?? existing.keterangan,
@@ -156,17 +159,17 @@ export const updatePelanggaranPrestasi = async (
         },
       });
 
+      // Update total poin siswa
       await tx.siswa.update({
-        where: { nis: existing.nisSiswa },
+        where: { id: existing.idSiswa },
         data: { poin: adjustedPoin },
       });
 
       return updated;
     });
   } catch (err) {
-    console.log(error);
-
-    const errorMessage = prismaErrorHandler(error);
+    console.log(err);
+    const errorMessage = prismaErrorHandler(err);
     throw new Error(errorMessage);
   }
 };
@@ -202,7 +205,6 @@ export const deletePelanggaranPrestasi = async (id) => {
     });
   } catch (err) {
     console.log(error);
-
     const errorMessage = prismaErrorHandler(error);
     throw new Error(errorMessage);
   }
@@ -229,7 +231,6 @@ export const createKonseling = async (data) => {
     return konseling;
   } catch (error) {
     console.log(error);
-
     const errorMessage = prismaErrorHandler(error);
     throw new Error(errorMessage);
   }
@@ -246,7 +247,6 @@ export const getKonselingById = async (id) => {
     });
   } catch (error) {
     console.log(error);
-
     const errorMessage = prismaErrorHandler(error);
     throw new Error(errorMessage);
   }
@@ -272,7 +272,6 @@ export const updateKonseling = async (id, data) => {
     });
   } catch (error) {
     console.log(error);
-
     const errorMessage = prismaErrorHandler(error);
     throw new Error(errorMessage);
   }
@@ -286,7 +285,6 @@ export const deleteKonseling = async (id) => {
     });
   } catch (error) {
     console.log(error);
-
     const errorMessage = prismaErrorHandler(error);
     throw new Error(errorMessage);
   }

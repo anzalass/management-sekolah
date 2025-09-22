@@ -2,6 +2,7 @@ import {
   absenMasukGuru,
   absenPulangGuru,
   getAllKehadiranGuru,
+  getKehadiranGuruByIdGuru,
 } from "../services/KehadiranGurudanStaff.js";
 import memoryUpload from "../utils/multer.js";
 
@@ -35,8 +36,7 @@ export const absenMasukGuruController = (req, res) => {
         data: result,
       });
     } catch (error) {
-      console.error("Absen Masuk Error:", error);
-      return res.status(400).json({ message: error.message });
+      return res.status(500).json({ message: error.message, success: false });
     }
   });
 };
@@ -64,8 +64,7 @@ export const absenPulangGuruController = async (req, res) => {
       data: result,
     });
   } catch (error) {
-    console.error("Absen Pulang Error:", error);
-    return res.status(400).json({ message: error.message });
+    return res.status(500).json({ message: error.message, success: false });
   }
 };
 export const getKehadiranGuruController = async (req, res) => {
@@ -86,10 +85,12 @@ export const getKehadiranGuruController = async (req, res) => {
       data: kehadiran,
     });
   } catch (error) {
-    console.error("Gagal mengambil kehadiran guru:", error);
-    res.status(500).json({
-      success: false,
-      message: "Terjadi kesalahan saat mengambil data kehadiran guru",
-    });
+    return res.status(500).json({ message: error.message, success: false });
   }
+};
+
+export const getKehadiranGuruByIdGuruController = async () => {
+  try {
+    const data = await getKehadiranGuruByIdGuru(req.params.idGuru);
+  } catch (error) {}
 };

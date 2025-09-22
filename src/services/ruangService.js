@@ -11,6 +11,7 @@ export const createRuang = async (data) => {
       });
     });
   } catch (error) {
+    console.log(error);
     const errorMessage = prismaErrorHandler(error);
     throw new Error(errorMessage);
   }
@@ -32,6 +33,7 @@ export const updateRuang = async (id, data) => {
       console.log(updt.result);
     });
   } catch (error) {
+    console.log(error);
     const errorMessage = prismaErrorHandler(error);
     throw new Error(errorMessage);
   }
@@ -43,6 +45,7 @@ export const deleteRuang = async (id) => {
       await tx.ruangan.delete({ where: { id } });
     });
   } catch (error) {
+    console.log(error);
     const errorMessage = prismaErrorHandler(error);
     throw new Error(errorMessage);
   }
@@ -84,9 +87,8 @@ export const getAllRuang = async ({ page = 1, pageSize = 10, nama = "" }) => {
       totalPages: Math.ceil(total / pageSize),
     };
   } catch (error) {
-    const errorMessage = prismaErrorHandler(error);
     console.log(error);
-
+    const errorMessage = prismaErrorHandler(error);
     throw new Error(errorMessage);
   }
 };

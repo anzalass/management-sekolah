@@ -8,7 +8,8 @@ export const createPengumumanKelas = async (data) => {
     return await prisma.pengumumanKelas.create({ data });
   } catch (error) {
     console.log(error);
-    throw prismaErrorHandler(error);
+    const errorMessage = prismaErrorHandler(error);
+    throw new Error(errorMessage);
   }
 };
 
@@ -20,7 +21,8 @@ export const getAllPengumumanKelas = async () => {
     });
   } catch (error) {
     console.log(error);
-    throw prismaErrorHandler(error);
+    const errorMessage = prismaErrorHandler(error);
+    throw new Error(errorMessage);
   }
 };
 
@@ -32,7 +34,8 @@ export const getPengumumanKelasById = async (id) => {
     });
   } catch (error) {
     console.log(error);
-    throw prismaErrorHandler(error);
+    const errorMessage = prismaErrorHandler(error);
+    throw new Error(errorMessage);
   }
 };
 
@@ -44,7 +47,8 @@ export const updatePengumumanKelas = async (id, data) => {
     });
   } catch (error) {
     console.log(error);
-    throw prismaErrorHandler(error);
+    const errorMessage = prismaErrorHandler(error);
+    throw new Error(errorMessage);
   }
 };
 
@@ -55,7 +59,8 @@ export const deletePengumumanKelas = async (id) => {
     });
   } catch (error) {
     console.log(error);
-    throw prismaErrorHandler(error);
+    const errorMessage = prismaErrorHandler(error);
+    throw new Error(errorMessage);
   }
 };
 
@@ -66,6 +71,7 @@ export const getPengumumanKelasByKelasId = async (idKelas) => {
     });
   } catch (error) {
     console.log(error);
-    throw prismaErrorHandler(error);
+    const errorMessage = prismaErrorHandler(error);
+    throw new Error(errorMessage);
   }
 };

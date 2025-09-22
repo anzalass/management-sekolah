@@ -33,7 +33,15 @@ import kehadiranSiswaRoutes from "./routes/kehadiranSiswaRoutes.js";
 import catatahnPerkembanganSiswa from "./routes/catatanPerkembanganSiswaRoutes.js";
 import pengumumanKelasRoutes from "./routes/pengumumanKelasRoutes.js";
 import listKelasRoutes from "./routes/listKelasRoutes.js";
+import catatanAkhirSiswaRoutes from "./routes/catatanAkhirSiswaRoutes.js";
+import siswaRoutes from "./routes/siswa/siswaRoutes.js";
+import perizinanSiswa from "./routes/siswa/perizinanSiswaRoutes.js";
+
 import pembayaranRoutes from "./routes/pembayaranRoutes.js";
+import jadwalRoutes from "./routes/jadwalPelajaranRoutes.js";
+import janjiTemuRoutes from "./routes/siswa/janjiTemuRoutes.js";
+import ujianRoutes from "./routes/ujianIframeRoutes.js";
+import weeklyActivity from "./routes/weeklyActivityRoutes.js";
 
 import { fileURLToPath } from "url";
 import path from "path";
@@ -56,7 +64,7 @@ app.use(morgan("dev"));
 app.use(
   cors({
     origin: `${process.env.SERVER_FE}`,
-    methods: ["GET", "POST", "PUT", "DELETE"],
+    methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
     allowedHeaders: ["Content-Type", "Authorization"],
     credentials: true,
   })
@@ -99,6 +107,13 @@ app.use("/api/v1", catatahnPerkembanganSiswa);
 app.use("/api/v1", pengumumanKelasRoutes);
 app.use("/api/v1", listKelasRoutes);
 app.use("/api/v1", pembayaranRoutes);
+app.use("/api/v1", catatanAkhirSiswaRoutes);
+app.use("/api/v1", siswaRoutes);
+app.use("/api/v1", jadwalRoutes);
+app.use("/api/v1", perizinanSiswa);
+app.use("/api/v1", janjiTemuRoutes);
+app.use("/api/v1", ujianRoutes);
+app.use("/api/v1", weeklyActivity);
 
 app.get("/api/v1/view-image/:imageName", (req, res) => {
   const { imageName } = req.params;

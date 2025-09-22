@@ -8,9 +8,10 @@ import { prismaErrorHandler } from "../utils/errorHandlerPrisma.js";
 const prisma = new PrismaClient();
 
 // ===== BUAT BUKU =====
-export const createBuku = async (data, file) => {
+export const createBuku = async (data, file, cover) => {
   const { nama, pengarang, penerbit, tahunTerbit, keterangan, stok } = data;
   let UploadResult = null;
+  let imageUploadResult = null;
 
   try {
     if (file && file.buffer) {
@@ -21,7 +22,13 @@ export const createBuku = async (data, file) => {
       UploadResult = await uploadToCloudinary(file.buffer, "buku", nama);
     }
 
-    console.log("srvice", file);
+    if (cover && cover.buffer && cover.buffer.length > 0) {
+      imageUploadResult = await uploadToCloudinary(
+        cover.buffer,
+        "cover_buku",
+        nama
+      );
+    }
 
     const result = await prisma.buku_Perpustakaan.create({
       data: {
@@ -33,6 +40,8 @@ export const createBuku = async (data, file) => {
         stok: parseInt(stok),
         filepdf: UploadResult?.secure_url || null,
         filePdfid: UploadResult?.public_id,
+        cover: imageUploadResult?.secure_url || null,
+        cover_id: imageUploadResult?.public_id,
       },
     });
 
@@ -255,7 +264,6 @@ export const deletePeminjamanDanPengembalian = async (id) => {
       });
     });
   } catch (error) {
-    console.error("Gagal hapus peminjaman:", error);
     console.log(error);
     const errorMessage = prismaErrorHandler(error);
     throw new Error(errorMessage);

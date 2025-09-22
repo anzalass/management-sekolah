@@ -1,0 +1,121 @@
+import { PrismaClient } from "@prisma/client";
+import { prismaErrorHandler } from "../utils/errorHandlerPrisma.js";
+const prisma = new PrismaClient();
+
+/**
+ * Tambah UjianIframe
+ */
+export const createUjianIframeService = async (data) => {
+  try {
+    const { idKelasMapel, nama, deadline, iframe } = data;
+
+    const ujian = await prisma.ujianIframe.create({
+      data: {
+        idKelasMapel,
+        nama,
+        deadline: new Date(deadline),
+        iframe,
+      },
+    });
+
+    return ujian;
+  } catch (error) {
+    console.error(error);
+    const errorMessage = prismaErrorHandler(error);
+    throw new Error(errorMessage);
+  }
+};
+
+/**
+ * Ambil semua UjianIframe
+ */
+export const getAllUjianIframeService = async () => {
+  try {
+    return await prisma.ujianIframe.findMany({
+      orderBy: {
+        deadline: "asc",
+      },
+      include: {
+        KelasMapel: true, // ikut ambil info kelas mapel
+      },
+    });
+  } catch (error) {
+    console.error(error);
+    const errorMessage = prismaErrorHandler(error);
+    throw new Error(errorMessage);
+  }
+};
+
+/**
+ * Ambil UjianIframe by ID
+ */
+export const getUjianIframeByIdService = async (id) => {
+  try {
+    return await prisma.ujianIframe.findUnique({
+      where: { id },
+      include: {
+        KelasMapel: true,
+      },
+    });
+  } catch (error) {
+    console.error(error);
+    const errorMessage = prismaErrorHandler(error);
+    throw new Error(errorMessage);
+  }
+};
+
+/**
+ * Ambil UjianIframe by ID KelasMapel
+ */
+export const getUjianIframeByKelasMapelService = async (idKelasMapel) => {
+  try {
+    return await prisma.ujianIframe.findMany({
+      where: { idKelasMapel },
+      orderBy: {
+        deadline: "asc",
+      },
+      include: {
+        KelasMapel: true,
+      },
+    });
+  } catch (error) {
+    console.error(error);
+    const errorMessage = prismaErrorHandler(error);
+    throw new Error(errorMessage);
+  }
+};
+
+/**
+ * Update UjianIframe
+ */
+export const updateUjianIframeService = async (id, data) => {
+  try {
+    const { idKelasMapel, nama, deadline, iframe } = data;
+
+    return await prisma.ujianIframe.update({
+      where: { id },
+      data: {
+        idKelasMapel,
+        nama,
+        deadline: new Date(deadline),
+        iframe,
+      },
+    });
+  } catch (error) {
+    throw new Error(`Gagal update ujian: ${error.message}`);
+  }
+};
+
+/**
+ * Hapus UjianIframe
+ */
+export const deleteUjianIframeService = async (id) => {
+  try {
+    await prisma.ujianIframe.delete({
+      where: { id },
+    });
+    return { message: "Ujian berhasil dihapus" };
+  } catch (error) {
+    throw new Error(`Gagal menghapus ujian: ${error.message}`);
+  }
+};

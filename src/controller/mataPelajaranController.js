@@ -42,7 +42,7 @@ export const updateMataPelajaranController = async (req, res, next) => {
       .status(200)
       .json({ message: "Berhasil mengupdate mata pelajaran" });
   } catch (error) {
-    return res.status(500).json({ message: error.message });
+    return res.status(500).json({ message: error.message, success: false });
   }
 };
 
@@ -53,7 +53,7 @@ export const deleteMataPelajaranController = async (req, res, next) => {
       .status(200)
       .json({ message: "Berhasil menghapus mata pelajaran" });
   } catch (error) {
-    return res.status(500).json({ message: error.message });
+    return res.status(500).json({ message: error.message, success: false });
   }
 };
 
@@ -65,7 +65,7 @@ export const getMataPelajaranByIdController = async (req, res, next) => {
       data: mataPelajaran,
     });
   } catch (error) {
-    return res.status(500).json({ message: error.message });
+    return res.status(500).json({ message: error.message, success: false });
   }
 };
 
@@ -81,6 +81,6 @@ export const getAllMataPelajaranController = async (req, res, next) => {
       result,
     });
   } catch (error) {
-    return res.status(500).json({ message: error.message });
+    return res.status(500).json({ message: error.message, success: false });
   }
 };

@@ -56,6 +56,49 @@ export const createKehadiranSiswa = async (data) => {
   }
 };
 
+export const createKehadiranSiswaManual = async (data) => {
+  try {
+    const { idSiswa, idKelas, waktu, keterangan } = data;
+
+    // Ambil waktu lokal Indonesia (WIB)
+    const now = new Date();
+    const waktuWIB = addHours(now, 7); // offset server UTC → WIB
+
+    // Batas awal dan akhir hari (WIB)
+    const tanggalAwal = new Date(waktuWIB);
+    tanggalAwal.setHours(0, 0, 0, 0);
+
+    const tanggalAkhir = new Date(waktuWIB);
+    tanggalAkhir.setHours(23, 59, 59, 999);
+
+    // Cek apakah sudah absen hari ini
+
+    const siswa = await prisma.siswa.findUnique({
+      where: {
+        id: idSiswa,
+      },
+    });
+
+    // Buat kehadiran baru
+    const kehadiran = await prisma.kehadiranSiswa.create({
+      data: {
+        idSiswa,
+        namaSiswa: siswa.nama,
+        nisSiswa: siswa.nis,
+        idKelas,
+        waktu: waktu,
+        keterangan: keterangan,
+      },
+    });
+
+    return kehadiran;
+  } catch (error) {
+    console.error(error);
+    const errorMessage = prismaErrorHandler(error);
+    throw new Error(errorMessage);
+  }
+};
+
 export const deleteKehadiranSiswa = async (id) => {
   try {
     const deleted = await prisma.kehadiranSiswa.delete({
@@ -64,7 +107,6 @@ export const deleteKehadiranSiswa = async (id) => {
     return deleted;
   } catch (error) {
     console.log(error);
-
     const errorMessage = prismaErrorHandler(error);
     throw new Error(errorMessage);
   }
@@ -249,4 +291,21 @@ export const getRekapAbsensiByKelas = async (idKelas) => {
 
   // 3. Return dalam bentuk array
   return Object.values(rekap);
+};
+
+export const getAbsesniSiswaByKelas = async (idSiswa, idKelas) => {
+  try {
+    const dataAbsen = await prisma.kehadiranSiswa.findMany({
+      where: {
+        idKelas,
+        idSiswa,
+      },
+    });
+
+    return dataAbsen;
+  } catch (error) {
+    console.log(error);
+    const errorMessage = prismaErrorHandler(error);
+    throw new Error(errorMessage);
+  }
 };

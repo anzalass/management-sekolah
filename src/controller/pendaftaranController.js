@@ -17,7 +17,7 @@ export const createPendaftaranController = async (req, res) => {
       kategori,
     } = req.body;
 
-    const newPendaftaran = await createPendaftaran({
+    await createPendaftaran({
       studentName,
       parentName,
       email,
@@ -28,9 +28,9 @@ export const createPendaftaranController = async (req, res) => {
 
     return res
       .status(201)
-      .json({ message: "Pendaftaran berhasil dibuat", data: newPendaftaran });
+      .json({ message: "Pendaftaran berhasil dibuat", success: true });
   } catch (error) {
-    return res.status(500).json({ message: error.message });
+    return res.status(500).json({ message: error.message, success: false });
   }
 };
 
@@ -49,7 +49,7 @@ export const getAllPendaftaranController = async (req, res) => {
     });
   } catch (error) {
     console.error("Error fetching pendaftaran:", error);
-    return res.status(500).json({ message: error.message });
+    return res.status(500).json({ message: error.message, success: false });
   }
 };
 
@@ -63,9 +63,9 @@ export const getPendaftaranByIdController = async (req, res) => {
       return res.status(404).json({ message: "Pendaftaran tidak ditemukan" });
     }
 
-    return res.status(200).json({ data: pendaftaran });
+    return res.status(200).json({ data: pendaftaran, success: true });
   } catch (error) {
-    return res.status(500).json({ message: error.message });
+    return res.status(500).json({ message: error.message, success: false });
   }
 };
 
@@ -82,7 +82,7 @@ export const updatePendaftaranController = async (req, res) => {
     const { studentName, parentName, email, phoneNumber, yourLocation } =
       req.body;
 
-    const updatedPendaftaran = await updatePendaftaran(id, {
+    await updatePendaftaran(id, {
       studentName,
       parentName,
       email,
@@ -90,14 +90,12 @@ export const updatePendaftaranController = async (req, res) => {
       yourLocation,
     });
 
-    return res
-      .status(200)
-      .json({
-        message: "Pendaftaran berhasil diperbarui",
-        data: updatedPendaftaran,
-      });
+    return res.status(200).json({
+      message: "Pendaftaran berhasil diperbarui",
+      success: true,
+    });
   } catch (error) {
-    return res.status(500).json({ message: error.message });
+    return res.status(500).json({ message: error.message, success: false });
   }
 };
 
@@ -112,8 +110,10 @@ export const deletePendaftaranController = async (req, res) => {
     }
 
     await deletePendaftaran(id);
-    return res.status(200).json({ message: "Pendaftaran berhasil dihapus" });
+    return res
+      .status(200)
+      .json({ message: "Pendaftaran berhasil dihapus", success: true });
   } catch (error) {
-    return res.status(500).json({ message: error.message });
+    return res.status(500).json({ message: error.message, success: false });
   }
 };
