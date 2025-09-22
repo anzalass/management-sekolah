@@ -185,7 +185,7 @@ export const getRapotSiswaController = async (req, res) => {
         <h1>Laporan Hasil Belajar</h1>
         <h4>Yayasan Tunas Anak Mulia</h4>
         <p>Rajeg Tangerang</p>
-        <p><strong>Tahun Ajaran: ${data.tahunAjaran}</strong></p>
+        <p><strong>Tahun Ajaran: ${tahunAjaran}</strong></p>
       </div>
 
       <!-- Data Siswa -->
@@ -204,10 +204,7 @@ export const getRapotSiswaController = async (req, res) => {
             <p class="label">Kelas:</p>
             <p class="value">${data.siswa.kelas}</p>
           </div>
-          <div class="field">
-            <p class="label">ID Siswa:</p>
-            <p class="value">${data.siswa.id}</p>
-          </div>
+      
         </div>
       </div>
 

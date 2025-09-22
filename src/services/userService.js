@@ -5,7 +5,6 @@ import fs from "fs/promises";
 import bcrypt from "bcryptjs";
 import {
   deleteFromCloudinary,
-  deleteFromImageKit,
   uploadToCloudinary,
 } from "../utils/ImageHandler.js";
 import { prismaErrorHandler } from "../utils/errorHandlerPrisma.js";

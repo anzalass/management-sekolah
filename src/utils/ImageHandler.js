@@ -1,47 +1,15 @@
-import ImageKit from "imagekit";
 import dotenv from "dotenv";
 dotenv.config();
-
-const imagekit = new ImageKit({
-  publicKey: "public_+LsWTN2IGXkaGmgXD8PpE/n7HFo=",
-  privateKey: "private_8X6RPe0HkLf3rPJCtJK5doTtdog=",
-  urlEndpoint: "https://ik.imagekit.io/blogemyu",
-});
-
-export const uploadToImageKit = async (file, folder) => {
-  try {
-    console.log("filename", file.originalname);
-
-    const filename = file?.originalname + new Date().getTime();
-    const result = await imagekit.upload({
-      file: file.buffer.toString("base64"),
-      fileName: filename,
-      folder: `management_sekolah/${folder}`,
-    });
-
-    return result;
-  } catch (error) {
-    throw new Error("Upload failed: " + error.message);
-  }
-};
-
-export const deleteFromImageKit = async (fileId) => {
-  try {
-    const result = await imagekit.deleteFile(fileId);
-    return result;
-  } catch (error) {
-    throw new Error("Delete failed: " + error.message);
-  }
-};
-
+import { fileTypeFromBuffer } from "file-type";
 import { v2 as cloudinary } from "cloudinary";
 import sharp from "sharp";
 
 // Konfigurasi Cloudinary
 cloudinary.config({
-  cloud_name: "dyofh7ecq",
-  api_key: "927867245521265",
-  api_secret: "G4yz1UqzywU4hXNaklR541BdFvY",
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME || "dyofh7ecq",
+  api_key: process.env.CLOUDINARY_API_KEY || "927867245521265",
+  api_secret:
+    process.env.CLOUDINARY_API_SECRET || "G4yz1UqzywU4hXNaklR541BdFvY",
 });
 
 /**
@@ -53,54 +21,69 @@ cloudinary.config({
 export const uploadToCloudinary = async (
   fileBuffer,
   folder,
-  fileName = "image"
+  fileName = "file"
 ) => {
   if (!fileBuffer || fileBuffer.length === 0) {
     throw new Error("File kosong");
   }
 
+  // Deteksi tipe file
+  const type = await fileTypeFromBuffer(fileBuffer);
+  const mime = type?.mime || "application/octet-stream";
+
+  const isImage = mime.startsWith("image/");
+
   try {
-    // 1. Kompres gambar (resize max width 2000px, kualitas 80%)
-    const compressedBuffer = await sharp(fileBuffer)
-      .resize({ width: 2000, withoutEnlargement: true })
-      .jpeg({ quality: 80 })
-      .toBuffer();
+    if (isImage) {
+      // === Jika file image: compress pakai sharp ===
+      const compressedBuffer = await sharp(fileBuffer)
+        .resize({ width: 2000, withoutEnlargement: true })
+        .jpeg({ quality: 80 })
+        .toBuffer();
 
-    // 2. Coba upload pakai streaming
-    return await new Promise((resolve, reject) => {
-      const uploadStream = cloudinary.uploader.upload_stream(
-        {
-          folder,
-          public_id: `${fileName}_${Date.now()}`,
-          resource_type: "auto",
-          timeout: 120000, // 2 menit
-        },
-        (error, result) => {
-          if (error) {
-            console.warn("Upload via stream gagal:", error.message);
-            return reject(error);
+      // Upload image pakai stream
+      return await new Promise((resolve, reject) => {
+        const uploadStream = cloudinary.uploader.upload_stream(
+          {
+            folder,
+            public_id: `${fileName}_${Date.now()}`,
+            resource_type: "image",
+            timeout: 120000,
+          },
+          (error, result) => {
+            if (error) return reject(error);
+            resolve({
+              secure_url: result.secure_url,
+              public_id: result.public_id,
+            });
           }
-          resolve({
-            secure_url: result.secure_url,
-            public_id: result.public_id,
-          });
-        }
-      );
-
-      uploadStream.end(compressedBuffer);
-    });
+        );
+        uploadStream.end(compressedBuffer);
+      });
+    } else {
+      // === Jika file bukan image (PDF, docx, zip): upload langsung ===
+      return await new Promise((resolve, reject) => {
+        const uploadStream = cloudinary.uploader.upload_stream(
+          {
+            folder,
+            public_id: `${fileName}_${Date.now()}`,
+            resource_type: "raw", // penting!
+            timeout: 120000,
+          },
+          (error, result) => {
+            if (error) return reject(error);
+            resolve({
+              secure_url: result.secure_url,
+              public_id: result.public_id,
+            });
+          }
+        );
+        uploadStream.end(fileBuffer);
+      });
+    }
   } catch (err) {
-    console.warn("Stream upload error, mencoba fallback base64:", err.message);
-
-    // 3. Fallback ke Base64 upload
-    const base64 = `data:image/jpeg;base64,${fileBuffer.toString("base64")}`;
-    const result = await cloudinary.uploader.upload(base64, {
-      folder,
-      public_id: `${fileName}_${Date.now()}`,
-      resource_type: "image",
-      timeout: 120000,
-    });
-    return { secure_url: result.secure_url, public_id: result.public_id };
+    console.error("Upload gagal:", err.message);
+    throw err;
   }
 };
 

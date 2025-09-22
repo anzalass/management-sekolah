@@ -160,3 +160,37 @@ export const loginAdmin = async (auth) => {
     throw new Error(errorMessage);
   }
 };
+
+export const ubahPasswordSiswa = async (userId, oldPassword, newPassword) => {
+  try {
+    // Ambil user berdasarkan id
+    const user = await prisma.siswa.findUnique({
+      where: { id: userId },
+    });
+
+    if (!user) {
+      throw new Error("User tidak ditemukan");
+    }
+
+    // Cek password lama
+    const isMatch = await bcrypt.compare(oldPassword, user.password);
+    if (!isMatch) {
+      throw new Error("Password lama tidak sesuai");
+    }
+
+    // Hash password baru
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+    // Update password baru
+    await prisma.siswa.update({
+      where: { id: userId },
+      data: { password: hashedPassword },
+    });
+
+    return { message: "Password berhasil diubah" };
+  } catch (error) {
+    console.log(error);
+    const errorMessage = prismaErrorHandler(error);
+    throw new Error(errorMessage);
+  }
+};

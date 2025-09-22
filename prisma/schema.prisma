@@ -109,6 +109,7 @@ model Kelas {
   PengumumanKelas   PengumumanKelas[]
   CatatanPerkembanganSiswa CatatanPerkembanganSiswa[]
   JadwalPelajaran     JadwalPelajaran[]
+  WeeklyActivity WeeklyActivity[]
 }
 
 
@@ -155,6 +156,7 @@ model KelasDanMapel {
   TugasMapel     TugasMapel[]
   JenisNilai     JenisNilai[]
   CatatanAkhirSiswa CatatanAkhirSiswa[]
+  UjianIframe UjianIframe[]
 
 }
 
@@ -583,6 +585,17 @@ model MateriMapel {
 }
 
 
+model UjianIframe {
+    id          String @id @default(uuid())
+    idKelasMapel String
+    nama String
+    deadline DateTime
+    iframe String
+    KelasMapel KelasDanMapel   @relation(fields: [idKelasMapel], references: [id])
+
+}
+
+
 model SummaryMateri  {
   id   String @id @default(uuid())
   idSiswa String
@@ -643,4 +656,23 @@ model JanjiTemu {
    deskripsi String
   Siswa Siswa   @relation(fields: [idSiswa], references: [id])
   Guru Guru   @relation(fields: [idGuru], references: [id])
+}
+
+model WeeklyActivity {
+  id   String @id @default(uuid())
+   idKelas String
+   content String
+   waktu DateTime
+  Kelas Kelas   @relation(fields: [idKelas], references: [id])
+  FotoWeeklyActivity FotoWeeklyActivity[]
+
+}
+
+model FotoWeeklyActivity {
+  id   String @id @default(uuid())
+  idWeeklyActivity String
+  fotoUrl String
+  fotoId String
+  WeeklyAktivity WeeklyActivity   @relation(fields: [idWeeklyActivity], references: [id])
+
 }

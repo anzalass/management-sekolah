@@ -1,4 +1,9 @@
-import { createSekolah, updateSekolah } from "../services/sekolahService.js";
+import {
+  createSekolah,
+  getSekolah,
+  updateSekolah,
+} from "../services/sekolahService.js";
+import memoryUpload from "../utils/multer.js";
 
 export const createSekolahController = async (req, res) => {
   try {
@@ -11,10 +16,11 @@ export const createSekolahController = async (req, res) => {
   }
 };
 export const updateSekolahController = async (req, res) => {
-  upload.single("foto")(req, res, async (err) => {
+  memoryUpload.single("foto")(req, res, async (err) => {
     try {
-      const { id } = req.params;
-      await updateSekolah(id, req.body, req.file);
+      console.log(req.file);
+
+      await updateSekolah(req.body, req.file);
       return res
         .status(200)
         .json({ message: "Berjasil mengupdate informasi sekolah" });
@@ -22,4 +28,13 @@ export const updateSekolahController = async (req, res) => {
       return res.status(500).json({ message: error.message });
     }
   });
+};
+
+export const getSekolahController = async (req, res) => {
+  try {
+    const data = await getSekolah();
+    return res.status(200).json({ data });
+  } catch (error) {
+    return res.status(500).json({ message: error.message });
+  }
 };

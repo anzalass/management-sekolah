@@ -154,32 +154,40 @@ export const dashboardOverview = async () => {
 
 export const dashboardKelasMapel = async (idKelas) => {
   try {
-    const [siswaKelas, materiKelas, tugasKelas] = await Promise.all([
-      prisma.daftarSiswaMapel.findMany({
-        where: { idKelas },
-        select: {
-          id: true,
-          Siswa: {
-            select: {
-              id: true,
-              nama: true,
-              nis: true,
+    const [siswaKelas, materiKelas, tugasKelas, ujianKelas] = await Promise.all(
+      [
+        prisma.daftarSiswaMapel.findMany({
+          where: { idKelas },
+          select: {
+            id: true,
+            Siswa: {
+              select: {
+                id: true,
+                nama: true,
+                nis: true,
+              },
             },
           },
-        },
-      }),
-      prisma.materiMapel.findMany({
-        where: { idKelasMapel: idKelas },
-      }),
-      prisma.tugasMapel.findMany({
-        where: { idKelasMapel: idKelas },
-      }),
-    ]);
+        }),
+        prisma.materiMapel.findMany({
+          where: { idKelasMapel: idKelas },
+        }),
+        prisma.tugasMapel.findMany({
+          where: { idKelasMapel: idKelas },
+        }),
+        prisma.ujianIframe.findMany({
+          where: {
+            idKelasMapel: idKelas,
+          },
+        }),
+      ]
+    );
 
     return {
       siswaKelas,
       materiKelas,
       tugasKelas,
+      ujianKelas,
     };
   } catch (error) {
     console.log(error);
@@ -251,7 +259,7 @@ export const getSideBarGuru = async (idGuru, jabatan) => {
       },
     });
 
-    // Generate dynamic items untuk sidebar
+    // base sidebar
     const data = [
       {
         title: "Dashboard",
@@ -281,7 +289,7 @@ export const getSideBarGuru = async (idGuru, jabatan) => {
         isActive: false,
         shortcut: ["d", "d"],
         items: kelasMapel.map((km) => ({
-          title: `${km.namaMapel} -${km.tahunAjaran}`,
+          title: `${km.namaMapel} - ${km.tahunAjaran}`,
           url: `/mengajar/kelas-mapel/${km.id}`,
           icon: "userPen",
           shortcut: ["n", "n"],
@@ -312,6 +320,86 @@ export const getSideBarGuru = async (idGuru, jabatan) => {
         items: [],
       },
     ];
+
+    // kalau jabatannya Kepala Sekolah, tambahin Dashboard Utama di paling atas
+    if (jabatan === "Kepala Sekolah") {
+      data.unshift({
+        title: "Dashboard Utama",
+        url: "/dashboard", // misalnya /dashboard
+        icon: "home", // bisa disesuaikan dengan icon library
+        isActive: false,
+        shortcut: ["u", "u"],
+        items: [],
+      });
+    } else if (jabatan === "Guru BK") {
+      data.push({
+        title: "Data Konseling Siswa",
+        url: "", // misalnya /dashboard
+        icon: "home", // bisa disesuaikan dengan icon library
+        isActive: false,
+        shortcut: ["u", "u"],
+        items: [
+          {
+            title: `Data Konseling Siswa`,
+            url: `/mengajar/e-konseling/konseling-siswa`,
+            icon: "userPen",
+            shortcut: ["n", "n"],
+          },
+          {
+            title: `Pelanggaran Prestasi`,
+            url: `/mengajar/e-konseling/pelanggaran-prestasi`,
+            icon: "userPen",
+            shortcut: ["n", "n"],
+          },
+        ],
+      });
+    } else if (jabatan === "Guru Perpus") {
+      data.push({
+        title: "E - Perpustakaan",
+        url: "", // misalnya /dashboard
+        icon: "home", // bisa disesuaikan dengan icon library
+        isActive: false,
+        shortcut: ["u", "u"],
+        items: [
+          {
+            title: `Data Buku`,
+            url: `/mengajar/e-perpus/data-buku`,
+            icon: "userPen",
+            shortcut: ["n", "n"],
+          },
+          {
+            title: `Pelanggaran Prestasi`,
+            url: `/mengajar/e-perpus/peminjaman-pengembalian`,
+            icon: "userPen",
+            shortcut: ["n", "n"],
+          },
+        ],
+      });
+    } else if (jabatan === "Guru TU") {
+      data.push({
+        title: "E - Pembayaran",
+        url: "", // misalnya /dashboard
+        icon: "home", // bisa disesuaikan dengan icon library
+        isActive: false,
+        shortcut: ["u", "u"],
+        items: [
+          {
+            title: `Daftar Tagihan Siswa`,
+            url: `/mengajar/pembayaran/daftar-tagihan`,
+            icon: "userPen",
+            shortcut: ["n", "n"],
+          },
+          {
+            title: `Riwayat Pembayaran Siswa`,
+            url: `/mengajar/pembayaran/riwayat-pembayaran`,
+            icon: "userPen",
+            shortcut: ["n", "n"],
+          },
+        ],
+      });
+    }
+
+    console.log("jbtn", jabatan);
 
     return data;
   } catch (error) {

@@ -104,7 +104,7 @@ export const getPerizinanSiswaByIdSiswa = async (idSiswa) => {
   }
 };
 
-export const getPerizinanSiswaByIdKelas = async (idSiswa) => {
+export const getPerizinanSiswaByIdKelas = async (idKelas) => {
   try {
     const izinList = await prisma.perizinanSiswa.findMany({
       where: { idKelas },
@@ -132,6 +132,8 @@ export const getPerizinanSiswaByIdKelas = async (idSiswa) => {
       namaKelas: izin.Kelas?.nama || null,
     }));
   } catch (error) {
+    console.log(error);
+
     throw new Error(prismaErrorHandler(error));
   }
 };

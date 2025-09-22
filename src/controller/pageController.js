@@ -62,7 +62,7 @@ export const getDashboardWaliKelas = async (req, res) => {
 
 export const getSidebarMengajar = async (req, res) => {
   try {
-    const result = await getSideBarGuru(req.user.idGuru);
+    const result = await getSideBarGuru(req.user.idGuru, req.user.jabatan);
     return res.status(200).json({
       message: "Berhasil mendapatkan data dashboard",
       data: result,

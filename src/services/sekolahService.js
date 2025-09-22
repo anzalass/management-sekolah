@@ -1,5 +1,8 @@
 import { PrismaClient } from "@prisma/client";
-import { deleteFromImageKit, uploadToImageKit } from "../utils/ImageHandler.js";
+import {
+  deleteFromCloudinary,
+  uploadToCloudinary,
+} from "../utils/ImageHandler.js";
 import { prismaErrorHandler } from "../utils/errorHandlerPrisma.js";
 const prisma = new PrismaClient();
 
@@ -41,7 +44,7 @@ export const createSekolah = async (data) => {
   }
 };
 
-export const updateSekolah = async (id, data, foto) => {
+export const updateSekolah = async (data, foto) => {
   const {
     nama,
     npsn,
@@ -56,20 +59,24 @@ export const updateSekolah = async (id, data, foto) => {
   } = data;
 
   try {
-    const sekolah = await prisma.sekolah.findUnique({
-      where: { id },
-    });
+    const sekolah = await prisma.sekolah.findFirst({});
     if (!sekolah) {
       throw new Error("Sekolah dengan ID tersebut tidak ditemukan");
     }
 
-    let logoUploadResult = null;
-    if (foto !== null) {
-      await deleteFromImageKit(sekolah.logoId);
-      logoUploadResult = await uploadToImageKit(logo, "sekolah");
+    let imageUploadResult = null;
+    if (foto && foto.buffer && foto.buffer.length > 0) {
+      imageUploadResult = await uploadToCloudinary(
+        foto.buffer,
+        "sekolah",
+        nama
+      );
     }
+
+    console.log(nama);
+
     await prisma.sekolah.update({
-      where: { id },
+      where: { id: sekolah.id },
       data: {
         nama,
         npsn,
@@ -81,10 +88,21 @@ export const updateSekolah = async (id, data, foto) => {
         email,
         website,
         namaKepsek,
-        logo: logoUploadResult?.url,
-        logoId: logoUploadResult?.fileId,
+        logo: imageUploadResult?.secure_url,
+        logoId: imageUploadResult?.public_id,
       },
     });
+  } catch (error) {
+    console.log(error);
+    const errorMessage = prismaErrorHandler(error);
+    throw new Error(errorMessage);
+  }
+};
+
+export const getSekolah = async () => {
+  try {
+    const data = await prisma.sekolah.findFirst({});
+    return data;
   } catch (error) {
     console.log(error);
     const errorMessage = prismaErrorHandler(error);

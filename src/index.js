@@ -40,6 +40,8 @@ import perizinanSiswa from "./routes/siswa/perizinanSiswaRoutes.js";
 import pembayaranRoutes from "./routes/pembayaranRoutes.js";
 import jadwalRoutes from "./routes/jadwalPelajaranRoutes.js";
 import janjiTemuRoutes from "./routes/siswa/janjiTemuRoutes.js";
+import ujianRoutes from "./routes/ujianIframeRoutes.js";
+import weeklyActivity from "./routes/weeklyActivityRoutes.js";
 
 import { fileURLToPath } from "url";
 import path from "path";
@@ -110,6 +112,8 @@ app.use("/api/v1", siswaRoutes);
 app.use("/api/v1", jadwalRoutes);
 app.use("/api/v1", perizinanSiswa);
 app.use("/api/v1", janjiTemuRoutes);
+app.use("/api/v1", ujianRoutes);
+app.use("/api/v1", weeklyActivity);
 
 app.get("/api/v1/view-image/:imageName", (req, res) => {
   const { imageName } = req.params;

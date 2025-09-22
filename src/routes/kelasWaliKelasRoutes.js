@@ -21,7 +21,7 @@ router.put("/kelas-walikelas/update/:id", updateKelasWaliKelasController);
 router.delete("/kelas-walikelas/delete/:id", deleteKelasWaliKelasController);
 router.get("/kelas-walikelas/get/:id", getKelasWaliKelasByIdController);
 router.post("/kelas-walikelas/add", addSiswatoKelasWaliKelasController);
-router.post(
+router.delete(
   "/kelas-walikelas/remove/:id",
   deleteSiswatoKelasWaliKelasController
 );
