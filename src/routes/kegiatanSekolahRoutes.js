@@ -3,6 +3,7 @@ import { AuthMiddleware } from "../utils/authMiddleware.js";
 import {
   createKegiatanSekolahController,
   deleteKegiatanSekolahController,
+  getAllKegiatanSekolah2Controller,
   getAllKegiatanSekolahController,
   getKegiatanSekolahByIdController,
   updateKegiatanSekolahController,
@@ -32,6 +33,8 @@ router.get(
   AuthMiddleware,
   getAllKegiatanSekolahController
 );
+
+router.get("/kegiatan-sekolah-2", getAllKegiatanSekolah2Controller);
 router.put(
   "/kegiatan-sekolah/status/:id",
   AuthMiddleware,

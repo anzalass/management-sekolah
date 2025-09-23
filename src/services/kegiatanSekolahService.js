@@ -125,3 +125,14 @@ export const getAllKegiatanSekolah = async ({
     throw new Error(errorMessage);
   }
 };
+
+export const getAllKegiatanSekolah2 = async () => {
+  try {
+    const data = await prisma.kegiatanSekolah.findMany({});
+    return data;
+  } catch (error) {
+    console.log(error);
+    const errorMessage = prismaErrorHandler(error);
+    throw new Error(errorMessage);
+  }
+};
