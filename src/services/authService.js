@@ -68,8 +68,6 @@ export const login = async (auth) => {
         },
       });
 
-      console.log(kelas2.id);
-
       const isMatch = await bcrypt.compare(password, siswa.password);
 
       if (!isMatch) {
