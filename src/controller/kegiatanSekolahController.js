@@ -2,6 +2,7 @@ import {
   createKegiatanSekolah,
   deleteKegiatanSekolah,
   getAllKegiatanSekolah,
+  getAllKegiatanSekolah2,
   getKegiatanSekolahById,
   updateKegiatanSekolah,
   updateStatusKegiatan,
@@ -75,6 +76,18 @@ export const getAllKegiatanSekolahController = async (req, res) => {
     return res.status(200).json({
       message: "Berhasil mendapatkan semua kegiatan sekolah",
       result,
+    });
+  } catch (error) {
+    return res.status(500).json({ message: error.message, success: false });
+  }
+};
+
+export const getAllKegiatanSekolah2Controller = async (req, res) => {
+  try {
+    const data = await getAllKegiatanSekolah2();
+    return res.status(200).json({
+      message: "Berhasil mendapatkan semua kegiatan sekolah",
+      data,
     });
   } catch (error) {
     return res.status(500).json({ message: error.message, success: false });
