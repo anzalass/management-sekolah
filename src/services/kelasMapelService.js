@@ -62,6 +62,7 @@ export const getDetailKelasMapel = async (id, idSiswa) => {
             },
           },
         },
+        UjianIframe: true,
       },
     });
 
