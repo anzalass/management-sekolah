@@ -62,7 +62,13 @@ export const getDetailKelasMapel = async (id, idSiswa) => {
             },
           },
         },
-        UjianIframe: true,
+        UjianIframe: {
+          include: {
+            SelesaiUjian: {
+              where: { idSiswa },
+            },
+          },
+        },
       },
     });
 
@@ -79,10 +85,16 @@ export const getDetailKelasMapel = async (id, idSiswa) => {
       past: tugas.SummaryTugas.length > 0,
     }));
 
+    const ujianWithPast = detail.UjianIframe.map((ujian) => ({
+      ...ujian,
+      past: ujian.SelesaiUjian.length > 0,
+    }));
+
     return {
       ...detail,
       MateriMapel: materiWithPast,
       TugasMapel: tugasWithPast,
+      UjianMapel: ujianWithPast,
     };
   } catch (error) {
     console.log(error);
@@ -144,7 +156,11 @@ export const deleteKelasMapel = async (id) => {
           idKelasMapel: id,
         },
       });
-
+      await tx.ujianIframe.deleteMany({
+        where: {
+          idKelasMapel: id,
+        },
+      });
       await tx.summaryTugas.deleteMany({
         where: {
           idKelasMapel: id,

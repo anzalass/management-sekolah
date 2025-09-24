@@ -18,6 +18,7 @@ cloudinary.config({
  * @param {string} folder - Nama folder di Cloudinary
  * @param {string} fileName - Nama file (tanpa ekstensi)
  */
+
 export const uploadToCloudinary = async (
   fileBuffer,
   folder,
@@ -27,21 +28,17 @@ export const uploadToCloudinary = async (
     throw new Error("File kosong");
   }
 
-  // Deteksi tipe file
   const type = await fileTypeFromBuffer(fileBuffer);
   const mime = type?.mime || "application/octet-stream";
-
   const isImage = mime.startsWith("image/");
 
   try {
     if (isImage) {
-      // === Jika file image: compress pakai sharp ===
       const compressedBuffer = await sharp(fileBuffer)
         .resize({ width: 2000, withoutEnlargement: true })
         .jpeg({ quality: 80 })
         .toBuffer();
 
-      // Upload image pakai stream
       return await new Promise((resolve, reject) => {
         const uploadStream = cloudinary.uploader.upload_stream(
           {
@@ -61,20 +58,20 @@ export const uploadToCloudinary = async (
         uploadStream.end(compressedBuffer);
       });
     } else {
-      // === Jika file bukan image (PDF, docx, zip): upload langsung ===
+      // === PDF, docx, zip ===
       return await new Promise((resolve, reject) => {
         const uploadStream = cloudinary.uploader.upload_stream(
           {
             folder,
             public_id: `${fileName}_${Date.now()}`,
-            resource_type: "raw", // penting!
+            resource_type: "raw", // penting
             timeout: 120000,
           },
           (error, result) => {
             if (error) return reject(error);
             resolve({
-              secure_url: result.secure_url,
-              public_id: result.public_id,
+              secure_url: result.secure_url, // URL default
+              public_id: result.public_id, // simpan public_id untuk bikin URL inline
             });
           }
         );

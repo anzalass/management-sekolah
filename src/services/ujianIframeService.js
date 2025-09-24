@@ -64,6 +64,25 @@ export const getUjianIframeByIdService = async (id) => {
   }
 };
 
+export const getUjianIframeByIdGuruService = async (id) => {
+  try {
+    return await prisma.ujianIframe.findUnique({
+      where: { id },
+      include: {
+        SelesaiUjian: {
+          include: {
+            Siswa: true,
+          },
+        },
+      },
+    });
+  } catch (error) {
+    console.error(error);
+    const errorMessage = prismaErrorHandler(error);
+    throw new Error(errorMessage);
+  }
+};
+
 /**
  * Ambil UjianIframe by ID KelasMapel
  */
@@ -117,5 +136,52 @@ export const deleteUjianIframeService = async (id) => {
     return { message: "Ujian berhasil dihapus" };
   } catch (error) {
     throw new Error(`Gagal menghapus ujian: ${error.message}`);
+  }
+};
+
+export const SelesaiUjianService = async (data) => {
+  try {
+    await prisma.selesaiUjian.create({
+      data: {
+        idSiswa: data.idSiswa,
+        idKelasMapel: data.idKelasMapel,
+        idUjianIframe: data.idUjianIframe,
+        status: "Selesai",
+        createdAt: new Date(),
+      },
+    });
+  } catch (error) {
+    throw new Error(`Gagal mengumpulkan ujian: ${error.message}`);
+  }
+};
+
+export const getSelesaiUjian = async (idKelasMapel, idSiswa, idUjianIframe) => {
+  try {
+    const data = await prisma.selesaiUjian.findFirst({
+      where: {
+        idKelasMapel: idKelasMapel,
+        idSiswa: idSiswa,
+        idUjianIframe: idUjianIframe,
+      },
+    });
+    if (data) {
+      return "Selesai";
+    } else {
+      return "Belum Selesai";
+    }
+  } catch (error) {
+    throw new Error(`Gagal mengumpulkan ujian: ${error.message}`);
+  }
+};
+
+export const deleteSelesaiUjianById = async (id) => {
+  try {
+    await prisma.selesaiUjian.delete({
+      where: {
+        id,
+      },
+    });
+  } catch (error) {
+    throw new Error(`Gagal mengumpulkan ujian: ${error.message}`);
   }
 };

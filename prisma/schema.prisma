@@ -157,6 +157,8 @@ model KelasDanMapel {
   JenisNilai     JenisNilai[]
   CatatanAkhirSiswa CatatanAkhirSiswa[]
   UjianIframe UjianIframe[]
+  SelesaiUjian SelesaiUjian[]
+
 
 }
 
@@ -214,7 +216,7 @@ model NilaiSiswa {
 model KehadiranSiswa {
   id             String @id @default(uuid())
   idSiswa        String?
-  idKelas        String
+  idKelas        String?
   namaSiswa      String
   nisSiswa       String
   waktu          DateTime
@@ -262,6 +264,7 @@ model Siswa {
   CatatanPerkembanganSiswa      CatatanPerkembanganSiswa[]
   CatatanAkhirSiswa      CatatanAkhirSiswa[]
   JanjiTemu   JanjiTemu[]
+  SelesaiUjian SelesaiUjian[]
 
 }
 
@@ -592,7 +595,22 @@ model UjianIframe {
     deadline DateTime
     iframe String
     KelasMapel KelasDanMapel   @relation(fields: [idKelasMapel], references: [id])
+    SelesaiUjian SelesaiUjian[]
+}
 
+
+model SelesaiUjian {
+    id    String @id @default(uuid())
+    idUjianIframe String
+    idSiswa String
+    idKelasMapel String
+    status String
+    createdAt DateTime
+    UjianIframe UjianIframe   @relation(fields: [idUjianIframe], references: [id])
+    Siswa Siswa   @relation(fields: [idSiswa], references: [id])
+    KelasMapel KelasDanMapel   @relation(fields: [idKelasMapel], references: [id])
+    
+    @@unique([idSiswa, idKelasMapel, idUjianIframe])
 }
 
 
@@ -660,9 +678,9 @@ model JanjiTemu {
 
 model WeeklyActivity {
   id   String @id @default(uuid())
-   idKelas String
-   content String
-   waktu DateTime
+  idKelas String
+  content String
+  waktu DateTime
   Kelas Kelas   @relation(fields: [idKelas], references: [id])
   FotoWeeklyActivity FotoWeeklyActivity[]
 
