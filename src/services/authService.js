@@ -80,7 +80,7 @@ export const login = async (auth) => {
           nip: siswa.nis,
           jabatan: "Siswa",
           nama: siswa.nama,
-          idKelas: kelas2.id,
+          idKelas: kelas2?.id,
         },
         process.env.JWT_SECRET_KEY,
         { expiresIn: "3d" }

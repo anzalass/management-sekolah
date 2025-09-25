@@ -24,7 +24,7 @@ router.put(
 
 // [DELETE] Hapus jadwal mengajar berdasarkan ID
 router.delete(
-  "jadwal-mengajar/delete/:id",
+  "/jadwal-mengajar/delete/:id",
   AuthMiddleware,
   deleteJadwalMengajarController
 );

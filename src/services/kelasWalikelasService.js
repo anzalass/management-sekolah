@@ -4,6 +4,10 @@ import {
   deleteFromCloudinary,
   uploadToCloudinary,
 } from "../utils/ImageHandler.js";
+import {
+  deleteWeeklyActivity,
+  deleteWeeklyActivityIdKelas,
+} from "./weeklyActivityService.js";
 const prisma = new PrismaClient();
 
 export const createKelasWaliKelas = async (data, banner) => {
@@ -92,19 +96,25 @@ export const updateKelasWaliKelas = async (id, data, banner) => {
 export const deleteKelasWaliKelas = async (id) => {
   try {
     await prisma.$transaction(async (tx) => {
-      tx.daftarSiswaKelas.deleteMany({
+      // hapus semua siswa di kelas
+      await deleteWeeklyActivityIdKelas(id);
+      await tx.daftarSiswaKelas.deleteMany({
         where: {
           idKelas: id,
         },
       });
 
-      tx.pengumumanKelas.findMany({
+      // kalau ada pengumuman kelas juga harus dihapus
+      await tx.pengumumanKelas.deleteMany({
         where: {
           idKelas: id,
         },
       });
 
-      await tx.kelas.delete({ where: { id } });
+      // hapus kelasnya
+      await tx.kelas.delete({
+        where: { id },
+      });
     });
   } catch (error) {
     console.log(error);
