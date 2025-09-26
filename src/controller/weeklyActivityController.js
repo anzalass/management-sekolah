@@ -9,9 +9,15 @@ import {
  */
 export const createWeeklyActivityController = async (req, res) => {
   try {
-    const { idKelas, content, waktu } = req.body;
+    const { idKelas, judul, content, waktu } = req.body;
     const files = req.files; // multer memoryUpload.array('foto')
-    const result = await createWeeklyActivity(idKelas, content, waktu, files);
+    const result = await createWeeklyActivity(
+      idKelas,
+      judul,
+      content,
+      waktu,
+      files
+    );
     res.status(201).json({ message: "WeeklyActivity created", data: result });
   } catch (error) {
     res

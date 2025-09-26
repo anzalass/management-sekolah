@@ -8,11 +8,18 @@ const prisma = new PrismaClient();
 /**
  * Create WeeklyActivity dengan multiple foto
  */
-export const createWeeklyActivity = async (idKelas, content, waktu, files) => {
+export const createWeeklyActivity = async (
+  idKelas,
+  judul,
+  content,
+  waktu,
+  files
+) => {
   try {
     // 1. Simpan WeeklyActivity dulu
     const weeklyActivity = await prisma.weeklyActivity.create({
       data: {
+        judul,
         idKelas,
         content,
         waktu: new Date(waktu),

@@ -679,6 +679,7 @@ model JanjiTemu {
 model WeeklyActivity {
   id   String @id @default(uuid())
   idKelas String
+  judul String?
   content String
   waktu DateTime
   Kelas Kelas   @relation(fields: [idKelas], references: [id])
