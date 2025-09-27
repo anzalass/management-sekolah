@@ -110,14 +110,17 @@ export const bayarTagihanMidtransController = async (req, res) => {
     // buat order_id unik
     const uniqueOrderId = `${tagihan.id}-${Date.now()}`;
 
+    // payload sesuai format Snap
     const snapPayload = {
-      order_id: uniqueOrderId,
-      gross_amount: tagihan.nominal,
+      transaction_details: {
+        order_id: uniqueOrderId,
+        gross_amount: tagihan.nominal,
+      },
       customer_details: {
         first_name: tagihan.namaSiswa,
         email: req.user?.email || "noemail@domain.com",
       },
-      items: [
+      item_details: [
         {
           id: tagihan.id,
           price: tagihan.nominal,
@@ -130,6 +133,7 @@ export const bayarTagihanMidtransController = async (req, res) => {
     // request snap
     const snapResponse = await createTransactionService(snapPayload);
 
+    // hanya return snap response ke FE
     return res.json({ snap: snapResponse });
   } catch (err) {
     console.error(err);
