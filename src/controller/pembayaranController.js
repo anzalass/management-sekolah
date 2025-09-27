@@ -139,54 +139,6 @@ export const bayarTagihanMidtransController = async (req, res) => {
   }
 };
 
-// export const midtransNotificationController = async (req, res) => {
-//   try {
-//     const notif = req.body;
-
-//     const verified = await verificationService(notif);
-//     if (!verified)
-//       return res.status(403).json({ message: "Invalid signature" });
-
-//     const orderId = notif.order_id;
-//     const transactionStatus = notif.transaction_status;
-
-//     let statusPembayaran = "BELUM_BAYAR";
-//     if (transactionStatus === "settlement" || transactionStatus === "capture") {
-//       statusPembayaran = "LUNAS";
-//     } else if (transactionStatus === "pending") {
-//       statusPembayaran = "PENDING";
-//     } else {
-//       statusPembayaran = "GAGAL";
-//     }
-
-//     const tagihan = await prisma.tagihan.update({
-//       where: { id: orderId },
-//       data: {
-//         status: statusPembayaran,
-//       },
-//     });
-
-//     await prisma.riwayatPembayaran.create({
-//       data: {
-//         namaSiswa: tagihan.namaSiswa,
-//         nisSiswa: tagihan.nisSiswa,
-//         idSiswa: tagihan.idSiswa,
-//         idTagihan: tagihan.id,
-//         waktuBayar: new Date(),
-//         metodeBayar: "midtrans",
-//         status: statusPembayaran,
-//       },
-//     });
-
-//     console.log(`Tagihan ${orderId} updated to ${statusPembayaran}`);
-
-//     return res.json({ success: true });
-//   } catch (err) {
-//     console.error(err);
-//     return res.status(500).json({ message: "Error processing notification" });
-//   }
-// };
-
 export const midtransNotificationController = async (req, res) => {
   try {
     const notif = req.body;

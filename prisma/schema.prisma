@@ -493,16 +493,18 @@ model Tagihan {
   idSiswa     String?
   waktu       DateTime
   jatuhTempo  DateTime
-  status      TagihanStatus
+  status      StatusPembayaran
   keterangan  String
   nominal     Int
   RiwayatPembayaran RiwayatPembayaran[]
   Siswa Siswa? @relation(fields: [idSiswa], references: [id])
 }
 
-enum TagihanStatus {
+enum StatusPembayaran {
   BELUM_BAYAR @map("BELUM BAYAR")
   LUNAS
+  PENDING
+  GAGAL
 }
 
 model RiwayatPembayaran {
@@ -512,18 +514,12 @@ model RiwayatPembayaran {
   idSiswa         String?
   idTagihan       String 
   waktuBayar      DateTime
-  status          RiwayatPembayaranStatus
+  status          StatusPembayaran
   metodeBayar     String
   snapToken       String?  // simpan token snap
   snapRedirectUrl String?  // simpan url snap
   Siswa Siswa? @relation(fields: [idSiswa], references: [id])
   Tagihan Tagihan? @relation(fields: [idTagihan], references: [id])
-}
-enum RiwayatPembayaranStatus {
-  BELUM_BAYAR @map("BELUM BAYAR")
-  LUNAS
-  PENDING
-  GAGAL
 }
 
 
