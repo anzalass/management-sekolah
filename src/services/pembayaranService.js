@@ -13,7 +13,12 @@ export const createTagihan = async (data) => {
 
       if (opsi === "semua") {
         siswaTarget = await tx.siswa.findMany({
-          where: { tahunLulus: "" || null },
+          where: {
+            OR: [
+              { tahunLulus: "" }, // kosong string
+              { tahunLulus: null }, // null
+            ],
+          },
         });
       } else if (opsi === "kelas") {
         siswaTarget = await tx.siswa.findMany({
@@ -37,7 +42,7 @@ export const createTagihan = async (data) => {
       const tagihanArray = siswaTarget.map((siswa) => ({
         nama: tagihanData.nama,
         keterangan: tagihanData.keterangan,
-        status: "Belum Dibayar",
+        status: "BELUM_BAYAR" || "BELUM BAYAR",
         waktu: new Date(`${tagihanData.waktu}T00:00:00Z`),
         jatuhTempo: new Date(`${tagihanData.jatuhTempo}T00:00:00Z`),
         nominal: parseInt(tagihanData.nominal),
@@ -180,7 +185,7 @@ export const bayarTagihan = async (idTagihan, metodeBayar) => {
       // 2. Update status tagihan menjadi Dibayar
       const updatedTagihan = await tx.tagihan.update({
         where: { id: idTagihan },
-        data: { status: "Dibayar" },
+        data: { status: "LUNAS" },
       });
 
       // 3. Tambahkan riwayat pembayaran
