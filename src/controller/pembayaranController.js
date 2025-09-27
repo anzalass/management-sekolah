@@ -168,18 +168,22 @@ export const midtransNotificationController = async (req, res) => {
       statusPembayaran = "GAGAL";
     }
 
-    await prisma.tagihan.update({
+    const tagihan = await prisma.tagihan.update({
       where: { id: orderId },
       data: {
         status: statusPembayaran,
       },
     });
 
-    await prisma.riwayatPembayaran.updateMany({
-      where: { idTagihan: orderId },
+    await prisma.riwayatPembayaran.create({
       data: {
-        status: statusPembayaran,
+        namaSiswa: tagihan.namaSiswa,
+        nisSiswa: tagihan.nisSiswa,
+        idSiswa: tagihan.idSiswa,
+        idTagihan: tagihan.id,
         waktuBayar: new Date(),
+        metodeBayar: "midtrans",
+        status: statusPembayaran,
       },
     });
 
