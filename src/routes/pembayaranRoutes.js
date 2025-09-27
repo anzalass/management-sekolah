@@ -1,11 +1,13 @@
 import express from "express";
 import {
-  BayarTagihanController,
+  BayarTagihanManualController,
+  bayarTagihanMidtransController,
   CreateTagihanController,
   DeleteTagihanController,
   GetAllRiwayatPembayaranController,
   GetAllTagihanController,
   GetTagihanByIdController,
+  midtransNotificationController,
   UpdateTagihanController,
 } from "../controller/pembayaranController.js";
 
@@ -16,7 +18,8 @@ router.get("/pembayaran/:id", GetTagihanByIdController);
 router.post("/pembayaran/", CreateTagihanController);
 router.put("/pembayaran/:id", UpdateTagihanController);
 router.delete("/pembayaran/:id", DeleteTagihanController);
-router.post("/bayar-tagihan/:id", BayarTagihanController);
+router.post("/bayar-tagihan/:id", BayarTagihanManualController);
 router.get("/riwayat-pembayaran", GetAllRiwayatPembayaranController);
-
+router.post("/bayar-midtrans/:idTagihan", bayarTagihanMidtransController);
+router.post("/midtrans/notif", midtransNotificationController);
 export default router;
