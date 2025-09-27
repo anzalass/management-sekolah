@@ -159,7 +159,7 @@ export const midtransNotificationController = async (req, res) => {
     const orderId = notif.order_id;
     const transactionStatus = notif.transaction_status;
 
-    let statusPembayaran = "BELUM_TERBAYAR";
+    let statusPembayaran = "BELUM_BAYAR";
     if (transactionStatus === "settlement" || transactionStatus === "capture") {
       statusPembayaran = "TERBAYAR";
     } else if (transactionStatus === "pending") {
@@ -171,7 +171,7 @@ export const midtransNotificationController = async (req, res) => {
     await prisma.tagihan.update({
       where: { id: orderId },
       data: {
-        status: statusPembayaran === "BELUM_TERBAYAR",
+        status: statusPembayaran,
       },
     });
 
