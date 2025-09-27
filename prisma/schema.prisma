@@ -520,8 +520,8 @@ model RiwayatPembayaran {
   Tagihan Tagihan? @relation(fields: [idTagihan], references: [id])
 }
 enum RiwayatPembayaranStatus {
-  BELUM_TERBAYAR @map("BELUM TERBAYAR")
-  TERBAYAR
+  BELUM_BAYAR @map("BELUM BAYAR")
+  LUNAS
   PENDING
   GAGAL
 }
