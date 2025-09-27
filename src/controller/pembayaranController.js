@@ -171,7 +171,7 @@ export const midtransNotificationController = async (req, res) => {
     await prisma.tagihan.update({
       where: { id: orderId },
       data: {
-        status: statusPembayaran,
+        status: statusPembayaran === "BELUM_TERBAYAR",
       },
     });
 
