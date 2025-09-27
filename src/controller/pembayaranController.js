@@ -13,6 +13,9 @@ import {
   verificationService,
 } from "../utils/midtrans.js";
 const prisma = new PrismaClient();
+import { v4 as uuidv4 } from "uuid"; // kalau pakai ESModule
+// atau
+// const { v4: uuidv4 } = require('uuid'); // kalau pakai CommonJS
 
 export const CreateTagihanController = async (req, res) => {
   try {
@@ -107,16 +110,19 @@ export const bayarTagihanMidtransController = async (req, res) => {
       return res.status(404).json({ message: "Tagihan tidak ditemukan" });
     }
 
-    // buat order_id unik
-    const uniqueOrderId = `${tagihan.id}__${Date.now()}`;
+    // UUID unik untuk order_id Midtrans
+    const orderId = uuidv4();
+
     const snapPayload = {
-      order_id: uniqueOrderId,
-      gross_amount: tagihan.nominal,
+      transaction_details: {
+        order_id: orderId,
+        gross_amount: tagihan.nominal,
+      },
       customer_details: {
         first_name: tagihan.namaSiswa,
         email: req.user?.email || "noemail@domain.com",
       },
-      items: [
+      item_details: [
         {
           id: tagihan.id,
           price: tagihan.nominal,
@@ -124,9 +130,10 @@ export const bayarTagihanMidtransController = async (req, res) => {
           name: tagihan.nama,
         },
       ],
+      // simpan idTagihan asli di custom field (biar notif bisa tahu tagihan mana)
+      custom_field1: tagihan.id,
     };
 
-    // request snap
     const snapResponse = await createTransactionService(snapPayload);
 
     return res.json({ snap: snapResponse });
@@ -142,13 +149,15 @@ export const midtransNotificationController = async (req, res) => {
   try {
     const notif = req.body;
 
+    // (opsional) verifikasi signature key
     const verified = await verificationService(notif);
     if (!verified) {
       return res.status(403).json({ message: "Invalid signature" });
     }
 
-    const orderId = notif.order_id; // misal: "f4aee01c-2df-4ab2-b7b8-88f1234-1695847312093"
-    const tagihanId = orderId.split("__")[0]; // full UUID dapat
+    const orderId = notif.order_id; // ini UUID unik
+    const tagihanId = notif.custom_field1; // ambil idTagihan asli dari custom field
+
     const transactionStatus = notif.transaction_status;
 
     let statusPembayaran = "BELUM_BAYAR";
@@ -166,7 +175,7 @@ export const midtransNotificationController = async (req, res) => {
       data: { status: statusPembayaran },
     });
 
-    // update riwayat pembayaran terakhir yang match dengan order_id (snapToken)
+    // catat riwayat pembayaran
     await prisma.riwayatPembayaran.create({
       data: {
         namaSiswa: tagihan.namaSiswa,

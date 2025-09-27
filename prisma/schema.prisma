@@ -500,6 +500,15 @@ model Tagihan {
   Siswa Siswa? @relation(fields: [idSiswa], references: [id])
 }
 
+
+model SnapUrl {
+    id          String @id @default(uuid())
+    idTagihan String
+    snap_url String
+    snapToken String
+    createdAt String
+}
+
 enum StatusPembayaran {
   BELUM_BAYAR @map("BELUM BAYAR")
   LUNAS
