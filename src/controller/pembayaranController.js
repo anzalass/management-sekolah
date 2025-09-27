@@ -161,7 +161,7 @@ export const midtransNotificationController = async (req, res) => {
 
     let statusPembayaran = "BELUM_BAYAR";
     if (transactionStatus === "settlement" || transactionStatus === "capture") {
-      statusPembayaran = "TERBAYAR";
+      statusPembayaran = "LUNAS";
     } else if (transactionStatus === "pending") {
       statusPembayaran = "PENDING";
     } else {
