@@ -110,17 +110,14 @@ export const bayarTagihanMidtransController = async (req, res) => {
     // buat order_id unik
     const uniqueOrderId = `${tagihan.id}-${Date.now()}`;
 
-    // payload sesuai format Snap
     const snapPayload = {
-      transaction_details: {
-        order_id: uniqueOrderId,
-        gross_amount: tagihan.nominal,
-      },
+      order_id: uniqueOrderId,
+      gross_amount: tagihan.nominal,
       customer_details: {
         first_name: tagihan.namaSiswa,
         email: req.user?.email || "noemail@domain.com",
       },
-      item_details: [
+      items: [
         {
           id: tagihan.id,
           price: tagihan.nominal,
@@ -133,7 +130,6 @@ export const bayarTagihanMidtransController = async (req, res) => {
     // request snap
     const snapResponse = await createTransactionService(snapPayload);
 
-    // hanya return snap response ke FE
     return res.json({ snap: snapResponse });
   } catch (err) {
     console.error(err);
@@ -142,54 +138,6 @@ export const bayarTagihanMidtransController = async (req, res) => {
       .json({ message: "Gagal membuat transaksi Midtrans" });
   }
 };
-
-// export const midtransNotificationController = async (req, res) => {
-//   try {
-//     const notif = req.body;
-
-//     const verified = await verificationService(notif);
-//     if (!verified)
-//       return res.status(403).json({ message: "Invalid signature" });
-
-//     const orderId = notif.order_id;
-//     const transactionStatus = notif.transaction_status;
-
-//     let statusPembayaran = "BELUM_BAYAR";
-//     if (transactionStatus === "settlement" || transactionStatus === "capture") {
-//       statusPembayaran = "LUNAS";
-//     } else if (transactionStatus === "pending") {
-//       statusPembayaran = "PENDING";
-//     } else {
-//       statusPembayaran = "GAGAL";
-//     }
-
-//     const tagihan = await prisma.tagihan.update({
-//       where: { id: orderId },
-//       data: {
-//         status: statusPembayaran,
-//       },
-//     });
-
-//     await prisma.riwayatPembayaran.create({
-//       data: {
-//         namaSiswa: tagihan.namaSiswa,
-//         nisSiswa: tagihan.nisSiswa,
-//         idSiswa: tagihan.idSiswa,
-//         idTagihan: tagihan.id,
-//         waktuBayar: new Date(),
-//         metodeBayar: "midtrans",
-//         status: statusPembayaran,
-//       },
-//     });
-
-//     console.log(`Tagihan ${orderId} updated to ${statusPembayaran}`);
-
-//     return res.json({ success: true });
-//   } catch (err) {
-//     console.error(err);
-//     return res.status(500).json({ message: "Error processing notification" });
-//   }
-// };
 
 export const midtransNotificationController = async (req, res) => {
   try {
