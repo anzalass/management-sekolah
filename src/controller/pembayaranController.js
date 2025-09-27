@@ -108,8 +108,7 @@ export const bayarTagihanMidtransController = async (req, res) => {
     }
 
     // buat order_id unik
-    const uniqueOrderId = `${tagihan.id}-${Date.now()}`;
-
+    const uniqueOrderId = `${tagihan.id}__${Date.now()}`;
     const snapPayload = {
       order_id: uniqueOrderId,
       gross_amount: tagihan.nominal,
@@ -149,8 +148,7 @@ export const midtransNotificationController = async (req, res) => {
     }
 
     const orderId = notif.order_id; // misal: "f4aee01c-2df-4ab2-b7b8-88f1234-1695847312093"
-    const tagihanId = orderId.split("-")[0]; // ambil ID Tagihan asli sebelum timestamp
-
+    const tagihanId = orderId.split("__")[0]; // full UUID dapat
     const transactionStatus = notif.transaction_status;
 
     let statusPembayaran = "BELUM_BAYAR";
