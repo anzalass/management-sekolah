@@ -150,6 +150,7 @@ export const bayarTagihanMidtransController = async (req, res) => {
 export const midtransNotificationController = async (req, res) => {
   try {
     const notif = req.body;
+    console.log("notif", notif);
 
     // (opsional) verifikasi signature key
     const verified = await verificationService(notif);
