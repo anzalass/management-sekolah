@@ -29,25 +29,30 @@ const core = new MidtransClient.CoreApi({
 });
 
 export const buildTransaction = (body) => {
-  const { order_id, gross_amount, customer_details, items } = body;
-  if (!order_id) throw new Error("order_id is required");
-  if (typeof gross_amount !== "number")
+  const { transaction_details, customer_details, item_details } = body;
+
+  if (!transaction_details?.order_id) throw new Error("order_id is required");
+  if (typeof transaction_details.gross_amount !== "number")
     throw new Error("gross_amount must be a number");
 
   return {
     transaction_details: {
-      order_id: String(order_id),
-      gross_amount: gross_amount,
+      order_id: String(transaction_details.order_id),
+      gross_amount: transaction_details.gross_amount,
     },
-    item_details: Array.isArray(items) ? items : [],
+    item_details: Array.isArray(item_details) ? item_details : [],
     customer_details: customer_details || {},
   };
 };
 
 export const createTransactionService = async (data) => {
   try {
+    console.log("create", data);
+
     const payload = buildTransaction(data);
     const snapResponse = await snap.createTransaction(payload);
+    console.log("snap res", snapResponse);
+
     return snapResponse;
   } catch (error) {
     console.log(error);

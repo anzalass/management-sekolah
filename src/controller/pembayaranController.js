@@ -112,11 +112,12 @@ export const bayarTagihanMidtransController = async (req, res) => {
 
     // UUID unik untuk order_id Midtrans
     const orderId = uuidv4();
-    console.log(orderId);
+
+    console.log("Generated orderId:", orderId);
 
     const snapPayload = {
       transaction_details: {
-        order_id: orderId,
+        order_id: String(orderId), // HARUS ADA
         gross_amount: tagihan.nominal,
       },
       customer_details: {
@@ -131,13 +132,13 @@ export const bayarTagihanMidtransController = async (req, res) => {
           name: tagihan.nama,
         },
       ],
-      // simpan idTagihan asli di custom field (biar notif bisa tahu tagihan mana)
       custom_field1: tagihan.id,
     };
 
-    const snapResponse = await createTransactionService(snapPayload);
+    console.log("Snap Payload final:", snapPayload);
 
-    return res.json({ snap: snapResponse });
+    const snapResponse = await createTransactionService(snapPayload);
+    return res.json({ orderId, snap: snapResponse });
   } catch (err) {
     console.error(err);
     return res

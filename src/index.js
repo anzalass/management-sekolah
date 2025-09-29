@@ -57,7 +57,7 @@ dotenv.config();
 const app = express();
 app.use(express.json());
 
-const port = process.env.WEB_PORT || process.env.PORT || 3000; // ⬅️ ini kunci
+const port = process.env.WEB_PORT || process.env.PORT || 4000; // ⬅️ ini kunci
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 app.use(morgan("dev"));
 app.use(

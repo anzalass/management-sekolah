@@ -27,17 +27,21 @@ export const login = async (auth) => {
 
       const token = jwt.sign(
         {
-          idGuru: guru.id, // ⬅️ Tambahkan ini
+          idGuru: guru.id,
           nip: guru.nip,
           nama: guru.nama,
           jabatan: guru.jabatan,
         },
         process.env.JWT_SECRET_KEY,
-        { expiresIn: "3d" }
+        { expiresIn: "3d" } // token berlaku 5 menit
       );
+
+      const decoded = jwt.decode(token);
+      console.log(decoded);
 
       return {
         token,
+        expiresIn: decoded.exp,
         idGuru: guru.id,
         nip: guru.nip,
         nama: guru.nama,
@@ -86,8 +90,12 @@ export const login = async (auth) => {
         { expiresIn: "3d" }
       );
 
+      const decoded = jwt.decode(token);
+      console.log(decoded.exp);
+
       return {
         token,
+        expiresIn: decoded.exp,
         idGuru: siswa.id,
         nip: siswa.nis,
         nama: siswa.nama,

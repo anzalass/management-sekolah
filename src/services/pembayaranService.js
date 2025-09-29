@@ -178,7 +178,7 @@ export const bayarTagihan = async (idTagihan, metodeBayar) => {
         throw new Error("Tagihan tidak ditemukan");
       }
 
-      if (tagihan.status === "Dibayar") {
+      if (tagihan.status === "LUNAS") {
         throw new Error("Tagihan sudah dibayar");
       }
 
@@ -197,7 +197,7 @@ export const bayarTagihan = async (idTagihan, metodeBayar) => {
           nisSiswa: tagihan.nisSiswa,
           waktuBayar: new Date(),
           metodeBayar,
-          status: "Sukses",
+          status: "LUNAS",
         },
       });
 
