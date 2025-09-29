@@ -498,6 +498,7 @@ model Tagihan {
   nominal     Int
   RiwayatPembayaran RiwayatPembayaran[]
   Siswa Siswa? @relation(fields: [idSiswa], references: [id])
+  SnapUrl SnapUrl[]
 }
 
 
@@ -507,6 +508,8 @@ model SnapUrl {
     snap_url String
     snapToken String
     createdAt String
+    Tagihan Tagihan? @relation(fields: [idTagihan], references: [id])
+
 }
 
 enum StatusPembayaran {

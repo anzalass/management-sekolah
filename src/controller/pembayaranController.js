@@ -135,9 +135,15 @@ export const bayarTagihanMidtransController = async (req, res) => {
       custom_field1: tagihan.id,
     };
 
-    console.log("Snap Payload final:", snapPayload);
-
     const snapResponse = await createTransactionService(snapPayload);
+    await prisma.snapUrl.create({
+      data: {
+        id: orderId,
+        idTagihan: idTagihan,
+        snap_url: snapResponse.redirect_url,
+        snapToken: snapResponse.token,
+      },
+    });
     return res.json({ orderId, snap: snapResponse });
   } catch (err) {
     console.error(err);
@@ -158,6 +164,12 @@ export const midtransNotificationController = async (req, res) => {
       return res.status(403).json({ message: "Invalid signature" });
     }
 
+    const tagihanNotif = await prisma.snapUrl.findUnique({
+      where: {
+        id: notif.order_id,
+      },
+    });
+
     const orderId = notif.order_id; // ini UUID unik
     const tagihanId = notif.custom_field1; // ambil idTagihan asli dari custom field
 
@@ -174,7 +186,7 @@ export const midtransNotificationController = async (req, res) => {
 
     // update status tagihan
     const tagihan = await prisma.tagihan.update({
-      where: { id: tagihanId },
+      where: { id: tagihanNotif.idTagihan },
       data: { status: statusPembayaran },
     });
 
@@ -184,7 +196,7 @@ export const midtransNotificationController = async (req, res) => {
         namaSiswa: tagihan.namaSiswa,
         nisSiswa: tagihan.nisSiswa,
         idSiswa: tagihan.idSiswa,
-        idTagihan: tagihan.id,
+        idTagihan: tagihanNotif.idTagihan,
         waktuBayar: new Date(),
         metodeBayar: "midtrans",
         status: statusPembayaran,
