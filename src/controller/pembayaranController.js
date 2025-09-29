@@ -112,6 +112,7 @@ export const bayarTagihanMidtransController = async (req, res) => {
 
     // UUID unik untuk order_id Midtrans
     const orderId = uuidv4();
+    console.log(orderId);
 
     const snapPayload = {
       transaction_details: {
