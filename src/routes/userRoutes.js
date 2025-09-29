@@ -9,6 +9,7 @@ import {
   deleteSiswaController,
   getAllGuruController,
   getAllSiswaController,
+  getAllSiswaMasterController,
   getGuruByIDController,
   getSiswaByIDController,
   updateGuruController,
@@ -50,5 +51,10 @@ router.delete(
   deleteSiswaController
 );
 router.get("/user/get-all-siswa", AuthMiddleware, getAllSiswaController);
+router.get(
+  "/user/get-all-siswa-master",
+  AuthMiddleware,
+  getAllSiswaMasterController
+);
 
 export default router;
