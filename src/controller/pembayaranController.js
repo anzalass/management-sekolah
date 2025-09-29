@@ -170,9 +170,6 @@ export const midtransNotificationController = async (req, res) => {
       },
     });
 
-    const orderId = notif.order_id; // ini UUID unik
-    const tagihanId = notif.custom_field1; // ambil idTagihan asli dari custom field
-
     const transactionStatus = notif.transaction_status;
 
     let statusPembayaran = "BELUM_BAYAR";
@@ -202,8 +199,6 @@ export const midtransNotificationController = async (req, res) => {
         status: statusPembayaran,
       },
     });
-
-    console.log(`Tagihan ${tagihanId} updated to ${statusPembayaran}`);
 
     return res.json({ success: true });
   } catch (err) {

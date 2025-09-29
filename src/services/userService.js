@@ -582,6 +582,19 @@ const getAllSiswa = async ({
   }
 };
 
+const getAllSiswaMaster = async () => {
+  try {
+    const data = await prisma.siswa.findMany({});
+
+    return {
+      data,
+    };
+  } catch (error) {
+    const errorMessage = prismaErrorHandler(error);
+    throw new Error(errorMessage);
+  }
+};
+
 export {
   createRiwayatPendidikan,
   deleteRiwayatPendidikan,
@@ -595,4 +608,5 @@ export {
   deleteSiswa,
   getGuruByID,
   getSiswaByID,
+  getAllSiswaMaster,
 };

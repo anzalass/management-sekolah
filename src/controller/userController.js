@@ -11,6 +11,7 @@ import {
   deleteRiwayatPendidikan,
   getGuruByID,
   getSiswaByID,
+  getAllSiswaMaster,
 } from "../services/userService.js";
 import memoryUpload from "../utils/multer.js";
 import upload from "../utils/multer.js";
@@ -178,6 +179,18 @@ export const getAllSiswaController = async (req, res, next) => {
       nis: req.query.nis || "",
       kelas: req.query.kelas || "",
     });
+
+    return res
+      .status(200)
+      .json({ message: "Berhasil mendapatkan semua siswa", result });
+  } catch (error) {
+    return res.status(500).json({ message: error.message });
+  }
+};
+
+export const getAllSiswaMasterController = async (req, res, next) => {
+  try {
+    const result = await getAllSiswaMaster();
 
     return res
       .status(200)
