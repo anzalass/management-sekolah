@@ -25,8 +25,8 @@ export const getKelas = async (req, res) => {
 
 export const getKelasMapel = async (req, res) => {
   try {
-    const { idSiswa } = req.user;
-    const data = await siswaService.getKelasMapelByIdSiswa(idSiswa);
+    const { idGuru } = req.user;
+    const data = await siswaService.getKelasMapelByIdSiswa(idGuru);
     return res.json({ success: true, data });
   } catch (error) {
     return res.status(500).json({ success: false, message: error.message });
@@ -45,7 +45,7 @@ export const getPresensi = async (req, res) => {
 
 export const getPerizinan = async (req, res) => {
   try {
-    const { idSiswa } = req.params;
+    const { idGuru } = req.user;
     const data = await siswaService.getPerizinanByIdSiswa(idSiswa);
     return res.json({ success: true, data });
   } catch (error) {
@@ -55,8 +55,8 @@ export const getPerizinan = async (req, res) => {
 
 export const getPengumumanSiswa = async (req, res) => {
   try {
-    const { idSiswa } = req.params;
-    const data = await siswaService.getPengumuman(idSiswa);
+    const { idGuru } = req.user;
+    const data = await siswaService.getPengumuman(idGuru);
     return res.json({ success: true, data });
   } catch (error) {
     return res.status(500).json({ success: false, message: error.message });
@@ -65,8 +65,8 @@ export const getPengumumanSiswa = async (req, res) => {
 
 export const getRapot = async (req, res) => {
   try {
-    const { idSiswa } = req.params;
-    const data = await siswaService.getRapotSiswa(idSiswa);
+    const { idGuru } = req.user;
+    const data = await siswaService.getRapotSiswa(idGuru);
     return res.json({ success: true, data });
   } catch (error) {
     return res.status(500).json({ success: false, message: error.message });
@@ -75,8 +75,8 @@ export const getRapot = async (req, res) => {
 
 export const getPelanggaran = async (req, res) => {
   try {
-    const { idSiswa } = req.params;
-    const data = await siswaService.getPelanggaranSiswa(idSiswa);
+    const { idGuru } = req.user;
+    const data = await siswaService.getPelanggaranSiswa(idGuru);
     return res.json({ success: true, data });
   } catch (error) {
     return res.status(500).json({ success: false, message: error.message });
@@ -94,7 +94,7 @@ export const getPrestasi = async (req, res) => {
 
 export const getDashboardSiswa = async (req, res) => {
   try {
-    const idSiswa = req.user.idSiswa;
+    const idSiswa = req.user.idGuru;
     const idKelas = req.user.idKelas;
     console.log(req.user.idKelas);
 

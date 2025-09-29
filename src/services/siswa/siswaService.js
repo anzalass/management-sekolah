@@ -1,18 +1,17 @@
 import { PrismaClient } from "@prisma/client";
 import { prismaErrorHandler } from "../../utils/errorHandlerPrisma.js";
-
 const prisma = new PrismaClient();
 
 export const getPembayaranRiwayatPembayaranByIdSiswa = async (idSiswa) => {
   try {
     const tagihan = await prisma.tagihan.findMany({
       where: { idSiswa },
-      orderBy: { waktu: "desc" },
+      orderBy: { waktu: "desc" }, // urut waktu
     });
 
     const riwayatPembayaran = await prisma.riwayatPembayaran.findMany({
       where: { idSiswa },
-      orderBy: { waktuBayar: "desc" },
+      orderBy: { waktuBayar: "desc" }, // urut waktu
       include: {
         Tagihan: {
           select: {
@@ -23,24 +22,28 @@ export const getPembayaranRiwayatPembayaranByIdSiswa = async (idSiswa) => {
       },
     });
 
+    // biar FE gampang pakai, mapping ke field datar
+    const riwayatDenganTagihan = riwayatPembayaran.map((r) => ({
+      id: r.id,
+      namaSiswa: r.namaSiswa,
+      nisSiswa: r.nisSiswa,
+      idSiswa: r.idSiswa,
+      idTagihan: r.idTagihan,
+      waktuBayar: r.waktuBayar,
+      status: r.status,
+      metodeBayar: r.metodeBayar,
+      namaTagihan: r.Tagihan?.nama || null,
+      nominal: r.Tagihan?.nominal || 0,
+    }));
+
     return {
       tagihan,
-      riwayatPembayaran: riwayatPembayaran.map((r) => ({
-        id: r.id,
-        namaSiswa: r.namaSiswa,
-        nisSiswa: r.nisSiswa,
-        idSiswa: r.idSiswa,
-        idTagihan: r.idTagihan,
-        waktuBayar: r.waktuBayar,
-        status: r.status,
-        metodeBayar: r.metodeBayar,
-        namaTagihan: r.Tagihan?.nama || null,
-        nominal: r.Tagihan?.nominal || 0,
-      })),
+      riwayatPembayaran: riwayatDenganTagihan,
     };
   } catch (error) {
     console.log(error);
-    throw new Error(prismaErrorHandler(error));
+    const errorMessage = prismaErrorHandler(error);
+    throw new Error(errorMessage);
   }
 };
 
@@ -48,117 +51,142 @@ export const getKelasByIdSiswa = async (idSiswa) => {
   try {
     const kelassiswa = await prisma.daftarSiswaKelas.findMany({
       where: { idSiswa },
-      include: { Kelas: true },
+      include: { Kelas: true }, // langsung join tabel kelas
     });
+
     return kelassiswa.map((item) => item.Kelas);
   } catch (error) {
     console.log(error);
-    throw new Error(prismaErrorHandler(error));
+    const errorMessage = prismaErrorHandler(error);
+    throw new Error(errorMessage);
   }
 };
 
 export const getKelasMapelByIdSiswa = async (idSiswa) => {
   try {
-    const daftar = await prisma.daftarSiswaMapel.findMany({
-      where: { idSiswa },
-      select: { idKelas: true },
-    });
-    const idKelasUnique = [...new Set(daftar.map((d) => d.idKelas))];
-
-    const kelasMapel = await prisma.kelasDanMapel.findMany({
-      where: { id: { in: idKelasUnique } },
+    const kelasMapel = await prisma.daftarSiswaMapel.findMany({
+      where: {
+        idSiswa,
+      },
+      distinct: ["idKelas"], // ✅ biar ga dobel kelas
       include: {
-        _count: { select: { DaftarSiswa: true } },
+        KelasDanMapel: {
+          include: {
+            _count: {
+              select: { DaftarSiswa: true },
+            },
+          },
+        },
       },
     });
 
-    return kelasMapel.map((kelas) => ({
-      ...kelas,
-      totalSiswa: kelas._count.DaftarSiswa,
+    return kelasMapel.map((item) => ({
+      ...item.KelasDanMapel,
+      totalSiswa: item.KelasDanMapel._count.DaftarSiswa,
     }));
   } catch (error) {
     console.log(error);
-    throw error;
+    const errorMessage = prismaErrorHandler(error);
+    throw new Error(errorMessage);
   }
 };
 
 export const getKelasMapelByIdSiswaRecent = async (idSiswa) => {
   try {
-    const sekolah = await prisma.sekolah.findFirst();
-    const daftar = await prisma.daftarSiswaMapel.findMany({
+    const sekolah = await prisma.sekolah.findFirst(); // ambil tahun ajaran aktif
+
+    const kelasMapel = await prisma.daftarSiswaMapel.findMany({
       where: {
         idSiswa,
-        KelasDanMapel: { tahunAjaran: sekolah?.tahunAjaran },
+        KelasDanMapel: {
+          tahunAjaran: sekolah?.tahunAjaran,
+        },
       },
-      select: { idKelas: true },
-    });
-    const idKelasUnique = [...new Set(daftar.map((d) => d.idKelas))];
-
-    const kelasMapel = await prisma.kelasDanMapel.findMany({
-      where: {
-        id: { in: idKelasUnique },
-        tahunAjaran: sekolah?.tahunAjaran,
-      },
+      distinct: ["idKelas"], // ✅ biar ga dobel kelas
       include: {
-        _count: { select: { DaftarSiswa: true } },
+        KelasDanMapel: {
+          include: {
+            _count: {
+              select: { DaftarSiswa: true },
+            },
+          },
+        },
       },
     });
 
-    return kelasMapel.map((kelas) => ({
-      ...kelas,
-      totalSiswa: kelas._count.DaftarSiswa,
+    return kelasMapel.map((item) => ({
+      ...item.KelasDanMapel,
+      totalSiswa: item.KelasDanMapel._count.DaftarSiswa,
     }));
   } catch (error) {
     console.log(error);
-    throw error;
+    const errorMessage = prismaErrorHandler(error);
+    throw new Error(errorMessage);
   }
 };
 
 export const getPresensiByIdSiswa = async (idSiswa) => {
   try {
-    return await prisma.kehadiranSiswa.findMany({
-      where: { idSiswa },
+    const kehadiranSiswa = await prisma.kehadiranSiswa.findMany({
+      where: {
+        idSiswa,
+      },
     });
+    return kehadiranSiswa;
   } catch (error) {
     console.log(error);
-    throw new Error(prismaErrorHandler(error));
+    const errorMessage = prismaErrorHandler(error);
+    throw new Error(errorMessage);
   }
 };
 
-// 🔥 FIX: harus ada param idSiswa
-export const getPerizinanByIdSiswa = async (idSiswa) => {
+export const getPerizinanByIdSiswa = async () => {
   try {
-    return await prisma.perizinanSiswa.findMany({
-      where: { idSiswa },
-      orderBy: { time: "desc" },
+    const perizinanSiswa = await prisma.perizinanSiswa.findMany({
+      where: {
+        idSiswa,
+      },
+      orderBy: {
+        time: "desc",
+      },
     });
+    return perizinanSiswa;
   } catch (error) {
     console.log(error);
-    throw new Error(prismaErrorHandler(error));
+    const errorMessage = prismaErrorHandler(error);
+    throw new Error(errorMessage);
   }
 };
 
 export const getPengumuman = async (idSiswa) => {
   try {
+    // ambil kelas yang diikuti siswa
     const kelassiswa = await prisma.daftarSiswaKelas.findMany({
       where: { idSiswa },
-      select: { idKelas: true },
     });
 
-    const idKelasList = kelassiswa.map((k) => k.idKelas);
+    // ambil semua pengumuman kelas berdasarkan daftar kelas siswa
+    let pengumumanKelas = [];
 
-    const pengumumanKelas = await prisma.pengumumanKelas.findMany({
-      where: { idKelas: { in: idKelasList } },
-      orderBy: { time: "desc" },
-    });
+    for (let i = 0; i < kelassiswa.length; i++) {
+      const dataPengumumanKelas = await prisma.pengumumanKelas.findMany({
+        where: { idKelas: kelassiswa[i].idKelas },
+        orderBy: { time: "desc" },
+      });
+      pengumumanKelas = [...pengumumanKelas, ...dataPengumumanKelas];
+    }
 
+    // ambil pengumuman umum
     const pengumumanUmum = await prisma.pengumuman.findMany({
       orderBy: { time: "desc" },
     });
 
-    return [...pengumumanUmum, ...pengumumanKelas].sort(
-      (a, b) => new Date(b.time) - new Date(a.time)
+    // gabung & urutkan berdasarkan time
+    const semuaPengumuman = [...pengumumanUmum, ...pengumumanKelas].sort(
+      (a, b) => new Date(b.time).getTime() - new Date(a.time).getTime()
     );
+
+    return semuaPengumuman;
   } catch (error) {
     console.error(error);
     throw new Error(prismaErrorHandler(error));
@@ -168,7 +196,7 @@ export const getPengumuman = async (idSiswa) => {
 export const getRapotSiswa = async (idSiswa) => {
   const rapot = await prisma.daftarSiswaKelas.findMany({
     where: { idSiswa },
-    distinct: ["idKelas"],
+    distinct: ["idKelas"], // biar ga dobel kelas
     include: {
       Kelas: {
         select: {
@@ -180,6 +208,7 @@ export const getRapotSiswa = async (idSiswa) => {
     },
   });
 
+  // mapping supaya hasilnya flat, tanpa nested object
   return rapot.map((item) => ({
     id: item.id,
     idKelas: item.idKelas,
@@ -194,21 +223,25 @@ export const getRapotSiswa = async (idSiswa) => {
 };
 
 export const getPelanggaranSiswa = async (idSiswa) => {
-  return prisma.pelanggaran_Dan_Prestasi_Siswa.findMany({
+  const pelanggaran = await prisma.pelanggaran_Dan_Prestasi_Siswa.findMany({
     where: {
       idSiswa,
       jenis: "Pelanggaran",
     },
   });
+
+  return pelanggaran;
 };
 
 export const getPrestasiSiswa = async (idSiswa) => {
-  return prisma.pelanggaran_Dan_Prestasi_Siswa.findMany({
+  const pelanggaran = await prisma.pelanggaran_Dan_Prestasi_Siswa.findMany({
     where: {
       idSiswa,
       jenis: "Prestasi",
     },
   });
+
+  return pelanggaran;
 };
 
 export const getNilaiSiswaByTahun = async (idSiswa) => {
@@ -219,11 +252,11 @@ export const getNilaiSiswaByTahun = async (idSiswa) => {
       where: {
         idSiswa,
         KelasDanMapel: {
-          tahunAjaran: tahunAjaran.tahunAjaran,
+          tahunAjaran: tahunAjaran.tahunAjaran, // filter kelas mapel tahun ajaran
         },
       },
       include: {
-        JenisNilai: true,
+        JenisNilai: true, // untuk lihat bobot & jenis
         KelasDanMapel: {
           select: {
             id: true,
@@ -235,10 +268,14 @@ export const getNilaiSiswaByTahun = async (idSiswa) => {
         },
       },
       orderBy: {
-        KelasDanMapel: { namaMapel: "asc" },
+        KelasDanMapel: {
+          namaMapel: "asc",
+        },
       },
+      // distinct: ["id"],
     });
 
+    // mapping biar rapih
     return nilai.map((n) => ({
       id: n.id,
       nilai: n.nilai,
@@ -257,5 +294,6 @@ export const getNilaiSiswaByTahun = async (idSiswa) => {
 };
 
 export const getPerpustakaan = async () => {
-  return prisma.buku_Perpustakaan.findMany();
+  const perpustakaan = await prisma.buku_Perpustakaan.findMany({});
+  return perpustakaan;
 };
