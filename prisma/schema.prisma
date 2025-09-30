@@ -507,7 +507,7 @@ model SnapUrl {
     idTagihan String
     snap_url String
     snapToken String
-    createdAt String
+    createdAt DateTime
     Tagihan Tagihan? @relation(fields: [idTagihan], references: [id])
 
 }
