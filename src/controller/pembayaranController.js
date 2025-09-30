@@ -142,6 +142,7 @@ export const bayarTagihanMidtransController = async (req, res) => {
         idTagihan: idTagihan,
         snap_url: snapResponse.redirect_url,
         snapToken: snapResponse.token,
+        createdAt: new Date(),
       },
     });
     return res.json({ orderId, snap: snapResponse });
@@ -197,6 +198,12 @@ export const midtransNotificationController = async (req, res) => {
         waktuBayar: new Date(),
         metodeBayar: "midtrans",
         status: statusPembayaran,
+      },
+    });
+
+    await prisma.snapUrl.deleteMany({
+      where: {
+        idTagihan: tagihanNotif.idTagihan,
       },
     });
 
