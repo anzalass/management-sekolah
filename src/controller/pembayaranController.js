@@ -189,6 +189,7 @@ export const midtransNotificationController = async (req, res) => {
     });
 
     // catat riwayat pembayaran
+
     await prisma.riwayatPembayaran.create({
       data: {
         namaSiswa: tagihan.namaSiswa,
@@ -201,11 +202,13 @@ export const midtransNotificationController = async (req, res) => {
       },
     });
 
-    await prisma.snapUrl.deleteMany({
-      where: {
-        idTagihan: tagihanNotif.idTagihan,
-      },
-    });
+    if (transactionStatus === "settlement" || transactionStatus === "capture") {
+      await prisma.snapUrl.deleteMany({
+        where: {
+          idTagihan: tagihanNotif.idTagihan,
+        },
+      });
+    }
 
     return res.json({ success: true });
   } catch (err) {
