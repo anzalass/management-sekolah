@@ -17,6 +17,7 @@ export const getPembayaranRiwayatPembayaranByIdSiswa = async (idSiswa) => {
           select: {
             nama: true,
             nominal: true,
+            status: true,
           },
         },
       },
@@ -34,6 +35,7 @@ export const getPembayaranRiwayatPembayaranByIdSiswa = async (idSiswa) => {
       metodeBayar: r.metodeBayar,
       namaTagihan: r.Tagihan?.nama || null,
       nominal: r.Tagihan?.nominal || 0,
+      status: r.status,
     }));
 
     return {
