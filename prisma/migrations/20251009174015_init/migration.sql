@@ -7,6 +7,9 @@ CREATE TYPE "StatusIzin" AS ENUM ('menunggu', 'disetujui', 'ditolak');
 -- CreateEnum
 CREATE TYPE "StatusPeminjamanBuku" AS ENUM ('dipinjam', 'dikembalikan');
 
+-- CreateEnum
+CREATE TYPE "StatusPembayaran" AS ENUM ('BELUM BAYAR', 'LUNAS', 'MENUNGGU_KONFIRMASI', 'BUKTI_TIDAK_VALID', 'PENDING', 'GAGAL');
+
 -- CreateTable
 CREATE TABLE "Sekolah" (
     "id" TEXT NOT NULL,
@@ -86,10 +89,24 @@ CREATE TABLE "Kelas" (
     "nama" TEXT NOT NULL,
     "namaGuru" TEXT NOT NULL,
     "nipGuru" TEXT NOT NULL,
+    "banner" TEXT,
+    "bannerId" TEXT,
     "ruangKelas" TEXT NOT NULL,
     "tahunAjaran" TEXT NOT NULL,
 
     CONSTRAINT "Kelas_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "JadwalPelajaran" (
+    "id" TEXT NOT NULL,
+    "idKelas" TEXT NOT NULL,
+    "hari" TEXT NOT NULL,
+    "namaMapel" TEXT NOT NULL,
+    "jamMulai" TEXT NOT NULL,
+    "jamSelesai" TEXT NOT NULL,
+
+    CONSTRAINT "JadwalPelajaran_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
@@ -113,6 +130,8 @@ CREATE TABLE "KelasDanMapel" (
     "nipGuru" TEXT NOT NULL,
     "ruangKelas" TEXT NOT NULL,
     "kelas" TEXT NOT NULL,
+    "banner" TEXT,
+    "bannerId" TEXT,
     "tahunAjaran" TEXT NOT NULL,
 
     CONSTRAINT "KelasDanMapel_pkey" PRIMARY KEY ("id")
@@ -124,7 +143,9 @@ CREATE TABLE "DaftarSiswaMapel" (
     "idKelas" TEXT NOT NULL,
     "idSiswa" TEXT NOT NULL,
     "namaSiswa" TEXT NOT NULL,
-    "nipSiswa" TEXT NOT NULL,
+    "nisSiswa" TEXT NOT NULL,
+    "banner" TEXT,
+    "bannerId" TEXT,
 
     CONSTRAINT "DaftarSiswaMapel_pkey" PRIMARY KEY ("id")
 );
@@ -133,9 +154,10 @@ CREATE TABLE "DaftarSiswaMapel" (
 CREATE TABLE "DaftarSiswaKelas" (
     "id" TEXT NOT NULL,
     "idKelas" TEXT NOT NULL,
+    "rapotSiswa" TEXT,
     "idSiswa" TEXT NOT NULL,
     "namaSiswa" TEXT NOT NULL,
-    "nipSiswa" TEXT NOT NULL,
+    "nisSiswa" TEXT NOT NULL,
 
     CONSTRAINT "DaftarSiswaKelas_pkey" PRIMARY KEY ("id")
 );
@@ -158,6 +180,7 @@ CREATE TABLE "NilaiSiswa" (
     "idJenisNilai" TEXT NOT NULL,
     "jenisNilai" TEXT NOT NULL,
     "nilai" INTEGER NOT NULL,
+    "createdAt" TIMESTAMP(3),
 
     CONSTRAINT "NilaiSiswa_pkey" PRIMARY KEY ("id")
 );
@@ -166,7 +189,7 @@ CREATE TABLE "NilaiSiswa" (
 CREATE TABLE "KehadiranSiswa" (
     "id" TEXT NOT NULL,
     "idSiswa" TEXT,
-    "idKelas" TEXT NOT NULL,
+    "idKelas" TEXT,
     "namaSiswa" TEXT NOT NULL,
     "nisSiswa" TEXT NOT NULL,
     "waktu" TIMESTAMP(3) NOT NULL,
@@ -182,11 +205,12 @@ CREATE TABLE "Siswa" (
     "nik" TEXT NOT NULL,
     "nama" TEXT NOT NULL,
     "jurusan" TEXT,
+    "password" TEXT,
     "tanggalLahir" TIMESTAMP(3) NOT NULL,
     "tempatLahir" TEXT NOT NULL,
     "namaAyah" TEXT NOT NULL,
     "namaIbu" TEXT NOT NULL,
-    "tahunLulus" TEXT NOT NULL,
+    "tahunLulus" TEXT,
     "poin" INTEGER,
     "alamat" TEXT,
     "agama" TEXT NOT NULL,
@@ -207,6 +231,7 @@ CREATE TABLE "Siswa" (
 CREATE TABLE "Konseling" (
     "id" TEXT NOT NULL,
     "idSiswa" TEXT NOT NULL,
+    "nisSiswa" TEXT NOT NULL,
     "namaSiswa" TEXT NOT NULL,
     "tanggal" TIMESTAMP(3) NOT NULL,
     "keterangan" TEXT NOT NULL,
@@ -217,6 +242,7 @@ CREATE TABLE "Konseling" (
 -- CreateTable
 CREATE TABLE "Pelanggaran_Dan_Prestasi_Siswa" (
     "id" TEXT NOT NULL,
+    "nisSiswa" TEXT NOT NULL,
     "idSiswa" TEXT NOT NULL,
     "waktu" TIMESTAMP(3) NOT NULL,
     "poin" INTEGER NOT NULL,
@@ -314,7 +340,6 @@ CREATE TABLE "PerizinanSiswa" (
     "id" TEXT NOT NULL,
     "idSiswa" TEXT NOT NULL,
     "idKelas" TEXT,
-    "jenis" TEXT NOT NULL,
     "keterangan" TEXT NOT NULL,
     "time" TIMESTAMP(3) NOT NULL,
     "bukti" TEXT NOT NULL,
@@ -377,9 +402,21 @@ CREATE TABLE "CatatanPerkembanganSiswa" (
 );
 
 -- CreateTable
+CREATE TABLE "CatatanAkhirSiswa" (
+    "id" TEXT NOT NULL,
+    "idKelasMapel" TEXT,
+    "idSiswa" TEXT NOT NULL,
+    "content" TEXT NOT NULL,
+
+    CONSTRAINT "CatatanAkhirSiswa_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
 CREATE TABLE "Buku_Perpustakaan" (
     "id" TEXT NOT NULL,
     "nama" TEXT NOT NULL,
+    "cover" TEXT,
+    "cover_id" TEXT,
     "filepdf" TEXT,
     "filePdfid" TEXT,
     "pengarang" TEXT NOT NULL,
@@ -395,6 +432,7 @@ CREATE TABLE "Buku_Perpustakaan" (
 CREATE TABLE "Peminjaman_dan_Pengembalian" (
     "id" TEXT NOT NULL,
     "idSiswa" TEXT NOT NULL,
+    "nisSiswa" TEXT NOT NULL,
     "idBuku" TEXT,
     "namaBuku" TEXT NOT NULL,
     "waktuPinjam" TIMESTAMP(3) NOT NULL,
@@ -406,10 +444,17 @@ CREATE TABLE "Peminjaman_dan_Pengembalian" (
 );
 
 -- CreateTable
+CREATE TABLE "ListKelas" (
+    "id" TEXT NOT NULL,
+    "namaKelas" TEXT NOT NULL,
+
+    CONSTRAINT "ListKelas_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
 CREATE TABLE "Mata_Pelajaran" (
     "id" TEXT NOT NULL,
     "nama" TEXT NOT NULL,
-    "kelas" TEXT NOT NULL,
 
     CONSTRAINT "Mata_Pelajaran_pkey" PRIMARY KEY ("id")
 );
@@ -427,11 +472,13 @@ CREATE TABLE "Tagihan" (
     "id" TEXT NOT NULL,
     "nama" TEXT NOT NULL,
     "namaSiswa" TEXT NOT NULL,
-    "nipSiswa" TEXT NOT NULL,
+    "nisSiswa" TEXT NOT NULL,
     "idSiswa" TEXT,
     "waktu" TIMESTAMP(3) NOT NULL,
+    "buktiUrl" TEXT,
+    "buktiId" TEXT,
     "jatuhTempo" TIMESTAMP(3) NOT NULL,
-    "status" TEXT NOT NULL,
+    "status" "StatusPembayaran" NOT NULL,
     "keterangan" TEXT NOT NULL,
     "nominal" INTEGER NOT NULL,
 
@@ -439,13 +486,28 @@ CREATE TABLE "Tagihan" (
 );
 
 -- CreateTable
+CREATE TABLE "SnapUrl" (
+    "id" TEXT NOT NULL,
+    "idTagihan" TEXT NOT NULL,
+    "snap_url" TEXT NOT NULL,
+    "snapToken" TEXT NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "SnapUrl_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
 CREATE TABLE "RiwayatPembayaran" (
     "id" TEXT NOT NULL,
     "namaSiswa" TEXT NOT NULL,
-    "nipSiswa" TEXT NOT NULL,
+    "nisSiswa" TEXT NOT NULL,
     "idSiswa" TEXT,
     "idTagihan" TEXT NOT NULL,
     "waktuBayar" TIMESTAMP(3) NOT NULL,
+    "status" "StatusPembayaran" NOT NULL,
+    "metodeBayar" TEXT NOT NULL,
+    "snapToken" TEXT,
+    "snapRedirectUrl" TEXT,
 
     CONSTRAINT "RiwayatPembayaran_pkey" PRIMARY KEY ("id")
 );
@@ -454,6 +516,7 @@ CREATE TABLE "RiwayatPembayaran" (
 CREATE TABLE "Testimoni" (
     "id" TEXT NOT NULL,
     "image" TEXT NOT NULL,
+    "imageId" TEXT NOT NULL,
     "parentName" TEXT NOT NULL,
     "description" TEXT NOT NULL,
     "guruId" TEXT,
@@ -467,6 +530,7 @@ CREATE TABLE "News" (
     "title" TEXT NOT NULL,
     "content" TEXT NOT NULL,
     "image" TEXT NOT NULL,
+    "imageId" TEXT NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
     "guruId" TEXT,
@@ -478,6 +542,7 @@ CREATE TABLE "News" (
 CREATE TABLE "Gallery" (
     "id" TEXT NOT NULL,
     "image" TEXT NOT NULL,
+    "imageId" TEXT NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
     "guruId" TEXT,
@@ -490,6 +555,7 @@ CREATE TABLE "GuruTemplate" (
     "id" TEXT NOT NULL,
     "name" TEXT NOT NULL,
     "image" TEXT NOT NULL,
+    "imageId" TEXT NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
     "guruId" TEXT,
@@ -526,14 +592,51 @@ CREATE TABLE "MateriMapel" (
 );
 
 -- CreateTable
+CREATE TABLE "UjianIframe" (
+    "id" TEXT NOT NULL,
+    "idKelasMapel" TEXT NOT NULL,
+    "nama" TEXT NOT NULL,
+    "deadline" TIMESTAMP(3) NOT NULL,
+    "iframe" TEXT NOT NULL,
+
+    CONSTRAINT "UjianIframe_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "SelesaiUjian" (
+    "id" TEXT NOT NULL,
+    "idUjianIframe" TEXT NOT NULL,
+    "idSiswa" TEXT NOT NULL,
+    "idKelasMapel" TEXT NOT NULL,
+    "status" TEXT NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "SelesaiUjian_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
 CREATE TABLE "SummaryMateri" (
     "id" TEXT NOT NULL,
     "idSiswa" TEXT NOT NULL,
+    "idKelasMapel" TEXT NOT NULL,
     "idMateri" TEXT NOT NULL,
     "content" TEXT NOT NULL,
     "waktu" TIMESTAMP(3) NOT NULL,
 
     CONSTRAINT "SummaryMateri_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "FotoSummaryMateri" (
+    "id" TEXT NOT NULL,
+    "idSummaryMateri" TEXT NOT NULL,
+    "idSiswa" TEXT NOT NULL,
+    "idKelasMapel" TEXT NOT NULL,
+    "idMateri" TEXT NOT NULL,
+    "fotoUrl" TEXT NOT NULL,
+    "fotoId" TEXT NOT NULL,
+
+    CONSTRAINT "FotoSummaryMateri_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
@@ -554,12 +657,26 @@ CREATE TABLE "TugasMapel" (
 -- CreateTable
 CREATE TABLE "SummaryTugas" (
     "id" TEXT NOT NULL,
+    "idKelasMapel" TEXT NOT NULL,
     "idSiswa" TEXT NOT NULL,
     "idTugas" TEXT NOT NULL,
     "content" TEXT NOT NULL,
     "waktu" TIMESTAMP(3) NOT NULL,
 
     CONSTRAINT "SummaryTugas_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "FotoSummaryTugas" (
+    "id" TEXT NOT NULL,
+    "idSummaryTugas" TEXT NOT NULL,
+    "idSiswa" TEXT NOT NULL,
+    "idKelasMapel" TEXT NOT NULL,
+    "idTugas" TEXT NOT NULL,
+    "fotoUrl" TEXT NOT NULL,
+    "fotoId" TEXT NOT NULL,
+
+    CONSTRAINT "FotoSummaryTugas_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
@@ -572,6 +689,57 @@ CREATE TABLE "Arsip" (
     "url_id" TEXT NOT NULL,
 
     CONSTRAINT "Arsip_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "JanjiTemu" (
+    "id" TEXT NOT NULL,
+    "idSiswa" TEXT NOT NULL,
+    "idGuru" TEXT NOT NULL,
+    "waktu" TIMESTAMP(3) NOT NULL,
+    "status" TEXT NOT NULL,
+    "deskripsi" TEXT NOT NULL,
+
+    CONSTRAINT "JanjiTemu_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "WeeklyActivity" (
+    "id" TEXT NOT NULL,
+    "idKelas" TEXT NOT NULL,
+    "judul" TEXT,
+    "content" TEXT NOT NULL,
+    "waktu" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "WeeklyActivity_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "FotoWeeklyActivity" (
+    "id" TEXT NOT NULL,
+    "idWeeklyActivity" TEXT NOT NULL,
+    "fotoUrl" TEXT NOT NULL,
+    "fotoId" TEXT NOT NULL,
+
+    CONSTRAINT "FotoWeeklyActivity_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "Notifikasi" (
+    "id" TEXT NOT NULL,
+    "idSiswa" TEXT,
+    "idKelas" TEXT,
+    "idGuru" TEXT,
+    "redirectSiswa" TEXT,
+    "redirectGuru" TEXT,
+    "status" TEXT NOT NULL,
+    "idTerkait" TEXT,
+    "kategori" TEXT NOT NULL,
+    "keterangan" TEXT NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL,
+    "createdBy" TEXT,
+
+    CONSTRAINT "Notifikasi_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateIndex
@@ -587,6 +755,9 @@ CREATE UNIQUE INDEX "DaftarSiswaMapel_idSiswa_idKelas_key" ON "DaftarSiswaMapel"
 CREATE UNIQUE INDEX "DaftarSiswaKelas_idSiswa_idKelas_key" ON "DaftarSiswaKelas"("idSiswa", "idKelas");
 
 -- CreateIndex
+CREATE UNIQUE INDEX "NilaiSiswa_idSiswa_idJenisNilai_key" ON "NilaiSiswa"("idSiswa", "idJenisNilai");
+
+-- CreateIndex
 CREATE UNIQUE INDEX "Siswa_nis_key" ON "Siswa"("nis");
 
 -- CreateIndex
@@ -598,6 +769,15 @@ CREATE UNIQUE INDEX "Ruangan_nama_key" ON "Ruangan"("nama");
 -- CreateIndex
 CREATE UNIQUE INDEX "Jenis_Inventaris_nama_key" ON "Jenis_Inventaris"("nama");
 
+-- CreateIndex
+CREATE UNIQUE INDEX "CatatanAkhirSiswa_idSiswa_idKelasMapel_key" ON "CatatanAkhirSiswa"("idSiswa", "idKelasMapel");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "ListKelas_namaKelas_key" ON "ListKelas"("namaKelas");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "SelesaiUjian_idSiswa_idKelasMapel_idUjianIframe_key" ON "SelesaiUjian"("idSiswa", "idKelasMapel", "idUjianIframe");
+
 -- AddForeignKey
 ALTER TABLE "jadwalMengajar" ADD CONSTRAINT "jadwalMengajar_idGuru_fkey" FOREIGN KEY ("idGuru") REFERENCES "Guru"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
@@ -606,6 +786,9 @@ ALTER TABLE "KehadiranGuru" ADD CONSTRAINT "KehadiranGuru_idGuru_fkey" FOREIGN K
 
 -- AddForeignKey
 ALTER TABLE "Kelas" ADD CONSTRAINT "Kelas_idGuru_fkey" FOREIGN KEY ("idGuru") REFERENCES "Guru"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "JadwalPelajaran" ADD CONSTRAINT "JadwalPelajaran_idKelas_fkey" FOREIGN KEY ("idKelas") REFERENCES "Kelas"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "RiwayatPendidikanGuru" ADD CONSTRAINT "RiwayatPendidikanGuru_idGuru_fkey" FOREIGN KEY ("idGuru") REFERENCES "Guru"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
@@ -641,7 +824,7 @@ ALTER TABLE "NilaiSiswa" ADD CONSTRAINT "NilaiSiswa_idJenisNilai_fkey" FOREIGN K
 ALTER TABLE "KehadiranSiswa" ADD CONSTRAINT "KehadiranSiswa_idSiswa_fkey" FOREIGN KEY ("idSiswa") REFERENCES "Siswa"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "KehadiranSiswa" ADD CONSTRAINT "KehadiranSiswa_idKelas_fkey" FOREIGN KEY ("idKelas") REFERENCES "Kelas"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "KehadiranSiswa" ADD CONSTRAINT "KehadiranSiswa_idKelas_fkey" FOREIGN KEY ("idKelas") REFERENCES "Kelas"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "Konseling" ADD CONSTRAINT "Konseling_idSiswa_fkey" FOREIGN KEY ("idSiswa") REFERENCES "Siswa"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
@@ -674,6 +857,12 @@ ALTER TABLE "CatatanPerkembanganSiswa" ADD CONSTRAINT "CatatanPerkembanganSiswa_
 ALTER TABLE "CatatanPerkembanganSiswa" ADD CONSTRAINT "CatatanPerkembanganSiswa_idSiswa_fkey" FOREIGN KEY ("idSiswa") REFERENCES "Siswa"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
+ALTER TABLE "CatatanAkhirSiswa" ADD CONSTRAINT "CatatanAkhirSiswa_idKelasMapel_fkey" FOREIGN KEY ("idKelasMapel") REFERENCES "KelasDanMapel"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "CatatanAkhirSiswa" ADD CONSTRAINT "CatatanAkhirSiswa_idSiswa_fkey" FOREIGN KEY ("idSiswa") REFERENCES "Siswa"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
 ALTER TABLE "Peminjaman_dan_Pengembalian" ADD CONSTRAINT "Peminjaman_dan_Pengembalian_idBuku_fkey" FOREIGN KEY ("idBuku") REFERENCES "Buku_Perpustakaan"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
@@ -683,7 +872,13 @@ ALTER TABLE "Peminjaman_dan_Pengembalian" ADD CONSTRAINT "Peminjaman_dan_Pengemb
 ALTER TABLE "Tagihan" ADD CONSTRAINT "Tagihan_idSiswa_fkey" FOREIGN KEY ("idSiswa") REFERENCES "Siswa"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
+ALTER TABLE "SnapUrl" ADD CONSTRAINT "SnapUrl_idTagihan_fkey" FOREIGN KEY ("idTagihan") REFERENCES "Tagihan"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
 ALTER TABLE "RiwayatPembayaran" ADD CONSTRAINT "RiwayatPembayaran_idSiswa_fkey" FOREIGN KEY ("idSiswa") REFERENCES "Siswa"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "RiwayatPembayaran" ADD CONSTRAINT "RiwayatPembayaran_idTagihan_fkey" FOREIGN KEY ("idTagihan") REFERENCES "Tagihan"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "Testimoni" ADD CONSTRAINT "Testimoni_guruId_fkey" FOREIGN KEY ("guruId") REFERENCES "Guru"("id") ON DELETE SET NULL ON UPDATE CASCADE;
@@ -701,10 +896,34 @@ ALTER TABLE "GuruTemplate" ADD CONSTRAINT "GuruTemplate_guruId_fkey" FOREIGN KEY
 ALTER TABLE "MateriMapel" ADD CONSTRAINT "MateriMapel_idKelasMapel_fkey" FOREIGN KEY ("idKelasMapel") REFERENCES "KelasDanMapel"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
+ALTER TABLE "UjianIframe" ADD CONSTRAINT "UjianIframe_idKelasMapel_fkey" FOREIGN KEY ("idKelasMapel") REFERENCES "KelasDanMapel"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "SelesaiUjian" ADD CONSTRAINT "SelesaiUjian_idUjianIframe_fkey" FOREIGN KEY ("idUjianIframe") REFERENCES "UjianIframe"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "SelesaiUjian" ADD CONSTRAINT "SelesaiUjian_idSiswa_fkey" FOREIGN KEY ("idSiswa") REFERENCES "Siswa"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "SelesaiUjian" ADD CONSTRAINT "SelesaiUjian_idKelasMapel_fkey" FOREIGN KEY ("idKelasMapel") REFERENCES "KelasDanMapel"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
 ALTER TABLE "SummaryMateri" ADD CONSTRAINT "SummaryMateri_idMateri_fkey" FOREIGN KEY ("idMateri") REFERENCES "MateriMapel"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "SummaryMateri" ADD CONSTRAINT "SummaryMateri_idSiswa_fkey" FOREIGN KEY ("idSiswa") REFERENCES "Siswa"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "SummaryMateri" ADD CONSTRAINT "SummaryMateri_idKelasMapel_fkey" FOREIGN KEY ("idKelasMapel") REFERENCES "KelasDanMapel"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "FotoSummaryMateri" ADD CONSTRAINT "FotoSummaryMateri_idSummaryMateri_fkey" FOREIGN KEY ("idSummaryMateri") REFERENCES "SummaryMateri"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "FotoSummaryMateri" ADD CONSTRAINT "FotoSummaryMateri_idMateri_fkey" FOREIGN KEY ("idMateri") REFERENCES "MateriMapel"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "FotoSummaryMateri" ADD CONSTRAINT "FotoSummaryMateri_idSiswa_fkey" FOREIGN KEY ("idSiswa") REFERENCES "Siswa"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "TugasMapel" ADD CONSTRAINT "TugasMapel_idKelasMapel_fkey" FOREIGN KEY ("idKelasMapel") REFERENCES "KelasDanMapel"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
@@ -714,3 +933,27 @@ ALTER TABLE "SummaryTugas" ADD CONSTRAINT "SummaryTugas_idTugas_fkey" FOREIGN KE
 
 -- AddForeignKey
 ALTER TABLE "SummaryTugas" ADD CONSTRAINT "SummaryTugas_idSiswa_fkey" FOREIGN KEY ("idSiswa") REFERENCES "Siswa"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "SummaryTugas" ADD CONSTRAINT "SummaryTugas_idKelasMapel_fkey" FOREIGN KEY ("idKelasMapel") REFERENCES "KelasDanMapel"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "FotoSummaryTugas" ADD CONSTRAINT "FotoSummaryTugas_idSummaryTugas_fkey" FOREIGN KEY ("idSummaryTugas") REFERENCES "SummaryTugas"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "FotoSummaryTugas" ADD CONSTRAINT "FotoSummaryTugas_idTugas_fkey" FOREIGN KEY ("idTugas") REFERENCES "TugasMapel"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "FotoSummaryTugas" ADD CONSTRAINT "FotoSummaryTugas_idSiswa_fkey" FOREIGN KEY ("idSiswa") REFERENCES "Siswa"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "JanjiTemu" ADD CONSTRAINT "JanjiTemu_idSiswa_fkey" FOREIGN KEY ("idSiswa") REFERENCES "Siswa"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "JanjiTemu" ADD CONSTRAINT "JanjiTemu_idGuru_fkey" FOREIGN KEY ("idGuru") REFERENCES "Guru"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "WeeklyActivity" ADD CONSTRAINT "WeeklyActivity_idKelas_fkey" FOREIGN KEY ("idKelas") REFERENCES "Kelas"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "FotoWeeklyActivity" ADD CONSTRAINT "FotoWeeklyActivity_idWeeklyActivity_fkey" FOREIGN KEY ("idWeeklyActivity") REFERENCES "WeeklyActivity"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
