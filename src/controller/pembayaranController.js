@@ -1,11 +1,13 @@
 import {
   bayarTagihan,
+  buktiTidakValid,
   createTagihan,
   deleteTagihan,
   getAllRiwayatPembayaran,
   getAllTagihan,
   getTagihanById,
   updateTagihan,
+  uploadBuktiTagihan,
 } from "../services/pembayaranService.js";
 import { PrismaClient } from "@prisma/client";
 import {
@@ -14,6 +16,7 @@ import {
 } from "../utils/midtrans.js";
 const prisma = new PrismaClient();
 import { v4 as uuidv4 } from "uuid"; // kalau pakai ESModule
+import memoryUpload from "../utils/multer.js";
 // atau
 // const { v4: uuidv4 } = require('uuid'); // kalau pakai CommonJS
 
@@ -214,5 +217,29 @@ export const midtransNotificationController = async (req, res) => {
   } catch (err) {
     console.error(err);
     return res.status(500).json({ message: "Error processing notification" });
+  }
+};
+
+export const uploadBuktiTagihanController = async (req, res) => {
+  memoryUpload.single("bukti")(req, res, async (err) => {
+    try {
+      await uploadBuktiTagihan(req.params.id, req.file);
+      return res
+        .status(200)
+        .json({ message: "Berhasil upload bukti Tagihan", success: true });
+    } catch (error) {
+      return res.status(500).json({ message: "Gagal upload bukti pembayaran" });
+    }
+  });
+};
+
+export const buktiTidakValidController = async (req, res) => {
+  try {
+    await buktiTidakValid(req.params.id);
+    return res
+      .status(200)
+      .json({ message: "Bukti tidak valid", success: true });
+  } catch (error) {
+    return res.status(500).json({ message: "Gagal upload bukti pembayaran" });
   }
 };

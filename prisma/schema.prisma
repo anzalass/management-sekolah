@@ -158,8 +158,6 @@ model KelasDanMapel {
   CatatanAkhirSiswa CatatanAkhirSiswa[]
   UjianIframe UjianIframe[]
   SelesaiUjian SelesaiUjian[]
-
-
 }
 
 model DaftarSiswaMapel {
@@ -265,6 +263,10 @@ model Siswa {
   CatatanAkhirSiswa      CatatanAkhirSiswa[]
   JanjiTemu   JanjiTemu[]
   SelesaiUjian SelesaiUjian[]
+    FotoSummaryMateri FotoSummaryMateri[]
+      FotoSummaryTugas FotoSummaryTugas[]
+
+
 
 }
 
@@ -416,7 +418,6 @@ model CatatanPerkembanganSiswa  {
   time        DateTime
   Kelas       Kelas?  @relation(fields: [idKelas], references: [id])
   Siswa       Siswa  @relation(fields: [idSiswa], references: [id])
-
 }
 
 model CatatanAkhirSiswa {
@@ -475,7 +476,6 @@ model ListKelas {
 model Mata_Pelajaran {
   id      String @id @default(uuid())
   nama    String
-  kelas   String
 }
 
 
@@ -492,6 +492,8 @@ model Tagihan {
   nisSiswa    String
   idSiswa     String?
   waktu       DateTime
+  buktiUrl    String?
+  buktiId     String?
   jatuhTempo  DateTime
   status      StatusPembayaran
   keterangan  String
@@ -515,6 +517,8 @@ model SnapUrl {
 enum StatusPembayaran {
   BELUM_BAYAR @map("BELUM BAYAR")
   LUNAS
+  MENUNGGU_KONFIRMASI
+  BUKTI_TIDAK_VALID
   PENDING
   GAGAL
 }
@@ -605,6 +609,8 @@ model MateriMapel {
       iframeYoutube     String?
       pdfUrl String?
       pdfUrlId String?
+        FotoSummaryMateri FotoSummaryMateri[]
+
       SummaryMateri SummaryMateri[]
       KelasMapel KelasDanMapel   @relation(fields: [idKelasMapel], references: [id])
 }
@@ -643,12 +649,26 @@ model SummaryMateri  {
   idMateri String
   content String
   waktu DateTime
+  FotoSummaryMateri FotoSummaryMateri[]
   MateriMapel MateriMapel   @relation(fields: [idMateri], references: [id])
   Siswa Siswa   @relation(fields: [idSiswa], references: [id])
   KelasMapel KelasDanMapel   @relation(fields: [idKelasMapel], references: [id])
-
-
 }
+
+model FotoSummaryMateri {
+  id   String @id @default(uuid())
+  idSummaryMateri String
+  idSiswa String
+  idKelasMapel String
+  idMateri String
+  fotoUrl String
+  fotoId String
+  SummaryMateri SummaryMateri   @relation(fields: [idSummaryMateri], references: [id])
+  MateriMapel MateriMapel   @relation(fields: [idMateri], references: [id])
+  Siswa Siswa   @relation(fields: [idSiswa], references: [id])
+}
+
+
 
 model TugasMapel {
     id          String @id @default(uuid())
@@ -661,6 +681,8 @@ model TugasMapel {
     pdfUrl String?
     pdfUrlId String?
     SummaryTugas SummaryTugas[]
+      FotoSummaryTugas FotoSummaryTugas[]
+
     KelasMapel KelasDanMapel   @relation(fields: [idKelasMapel], references: [id])
 }
 
@@ -671,11 +693,29 @@ model SummaryTugas {
   idTugas String
   content String
   waktu DateTime
+
+  FotoSummaryTugas FotoSummaryTugas[]
   TugasMapel TugasMapel   @relation(fields: [idTugas], references: [id])
   Siswa Siswa   @relation(fields: [idSiswa], references: [id])
   KelasMapel KelasDanMapel   @relation(fields: [idKelasMapel], references: [id])
 
 }
+
+
+model FotoSummaryTugas {
+  id   String @id @default(uuid())
+  idSummaryTugas String
+  idSiswa String
+  idKelasMapel String
+  idTugas String
+  fotoUrl String
+  fotoId String
+
+  SummaryTugas SummaryTugas   @relation(fields: [idSummaryTugas], references: [id])
+  TugasMapel TugasMapel   @relation(fields: [idTugas], references: [id])
+  Siswa Siswa   @relation(fields: [idSiswa], references: [id])
+}
+
 
 
 model Arsip {
@@ -716,4 +756,19 @@ model FotoWeeklyActivity {
   fotoId String
   WeeklyAktivity WeeklyActivity   @relation(fields: [idWeeklyActivity], references: [id])
 
+}
+
+model Notifikasi {
+  id   String @id @default(uuid())
+  idSiswa String?
+  idKelas String?
+  idGuru String?
+  redirectSiswa String?
+  redirectGuru String?
+  status String
+  idTerkait String?
+  kategori String
+  keterangan String
+  createdAt DateTime
+  createdBy String?
 }

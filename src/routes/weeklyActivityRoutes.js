@@ -14,7 +14,7 @@ const router = express.Router();
 router.post(
   "/weekly-activity/",
   AuthMiddleware,
-  memoryUpload.array("foto", 10),
+  memoryUpload.array("foto", 20),
   createWeeklyActivityController
 );
 

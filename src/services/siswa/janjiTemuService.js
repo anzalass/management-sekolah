@@ -1,13 +1,17 @@
 // services/janjiTemuService.ts
 import { PrismaClient } from "@prisma/client";
 import { prismaErrorHandler } from "../../utils/errorHandlerPrisma.js";
+import {
+  createNotifikasi,
+  deleteNotifikasiByIdTerkait,
+} from "../notifikasiService.js";
 
 const prisma = new PrismaClient();
 
 // CREATE
 export const createJanjiTemu = async (data, idSiswa) => {
   try {
-    return await prisma.janjiTemu.create({
+    const janjiTemu = await prisma.janjiTemu.create({
       data: {
         deskripsi: data.deskripsi,
         status: "menunggu",
@@ -16,6 +20,28 @@ export const createJanjiTemu = async (data, idSiswa) => {
         idSiswa: idSiswa,
       },
     });
+
+    const siswa = await prisma.siswa.findUnique({
+      where: {
+        id: idSiswa,
+      },
+      select: {
+        nama: true,
+      },
+    });
+
+    if (janjiTemu) {
+      await createNotifikasi({
+        idSiswa: janjiTemu.idSiswa,
+        kategori: "Janji Temu Siswa",
+        idTerkait: janjiTemu.id,
+        idGuru: janjiTemu.idGuru,
+        redirectGuru: `/mengajar/janji-temu`,
+        redirectSiswa: `/siswa/janji-temu`,
+        keterangan: `${siswa.nama} mengajukan janji temu`,
+        createdBy: janjiTemu.idSiswa,
+      });
+    }
   } catch (error) {
     console.log(error);
     const errorMessage = prismaErrorHandler(error);
@@ -150,9 +176,11 @@ export const updateJanjiTemu = async (id, data) => {
 // DELETE
 export const deleteJanjiTemu = async (id) => {
   try {
-    return await prisma.janjiTemu.delete({
+    const janjiTemu = await prisma.janjiTemu.delete({
       where: { id },
     });
+
+    await deleteNotifikasiByIdTerkait(janjiTemu.id);
   } catch (error) {
     console.log(error);
     const errorMessage = prismaErrorHandler(error);
@@ -162,11 +190,31 @@ export const deleteJanjiTemu = async (id) => {
 
 export const updateStatusJanjiTemu = async (id, status) => {
   try {
-    return await prisma.janjiTemu.update({
+    await deleteNotifikasiByIdTerkait(id);
+    const janjiTemu = await prisma.janjiTemu.update({
       where: { id },
       data: {
         status: status,
       },
+    });
+
+    const siswa = await prisma.siswa.findUnique({
+      where: {
+        id: janjiTemu.idSiswa,
+      },
+      select: {
+        nama: true,
+      },
+    });
+
+    await createNotifikasi({
+      idSiswa: janjiTemu.idSiswa,
+      kategori: "Janji Temu Siswa",
+      idTerkait: janjiTemu.id,
+      redirectGuru: `/mengajar/janji-temu`,
+      redirectSiswa: `/siswa/janji-temu`,
+      keterangan: `${siswa.nama} mengajukan janji temu`,
+      createdBy: janjiTemu.idGuru,
     });
   } catch (error) {
     console.log(error);

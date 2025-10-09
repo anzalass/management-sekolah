@@ -1,11 +1,15 @@
 import { PrismaClient } from "@prisma/client";
 import { prismaErrorHandler } from "../utils/errorHandlerPrisma.js";
+import {
+  createNotifikasi,
+  deleteNotifikasiByIdTerkait,
+} from "./notifikasiService.js";
 
 const prisma = new PrismaClient();
 
 export const createCatatan = async (data) => {
   try {
-    return await prisma.catatanPerkembanganSiswa.create({
+    const cttn = await prisma.catatanPerkembanganSiswa.create({
       data: {
         idKelas: data.idKelas,
         idSiswa: data.idSiswa,
@@ -13,6 +17,29 @@ export const createCatatan = async (data) => {
         time: new Date(),
       },
     });
+
+    const kelas = await prisma.kelas.findUnique({
+      where: {
+        id: data.idKelas,
+      },
+      select: {
+        nama: true,
+        idGuru: true,
+        id: true,
+      },
+    });
+
+    if (cttn) {
+      await createNotifikasi({
+        idSiswa: cttn.idSiswa,
+        idTerkait: cttn.id,
+        kategori: "Menambahkan Catatan Siswa Kelas",
+        createdBy: kelas.idGuru,
+        idKelas: kelas.id,
+        redirectSiswa: "/siswa/catatan-perkembangan",
+        keterangan: `Catatan baru untukmu : ${cttn.content}`,
+      });
+    }
   } catch (error) {
     console.log(error);
     const errorMessage = prismaErrorHandler(error);
@@ -24,6 +51,22 @@ export const getAllCatatan = async () => {
   try {
     return await prisma.catatanPerkembanganSiswa.findMany({
       include: { Kelas: true, Siswa: true },
+      orderBy: { time: "desc" },
+    });
+  } catch (error) {
+    console.log(error);
+    const errorMessage = prismaErrorHandler(error);
+    throw new Error(errorMessage);
+  }
+};
+
+export const getAllCatataByIdKelasDanIdSiswa = async (idKelas, idSiswa) => {
+  try {
+    return await prisma.catatanPerkembanganSiswa.findMany({
+      where: {
+        idKelas,
+        idSiswa,
+      },
       orderBy: { time: "desc" },
     });
   } catch (error) {
@@ -76,10 +119,34 @@ export const getCatatanByIdKelas = async (idKelas) => {
 
 export const updateCatatan = async (id, data) => {
   try {
-    return await prisma.catatanPerkembanganSiswa.update({
+    await deleteNotifikasiByIdTerkait(id);
+    const cttn = await prisma.catatanPerkembanganSiswa.update({
       where: { id },
       data,
     });
+
+    const kelas = await prisma.kelas.findUnique({
+      where: {
+        id: data.idKelas,
+      },
+      select: {
+        nama: true,
+        idGuru: true,
+        id: true,
+      },
+    });
+
+    if (cttn) {
+      await createNotifikasi({
+        idSiswa: cttn.idSiswa,
+        idTerkait: cttn.id,
+        kategori: "Menambahkan Catatan Siswa Kelas",
+        createdBy: kelas.idGuru,
+        idKelas: kelas.id,
+        redirectSiswa: "/siswa/catatan-perkembangan",
+        keterangan: `Catatan baru untukmu : ${cttn.content}`,
+      });
+    }
   } catch (error) {
     console.log(error);
     const errorMessage = prismaErrorHandler(error);
@@ -89,6 +156,7 @@ export const updateCatatan = async (id, data) => {
 
 export const deleteCatatan = async (id) => {
   try {
+    await deleteNotifikasiByIdTerkait(id);
     return await prisma.catatanPerkembanganSiswa.delete({
       where: { id },
     });

@@ -4,6 +4,7 @@ import { prismaErrorHandler } from "../utils/errorHandlerPrisma.js";
 const prisma = new PrismaClient();
 
 import { addHours } from "date-fns";
+import { createNotifikasi } from "./notifikasiService.js";
 
 export const createKehadiranSiswa = async (data) => {
   try {
@@ -47,6 +48,27 @@ export const createKehadiranSiswa = async (data) => {
         keterangan,
       },
     });
+
+    const kelas = await prisma.kelas.findUnique({
+      where: {
+        id: idKelas,
+      },
+      select: {
+        idGuru: true,
+      },
+    });
+
+    if (kehadiran) {
+      await createNotifikasi({
+        idSiswa: kehadiran.idSiswa,
+        idTerkait: kehadiran.id,
+        kategori: "Kehadiran Siswa",
+        idKelas: idKelas,
+        createdBy: kelas.idGuru,
+        redirectSiswa: "/siswa/log-presensi",
+        keterangan: `Kehadiran Pukul ${kehadiran.waktu.toLocaleDateString()}`,
+      });
+    }
 
     return kehadiran;
   } catch (error) {
@@ -114,12 +136,18 @@ export const deleteKehadiranSiswa = async (id) => {
 
 export const getSiswaByKelasWithKehadiranHariIni = async (idKelas) => {
   try {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
+    // Ambil tanggal hari ini di zona Asia/Jakarta
+    const now = new Date();
+    const todayJakarta = new Date(
+      new Date(now.toLocaleString("en-US", { timeZone: "Asia/Jakarta" }))
+    );
 
-    const besok = new Date(today);
-    besok.setDate(today.getDate() + 1);
+    todayJakarta.setHours(0, 0, 0, 0);
 
+    const besokJakarta = new Date(todayJakarta);
+    besokJakarta.setDate(todayJakarta.getDate() + 1);
+
+    // Query ke Prisma
     const siswaList = await prisma.siswa.findMany({
       where: {
         DaftarSiswaKelas: {
@@ -140,8 +168,8 @@ export const getSiswaByKelasWithKehadiranHariIni = async (idKelas) => {
           },
           where: {
             waktu: {
-              gte: today,
-              lt: besok,
+              gte: todayJakarta,
+              lt: besokJakarta,
             },
             idKelas,
           },
@@ -149,10 +177,10 @@ export const getSiswaByKelasWithKehadiranHariIni = async (idKelas) => {
       },
     });
 
-    // Map nis jadi id untuk kebutuhan React Table
+    // Map data untuk React Table
     const siswaListWithId = siswaList.map((siswa) => ({
-      nis: siswa.nis,
       id: siswa.id,
+      nis: siswa.nis,
       nama: siswa.nama,
       kehadiranSiswa: siswa.KehadiranSiswa,
     }));

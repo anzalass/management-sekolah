@@ -67,3 +67,14 @@ export const getAllListKelas = async ({
     throw new Error(errorMessage);
   }
 };
+
+export const getAllListKelasInput = async () => {
+  try {
+    const data = await prisma.listKelas.findMany({});
+    return data;
+  } catch (error) {
+    console.log(error);
+    const errorMessage = prismaErrorHandler(error);
+    throw new Error(errorMessage);
+  }
+};

@@ -45,6 +45,59 @@ export const createMateriMapel = async (data, file) => {
   }
 };
 
+export const updateMateriMapel = async (id, data, file) => {
+  try {
+    // Cek apakah data materi ada
+    const existingMateri = await prisma.materiMapel.findUnique({
+      where: { id },
+    });
+
+    if (!existingMateri) {
+      throw new Error("Materi tidak ditemukan");
+    }
+
+    let uploadResult = null;
+    let pdfUrl = existingMateri.pdfUrl;
+    let pdfUrlId = existingMateri.pdfUrlId;
+
+    // Kalau user upload file baru
+    if (file && file.buffer && file.buffer.length > 0) {
+      // Hapus file lama dari Cloudinary kalau ada
+      if (existingMateri.pdfUrlId) {
+        await deleteFromCloudinary(existingMateri.pdfUrlId);
+      }
+
+      // Upload file baru
+      uploadResult = await uploadToCloudinary(
+        file.buffer,
+        "materi",
+        data.judul
+      );
+      pdfUrl = uploadResult.secure_url;
+      pdfUrlId = uploadResult.public_id;
+    }
+
+    // Update data ke database
+    const updated = await prisma.materiMapel.update({
+      where: { id },
+      data: {
+        judul: data.judul,
+        iframeGoogleSlide: data.iframeGoogleSlide,
+        iframeYoutube: data.iframeYoutube,
+        konten: data.konten,
+        pdfUrl,
+        pdfUrlId,
+      },
+    });
+
+    return updated;
+  } catch (error) {
+    console.error(error);
+    const errorMessage = prismaErrorHandler(error);
+    throw new Error(errorMessage);
+  }
+};
+
 export const getAllMateriMapel = async () => {
   try {
     return await prisma.materiMapel.findMany();
@@ -83,6 +136,7 @@ export const deleteMateriMapel = async (id) => {
       await deleteFromCloudinary(dataMateri.pdfUrlId);
     }
 
+    await deleteFotoSummaryMateriIDMateri(id);
     await prisma.summaryMateri.deleteMany({
       where: {
         idMateri: id,
@@ -104,9 +158,16 @@ export const deleteMateriMapel = async (id) => {
 
 // === SummaryMateri ===
 
-export const createSummaryMateri = async (data) => {
+export const createSummaryMateri = async (data, files) => {
   try {
-    return await prisma.summaryMateri.create({ data });
+    const data2 = await prisma.summaryMateri.create({ data });
+    await uploadFotoSummaryMateri(
+      data2.idMateri,
+      data2.idSiswa,
+      data2.idKelasMapel,
+      data2.id,
+      files
+    );
   } catch (error) {
     console.log(error);
     const errorMessage = prismaErrorHandler(error);
@@ -130,7 +191,7 @@ export const getSummaryMateriById = async (id) => {
   try {
     return await prisma.summaryMateri.findUnique({
       where: { id },
-      include: { Siswa: true, MateriMapel: true },
+      include: { Siswa: true, MateriMapel: true, FotoSummaryMateri: true },
     });
   } catch (error) {
     console.log(error);
@@ -141,6 +202,7 @@ export const getSummaryMateriById = async (id) => {
 
 export const deleteSummaryMateri = async (id) => {
   try {
+    await deleteFotoSummaryMateriIDSummaryMateri(id);
     return await prisma.summaryMateri.delete({
       where: { id },
     });
@@ -158,6 +220,7 @@ export const getSummaryByMateriId = async (idMateri) => {
       include: {
         Siswa: true,
         MateriMapel: true,
+        FotoSummaryMateri: true,
       },
     });
   } catch (error) {
@@ -198,6 +261,57 @@ export const createTugasMapel = async (data, file) => {
   }
 };
 
+export const updateTugasMapel = async (id, data, file) => {
+  try {
+    // 🔹 Cari data tugas lama
+    const existingTugas = await prisma.tugasMapel.findUnique({
+      where: { id },
+    });
+
+    if (!existingTugas) {
+      throw new Error("Tugas tidak ditemukan");
+    }
+
+    let UploadResult = null;
+
+    // 🔹 Jika ada file baru, upload ke Cloudinary
+    if (file && file.buffer) {
+      if (!file.buffer || file.buffer.length === 0) {
+        throw new Error("File kosong saat dibaca dari buffer");
+      }
+
+      // Hapus file lama di Cloudinary jika ada
+      if (existingTugas.pdfUrlId) {
+        await deleteFromCloudinary(existingTugas.pdfUrlId);
+      }
+
+      // Upload file baru
+      UploadResult = await uploadToCloudinary(file.buffer, "tugas", data.judul);
+    }
+
+    // 🔹 Update data ke Prisma
+    const updated = await prisma.tugasMapel.update({
+      where: { id },
+      data: {
+        judul: data.judul,
+        deadline: new Date(`${data.deadline}T00:00:00Z`),
+        idKelasMapel: data.idKelasMapel,
+        iframeGoogleSlide: data.iframeGoogleSlide,
+        iframeYoutube: data.iframeYoutube,
+        konten: data.konten,
+        pdfUrl: UploadResult?.secure_url || existingTugas.pdfUrl,
+        pdfUrlId: UploadResult?.public_id || existingTugas.pdfUrlId,
+      },
+    });
+
+    return updated;
+  } catch (error) {
+    console.error("Error update tugas mapel:", error);
+    const errorMessage = prismaErrorHandler(error);
+    throw new Error(errorMessage);
+  }
+};
+
 export const getAllTugasMapel = async () => {
   try {
     return await prisma.tugasMapel.findMany();
@@ -212,7 +326,7 @@ export const getTugasMapelById = async (id) => {
   try {
     return await prisma.tugasMapel.findUnique({
       where: { id },
-      include: { SummaryMateri: true, KelasMapel: true },
+      include: { SummaryTugas: true, KelasMapel: true, FotoSummaryTugas: true },
     });
   } catch (error) {
     console.log(error);
@@ -236,6 +350,7 @@ export const deleteTugasMapel = async (id) => {
       await deleteFromCloudinary(dataTugas.pdfUrlId);
     }
 
+    await deleteFotoSummaryTugasIDTugas(id);
     await prisma.summaryTugas.deleteMany({
       where: { idTugas: dataTugas.id },
     });
@@ -273,6 +388,7 @@ export const getMateriAndSummaryByMateriID = async (id) => {
                 nama: true,
               },
             },
+            FotoSummaryMateri: true,
           },
         },
       },
@@ -287,7 +403,8 @@ export const getMateriAndSummaryByMateriID = async (id) => {
       nama: item.Siswa.nama,
       content: item.content,
       fotoSiswa: item.Siswa?.foto || null,
-      waktu: item.createdAt,
+      waktu: item.waktu,
+      fotoSummary: item.FotoSummaryMateri,
     }));
 
     // Kembalikan data materi dengan summary yang sudah diformat
@@ -322,6 +439,7 @@ export const getTugasAndSummaryByTugasID = async (id) => {
                 nama: true,
               },
             },
+            FotoSummaryTugas: true,
           },
         },
       },
@@ -337,6 +455,7 @@ export const getTugasAndSummaryByTugasID = async (id) => {
       content: item.content,
       fotoSiswa: item.Siswa?.foto || null,
       waktu: item.createdAt,
+      fotoSummary: item.FotoSummaryTugas,
     }));
 
     // Kembalikan data materi dengan summary yang sudah diformat
@@ -351,9 +470,15 @@ export const getTugasAndSummaryByTugasID = async (id) => {
   }
 };
 
-export const createSummaryTugas = async (data) => {
+export const createSummaryTugas = async (data, files) => {
   try {
-    return await prisma.summaryTugas.create({ data });
+    const data2 = await prisma.summaryTugas.create({ data });
+    await uploadFotoSummaryTugas(
+      data2.idMateri,
+      data2.idSiswa,
+      data2.id,
+      files
+    );
   } catch (error) {
     console.log(error);
     const errorMessage = prismaErrorHandler(error);
@@ -388,6 +513,7 @@ export const getSummaryTugasById = async (id) => {
 
 export const deleteSummaryTugas = async (id) => {
   try {
+    await deleteFotoSummaryTugasIDSummaryTugas(id);
     return await prisma.summaryTugas.delete({
       where: { id },
     });
@@ -405,6 +531,264 @@ export const getSummaryByTugasId = async (idTugas) => {
       include: {
         Siswa: true,
         TugasMapel: true,
+      },
+    });
+  } catch (error) {
+    console.log(error);
+    const errorMessage = prismaErrorHandler(error);
+    throw new Error(errorMessage);
+  }
+};
+
+export const uploadFotoSummaryMateri = async (
+  idMateri,
+  idSiswa,
+  idKelasMapel,
+  idSummaryMateri,
+  files
+) => {
+  try {
+    if (files && files.length > 0) {
+      const fotoPromises = files.map(async (file, index) => {
+        const uploaded = await uploadToCloudinary(
+          file.buffer,
+          "foto_summary_tugas",
+          `foto_summary_tugas${index}`
+        );
+        return prisma.fotoSummaryMateri.create({
+          data: {
+            idSiswa,
+            idMateri,
+            idKelasMapel,
+            idSummaryMateri,
+            fotoUrl: uploaded.secure_url,
+            fotoId: uploaded.public_id,
+          },
+        });
+      });
+
+      await Promise.all(fotoPromises);
+    }
+  } catch (error) {
+    console.log(error);
+    const errorMessage = prismaErrorHandler(error);
+    throw new Error(errorMessage);
+  }
+};
+
+export const uploadFotoSummaryTugas = async (
+  idTugas,
+  idSiswa,
+  idSummaryTugas,
+  files
+) => {
+  try {
+    if (files && files.length > 0) {
+      const fotoPromises = files.map(async (file, index) => {
+        const uploaded = await uploadToCloudinary(
+          file.buffer,
+          "foto_summary_tugas",
+          `foto_summary_tugas${index}`
+        );
+        return prisma.fotoSummaryTugas.create({
+          data: {
+            idSiswa,
+            idTugas,
+            idSummaryTugas,
+            fotoUrl: uploaded.secure_url,
+            fotoId: uploaded.public_id,
+          },
+        });
+      });
+
+      await Promise.all(fotoPromises);
+    }
+  } catch (error) {
+    console.log(error);
+    const errorMessage = prismaErrorHandler(error);
+    throw new Error(errorMessage);
+  }
+};
+
+export const deleteFotoSummaryTugasIdSiswa = async (idSiswa) => {
+  try {
+    const data = await prisma.fotoSummaryTugas.findMany({
+      where: {
+        idSiswa,
+      },
+    });
+
+    for (let index = 0; index < data.length; index++) {
+      await deleteFromCloudinary(data[index].fotoId);
+    }
+
+    await prisma.fotoSummaryTugas.deleteMany({
+      where: {
+        idSiswa,
+      },
+    });
+  } catch (error) {
+    console.log(error);
+    const errorMessage = prismaErrorHandler(error);
+    throw new Error(errorMessage);
+  }
+};
+export const deleteFotoSummaryTugasIDKelas = async (idKelasMapel) => {
+  try {
+    const data = await prisma.fotoSummaryTugas.findMany({
+      where: {
+        idKelasMapel,
+      },
+    });
+
+    for (let index = 0; index < data.length; index++) {
+      await deleteFromCloudinary(data[index].fotoId);
+    }
+
+    await prisma.fotoSummaryTugas.deleteMany({
+      where: {
+        idKelasMapel,
+      },
+    });
+  } catch (error) {
+    console.log(error);
+    const errorMessage = prismaErrorHandler(error);
+    throw new Error(errorMessage);
+  }
+};
+export const deleteFotoSummaryTugasIDTugas = async (idTugas) => {
+  try {
+    const data = await prisma.fotoSummaryTugas.findMany({
+      where: {
+        idTugas,
+      },
+    });
+
+    for (let index = 0; index < data.length; index++) {
+      await deleteFromCloudinary(data[index].fotoId);
+    }
+
+    await prisma.fotoSummaryTugas.deleteMany({
+      where: {
+        idTugas,
+      },
+    });
+  } catch (error) {
+    console.log(error);
+    const errorMessage = prismaErrorHandler(error);
+    throw new Error(errorMessage);
+  }
+};
+export const deleteFotoSummaryTugasIDSummaryTugas = async (idSummaryTugas) => {
+  try {
+    const data = await prisma.fotoSummaryTugas.findMany({
+      where: {
+        idSummaryTugas,
+      },
+    });
+
+    for (let index = 0; index < data.length; index++) {
+      await deleteFromCloudinary(data[index].fotoId);
+    }
+
+    await prisma.fotoSummaryTugas.deleteMany({
+      where: {
+        idSummaryTugas,
+      },
+    });
+  } catch (error) {
+    console.log(error);
+    const errorMessage = prismaErrorHandler(error);
+    throw new Error(errorMessage);
+  }
+};
+
+export const deleteFotoSummaryMateriIdSiswa = async (idSiswa) => {
+  try {
+    const data = await prisma.fotoSummaryMateri.findMany({
+      where: {
+        idSiswa,
+      },
+    });
+
+    for (let index = 0; index < data.length; index++) {
+      await deleteFromCloudinary(data[index].fotoId);
+    }
+
+    await prisma.fotoSummaryMateri.deleteMany({
+      where: {
+        idSiswa,
+      },
+    });
+  } catch (error) {
+    console.log(error);
+    const errorMessage = prismaErrorHandler(error);
+    throw new Error(errorMessage);
+  }
+};
+export const deleteFotoSummaryMateriIDKelas = async (idKelasMapel) => {
+  try {
+    const data = await prisma.fotoSummaryMateri.findMany({
+      where: {
+        idKelasMapel,
+      },
+    });
+
+    for (let index = 0; index < data.length; index++) {
+      await deleteFromCloudinary(data[index].fotoId);
+    }
+
+    await prisma.fotoSummaryMateri.deleteMany({
+      where: {
+        idKelasMapel,
+      },
+    });
+  } catch (error) {
+    console.log(error);
+    const errorMessage = prismaErrorHandler(error);
+    throw new Error(errorMessage);
+  }
+};
+export const deleteFotoSummaryMateriIDMateri = async (idMateri) => {
+  try {
+    const data = await prisma.fotoSummaryMateri.findMany({
+      where: {
+        idMateri,
+      },
+    });
+
+    for (let index = 0; index < data.length; index++) {
+      await deleteFromCloudinary(data[index].fotoId);
+    }
+
+    await prisma.fotoSummaryMateri.deleteMany({
+      where: {
+        idMateri,
+      },
+    });
+  } catch (error) {
+    console.log(error);
+    const errorMessage = prismaErrorHandler(error);
+    throw new Error(errorMessage);
+  }
+};
+export const deleteFotoSummaryMateriIDSummaryMateri = async (
+  idSummaryMateri
+) => {
+  try {
+    const data = await prisma.fotoSummaryMateri.findMany({
+      where: {
+        idSummaryMateri,
+      },
+    });
+
+    for (let index = 0; index < data.length; index++) {
+      await deleteFromCloudinary(data[index].fotoId);
+    }
+
+    await prisma.fotoSummaryMateri.deleteMany({
+      where: {
+        idSummaryMateri,
       },
     });
   } catch (error) {

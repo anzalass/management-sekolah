@@ -1,5 +1,9 @@
 import { PrismaClient } from "@prisma/client";
 import { prismaErrorHandler } from "../utils/errorHandlerPrisma.js";
+import {
+  deleteFromCloudinary,
+  uploadToCloudinary,
+} from "../utils/ImageHandler.js";
 const prisma = new PrismaClient();
 
 export const createTagihan = async (data) => {
@@ -266,6 +270,71 @@ export const deleteTagihan = async (id) => {
       return await tx.tagihan.delete({
         where: { id },
       });
+    });
+  } catch (error) {
+    console.log(error);
+    const errorMessage = prismaErrorHandler(error);
+    throw new Error(errorMessage);
+  }
+};
+
+export const uploadBuktiTagihan = async (id, file) => {
+  try {
+    if (!file) {
+      throw new Error("Harap upload file");
+    }
+
+    const tagihan = await prisma.tagihan.findUnique({
+      where: {
+        id: id,
+      },
+    });
+    let imageUploadResult = null;
+    if (file && file.buffer && file.buffer.length > 0) {
+      imageUploadResult = await uploadToCloudinary(
+        file.buffer,
+        "bukti_tagihan",
+        tagihan.idSiswa
+      );
+    }
+
+    const updated = await prisma.tagihan.update({
+      where: {
+        id,
+      },
+      data: {
+        buktiUrl: imageUploadResult.secure_url,
+        buktiId: imageUploadResult.public_id,
+        status: "MENUNGGU_KONFIRMASI",
+      },
+    });
+
+    return updated;
+  } catch (error) {
+    console.log(error);
+    const errorMessage = prismaErrorHandler(error);
+    throw new Error(errorMessage);
+  }
+};
+
+export const buktiTidakValid = async (id) => {
+  try {
+    const tagihan = await prisma.tagihan.findUnique({
+      where: {
+        id,
+      },
+    });
+
+    await deleteFromCloudinary(tagihan.buktiId);
+    await prisma.tagihan.update({
+      where: {
+        id,
+      },
+      data: {
+        status: "BUKTI_TIDAK_VALID",
+        buktiId: "",
+        buktiId: "",
+      },
     });
   } catch (error) {
     console.log(error);

@@ -2,6 +2,7 @@ import {
   createListKelas,
   deleteListKelas,
   getAllListKelas,
+  getAllListKelasInput,
 } from "../services/listKelasService.js";
 
 // Create
@@ -41,6 +42,15 @@ export const getAllListKelasController = async (req, res) => {
       page: parseInt(req.query.page) || 1,
       pageSize: parseInt(req.query.pageSize) || 10,
     });
+    return res.json(kelas);
+  } catch (error) {
+    return res.status(500).json({ message: error.message, success: false });
+  }
+};
+
+export const getAllListKelasInputController = async (req, res) => {
+  try {
+    const kelas = await getAllListKelasInput();
     return res.json(kelas);
   } catch (error) {
     return res.status(500).json({ message: error.message, success: false });
