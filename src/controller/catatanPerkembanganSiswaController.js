@@ -23,6 +23,18 @@ export const getAllCatatan = async (req, res, next) => {
   }
 };
 
+export const getAllCatatanByIdSiswaIdKelas = async (req, res, next) => {
+  try {
+    const result = await catatanService.getAllCatatanByIdSiswaIdKelas(
+      req.user.idKelas,
+      req.user.idGuru
+    );
+    res.json(result);
+  } catch (error) {
+    next(error);
+  }
+};
+
 export const getCatatanById = async (req, res, next) => {
   try {
     const { id } = req.params;

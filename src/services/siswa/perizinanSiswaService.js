@@ -5,6 +5,10 @@ import {
   uploadToCloudinary,
 } from "../../utils/ImageHandler.js";
 import { startOfDay, endOfDay } from "date-fns";
+import {
+  createNotifikasi,
+  deleteNotifikasiByIdTerkait,
+} from "../notifikasiService.js";
 
 const prisma = new PrismaClient();
 
@@ -20,7 +24,7 @@ export const createPerizinanSiswa = async (data) => {
         data.idSiswa
       );
     }
-    return await prisma.perizinanSiswa.create({
+    const izin = await prisma.perizinanSiswa.create({
       data: {
         idSiswa: data.idSiswa,
         idKelas: data.idKelas || null,
@@ -31,9 +35,30 @@ export const createPerizinanSiswa = async (data) => {
         status: data.status || "menunggu",
       },
     });
+
+    const siswa = await prisma.siswa.findUnique({
+      where: {
+        id: izin.idSiswa,
+      },
+      select: {
+        nama: true,
+      },
+    });
+
+    if (izin) {
+      await createNotifikasi({
+        idSiswa: izin.idSiswa,
+        idKelas: izin.idKelas,
+        kategori: "Perizinan Siswa",
+        idTerkait: izin.id,
+        redirectGuru: `/mengajar/walikelas/${izin.idKelas}`,
+        redirectSiswa: `/siswa/perizinan`,
+        keterangan: `${siswa.nama} mengajukan izin`,
+        createdBy: izin.idSiswa,
+      });
+    }
   } catch (error) {
     console.log(error);
-
     throw new Error(prismaErrorHandler(error));
   }
 };
@@ -194,12 +219,27 @@ export const updatePerizinanSiswa = async (id, data) => {
 
 export const updateStatusPerizinanSiswa = async (id, status) => {
   try {
-    return await prisma.perizinanSiswa.update({
+    await deleteNotifikasiByIdTerkait(id);
+
+    const izin = await prisma.perizinanSiswa.update({
       where: { id },
       data: {
         status: status,
       },
     });
+
+    if (izin) {
+      await createNotifikasi({
+        idSiswa: izin.idSiswa,
+        idKelas: izin.idKelas,
+        kategori: "Perizinan Siswa",
+        idTerkait: izin.id,
+        redirectGuru: `/mengajar/walikelas/${izin.idKelas}`,
+        redirectSiswa: `/siswa/perizinan`,
+        keterangan: `${siswa.nama} mengajukan izin`,
+        createdBy: izin.idSiswa,
+      });
+    }
   } catch (error) {
     throw new Error(prismaErrorHandler(error));
   }
@@ -218,9 +258,11 @@ export const deletePerizinanSiswa = async (id) => {
       await deleteFromCloudinary(data.bukti_id);
     }
 
-    return await prisma.perizinanSiswa.delete({
+    const deleteIzin = await prisma.perizinanSiswa.delete({
       where: { id },
     });
+
+    await deleteNotifikasiByIdTerkait(deleteIzin.id);
   } catch (error) {
     throw new Error(prismaErrorHandler(error));
   }

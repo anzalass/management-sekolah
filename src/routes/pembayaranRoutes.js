@@ -2,6 +2,7 @@ import express from "express";
 import {
   BayarTagihanManualController,
   bayarTagihanMidtransController,
+  buktiTidakValidController,
   CreateTagihanController,
   DeleteTagihanController,
   GetAllRiwayatPembayaranController,
@@ -9,6 +10,7 @@ import {
   GetTagihanByIdController,
   midtransNotificationController,
   UpdateTagihanController,
+  uploadBuktiTagihanController,
 } from "../controller/pembayaranController.js";
 
 const router = express.Router();
@@ -22,4 +24,7 @@ router.post("/bayar-tagihan/:id", BayarTagihanManualController);
 router.get("/riwayat-pembayaran", GetAllRiwayatPembayaranController);
 router.post("/bayar-midtrans/:idTagihan", bayarTagihanMidtransController);
 router.post("/midtrans/notif", midtransNotificationController);
+router.patch("/pembayaran-upload-bukti/:id", uploadBuktiTagihanController);
+router.patch("/pembayaran-bukti-tidak-valid/:id", buktiTidakValidController);
+
 export default router;

@@ -114,7 +114,7 @@ import path from "path";
 
 export const getRapotSiswa = async (idSiswa, tahunAjaran, idKelas) => {
   try {
-    // ambil data siswa
+    // 1️⃣ Ambil data siswa
     const siswa = await prisma.siswa.findUnique({
       where: { id: idSiswa },
       select: {
@@ -125,11 +125,9 @@ export const getRapotSiswa = async (idSiswa, tahunAjaran, idKelas) => {
       },
     });
 
-    if (!siswa) {
-      throw new Error("Siswa tidak ditemukan");
-    }
+    if (!siswa) throw new Error("Siswa tidak ditemukan");
 
-    // ambil daftar mapel yg diikuti siswa
+    // 2️⃣ Ambil daftar mapel yang diikuti siswa di tahun ajaran ini
     const kelasMapel = await prisma.kelasDanMapel.findMany({
       where: { tahunAjaran, DaftarSiswa: { some: { idSiswa } } },
       include: {
@@ -139,28 +137,46 @@ export const getRapotSiswa = async (idSiswa, tahunAjaran, idKelas) => {
       },
     });
 
-    // olah nilai
+    // 3️⃣ Olah nilai per mapel
     const nilai = kelasMapel.map((km) => {
-      let total = 0;
+      let totalNilaiXBobot = 0;
       let totalBobot = 0;
 
       km.JenisNilai.forEach((jn) => {
         const nilaiSiswa = jn.NilaiSiswa[0];
-        if (nilaiSiswa) {
-          total += nilaiSiswa.nilai * (jn.bobot / 100);
+        if (nilaiSiswa && jn.bobot > 0) {
+          totalNilaiXBobot += nilaiSiswa.nilai * jn.bobot;
           totalBobot += jn.bobot;
         }
       });
 
+      const nilaiAkhir =
+        totalBobot > 0
+          ? parseFloat((totalNilaiXBobot / totalBobot).toFixed(2))
+          : null;
+
       return {
         mapel: km.namaMapel,
-        guru: km.namaGuru,
-        nilaiAkhir: totalBobot > 0 ? total.toFixed(2) : null,
+        guru: km.Guru?.nama || "-",
+        nilaiAkhir,
         catatanAkhir: km.CatatanAkhirSiswa[0]?.content || "-",
       };
     });
 
-    // absensi
+    // 4️⃣ Hitung rata-rata (semua mapel yang memiliki nilaiAkhir)
+    const nilaiValid = nilai.filter((n) => n.nilaiAkhir !== null);
+
+    const rataRataSemuaMapel =
+      nilaiValid.length > 0
+        ? parseFloat(
+            (
+              nilaiValid.reduce((sum, n) => sum + n.nilaiAkhir, 0) /
+              nilaiValid.length
+            ).toFixed(2)
+          )
+        : null;
+
+    // 5️⃣ Rekap absensi siswa
     const absensi = await prisma.kehadiranSiswa.groupBy({
       by: ["keterangan"],
       where: { idSiswa, idKelas },
@@ -171,15 +187,25 @@ export const getRapotSiswa = async (idSiswa, tahunAjaran, idKelas) => {
     const izin = absensi.find((a) => a.keterangan === "Izin")?._count || 0;
     const sakit = absensi.find((a) => a.keterangan === "Sakit")?._count || 0;
     const alpha = absensi.find((a) => a.keterangan === "Alpha")?._count || 0;
-    const total = hadir + izin + sakit + alpha;
+    const totalAbsensi = hadir + izin + sakit + alpha;
 
+    // 6️⃣ Return hasil akhir rapor
     return {
       siswa,
       nilai,
-      absensi: { total, hadir, izin, sakit, alpha },
+      rataRata: rataRataSemuaMapel, // alias biar tetap backward compatible
+      rataRataSemuaMapel,
+      absensi: {
+        total: totalAbsensi,
+        hadir,
+        izin,
+        sakit,
+        alpha,
+      },
     };
   } catch (error) {
-    console.log(error);
+    console.error("Error getRapotSiswa:", error);
+    throw new Error("Gagal mengambil data rapor siswa");
   }
 };
 

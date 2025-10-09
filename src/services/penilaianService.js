@@ -1,8 +1,14 @@
 import { PrismaClient } from "@prisma/client";
 const prisma = new PrismaClient();
 import { prismaErrorHandler } from "../utils/errorHandlerPrisma.js";
+import {
+  createNotifikasi,
+  deleteNotifikasiByIdTerkait,
+} from "./notifikasiService.js";
 
 export const createJenisNilai = async (data) => {
+  console.log("dtt", data);
+
   try {
     return await prisma.$transaction(async (tx) => {
       // Cek total bobot
@@ -11,7 +17,8 @@ export const createJenisNilai = async (data) => {
       });
 
       const totalBobot =
-        existingJenis.reduce((acc, item) => acc + item.bobot, 0) + data.bobot;
+        existingJenis.reduce((acc, item) => acc + Number(item.bobot), 0) +
+        Number(data.bobot);
 
       if (totalBobot > 100) {
         throw new Error(`Total bobot melebihi 100% (current: ${totalBobot}%)`);
@@ -25,7 +32,13 @@ export const createJenisNilai = async (data) => {
         throw new Error(`Jenis nilai "${data.jenis}" sudah ada`);
       }
       // Buat jenis nilai baru
-      const newJenis = await tx.jenisNilai.create({ data });
+      const newJenis = await tx.jenisNilai.create({
+        data: {
+          idKelasMapel: data.idKelasMapel,
+          jenis: data.jenis,
+          bobot: Number(data.bobot),
+        },
+      });
 
       // Ambil semua siswa dari kelas
       const kelas = await tx.kelasDanMapel.findUnique({
@@ -144,6 +157,29 @@ export const createNilaiSiswa = async (data) => {
           createdAt: new Date(),
         },
       });
+
+      const kelas = await prisma.kelasDanMapel.findUnique({
+        where: {
+          id: created.idKelasDanMapel,
+        },
+        select: {
+          namaMapel: true,
+          idGuru: true,
+          id: true,
+        },
+      });
+
+      if (created) {
+        await createNotifikasi({
+          idSiswa: created.idSiswa,
+          idTerkait: created.id,
+          kategori: "Menambahkan Nilai Siswa",
+          createdBy: kelas.idGuru,
+          idKelas: kelas.id,
+          redirectSiswa: "/siswa/nilai",
+          keterangan: `Kamu mendapatkan nilai : ${created.nilai} dari mata pelajaran : ${kelas.namaMapel} dari penilaian : ${created.jenisNilai}`,
+        });
+      }
       return created;
     });
     return result;
@@ -164,6 +200,29 @@ export const updateNilaiSiswa = async (id, data) => {
           createdAt: new Date(),
         },
       });
+
+      const kelas = await prisma.kelasDanMapel.findUnique({
+        where: {
+          id: updated.idKelasDanMapel,
+        },
+        select: {
+          namaMapel: true,
+          idGuru: true,
+          id: true,
+        },
+      });
+
+      if (updated) {
+        await createNotifikasi({
+          idSiswa: updated.idSiswa,
+          idTerkait: updated.id,
+          kategori: "Menambahkan Nilai Siswa",
+          createdBy: kelas.idGuru,
+          idKelas: kelas.id,
+          redirectSiswa: "/siswa/nilai",
+          keterangan: `Kamu mendapatkan nilai : ${updated.nilai} dari mata pelajaran : ${kelas.namaMapel} dari penilaian : ${updated.jenisNilai}`,
+        });
+      }
       return updated;
     });
     return result;
@@ -176,6 +235,7 @@ export const updateNilaiSiswa = async (id, data) => {
 
 export const deleteNilaiSiswa = async (id) => {
   try {
+    await deleteNotifikasiByIdTerkait(id);
     const result = await prisma.$transaction(async (tx) => {
       const deleted = await tx.nilaiSiswa.delete({
         where: { id },
@@ -279,13 +339,13 @@ export const getRekapNilaiByKelasMapel = async (idKelasDanMapel) => {
 // services/rekapNilaiService.js
 
 export const getRekapNilaiKelasBaru = async (idKelas) => {
-  // 1. Ambil tahun ajaran dari sekolah pertama
+  // 1️⃣ Ambil tahun ajaran dari sekolah
   const sekolah = await prisma.sekolah.findFirst({
     select: { tahunAjaran: true },
   });
   if (!sekolah) throw new Error("Data sekolah tidak ditemukan");
 
-  // 2. Ambil daftar siswa di kelas ini
+  // 2️⃣ Ambil daftar siswa di kelas ini
   const daftarSiswa = await prisma.daftarSiswaKelas.findMany({
     where: { idKelas },
     include: { Siswa: true },
@@ -293,11 +353,9 @@ export const getRekapNilaiKelasBaru = async (idKelas) => {
 
   const idSiswaList = daftarSiswa.map((d) => d.idSiswa);
 
-  // 3. Ambil semua kelasMapel di tahun ajaran yang sama
+  // 3️⃣ Ambil semua kelasMapel di tahun ajaran yang sama
   const kelasMapelList = await prisma.kelasDanMapel.findMany({
-    where: {
-      tahunAjaran: sekolah.tahunAjaran,
-    },
+    where: { tahunAjaran: sekolah.tahunAjaran },
     include: {
       JenisNilai: {
         include: {
@@ -310,29 +368,64 @@ export const getRekapNilaiKelasBaru = async (idKelas) => {
     },
   });
 
-  // 4. Bentuk rekap nilai
+  // 4️⃣ Siapkan struktur rekap
   const rekap = {};
-
   daftarSiswa.forEach((s) => {
     rekap[s.idSiswa] = {
       idSiswa: s.idSiswa,
       nis: s.Siswa.nis,
       nama: s.Siswa.nama,
       nilai: {},
-      total: 0,
+      totalNilai: 0, // untuk rata-rata semua mapel
+      totalMapel: 0,
+      rataRata: 0,
     };
   });
 
+  // 5️⃣ Hitung nilai akhir per mapel per siswa (berdasarkan bobot)
   kelasMapelList.forEach((mapel) => {
-    mapel.JenisNilai.forEach((jn) => {
-      jn.NilaiSiswa.forEach((ns) => {
-        rekap[ns.idSiswa].nilai[`${mapel.namaMapel}-${jn.jenis}`] = ns.nilai;
-        rekap[ns.idSiswa].total += ns.nilai;
+    idSiswaList.forEach((idSiswa) => {
+      let totalNilaiXBobot = 0;
+      let totalBobot = 0;
+
+      mapel.JenisNilai.forEach((jn) => {
+        const nilaiSiswa = jn.NilaiSiswa.find((ns) => ns.idSiswa === idSiswa);
+        if (nilaiSiswa && jn.bobot > 0) {
+          totalNilaiXBobot += nilaiSiswa.nilai * jn.bobot;
+          totalBobot += jn.bobot;
+        }
+
+        // tetap tampilkan semua nilai di tabel
+        const key = `${mapel.namaMapel}-${jn.jenis}`;
+        rekap[idSiswa].nilai[key] = {
+          nilai: nilaiSiswa?.nilai || "-",
+          bobot: jn.bobot,
+        };
       });
+
+      // hitung nilai akhir mapel (kalau ada bobot valid)
+      if (totalBobot > 0) {
+        const nilaiAkhir = parseFloat(
+          (totalNilaiXBobot / totalBobot).toFixed(2)
+        );
+        rekap[idSiswa].totalNilai += nilaiAkhir;
+        rekap[idSiswa].totalMapel += 1;
+      }
     });
   });
 
-  return {
-    data: Object.values(rekap),
-  };
+  // 6️⃣ Hitung rata-rata akhir tiap siswa
+  Object.values(rekap).forEach((r) => {
+    r.rataRata =
+      r.totalMapel > 0
+        ? parseFloat((r.totalNilai / r.totalMapel).toFixed(2))
+        : 0;
+  });
+
+  // 7️⃣ Urutkan dari rata-rata terbesar ke terkecil
+  const sortedData = Object.values(rekap).sort(
+    (a, b) => b.rataRata - a.rataRata
+  );
+
+  return { data: sortedData };
 };

@@ -8,6 +8,10 @@ import {
   uploadToCloudinary,
 } from "../utils/ImageHandler.js";
 import { prismaErrorHandler } from "../utils/errorHandlerPrisma.js";
+import {
+  deleteFotoSummaryMateriIdSiswa,
+  deleteFotoSummaryTugasIdSiswa,
+} from "./materiTugasSummaryService.js";
 
 const createGuru = async (guru, foto) => {
   const {
@@ -419,6 +423,9 @@ const deleteSiswa = async (id) => {
       await tx.catatanPerkembanganSiswa.deleteMany({
         where: { idSiswa: id },
       });
+      await deleteFotoSummaryMateriIdSiswa(id);
+      await deleteFotoSummaryTugasIdSiswa(id);
+
       await tx.summaryMateri.deleteMany({ where: { idSiswa: id } });
       await tx.summaryTugas.deleteMany({ where: { idSiswa: id } });
       await tx.nilaiSiswa.deleteMany({ where: { idSiswa: id } });

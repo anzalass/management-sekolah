@@ -4,16 +4,18 @@ import {
   createMataPelajaranController,
   deleteMataPelajaranController,
   getAllMataPelajaranController,
+  getAllMataPelajaranInputController,
   getMataPelajaranByIdController,
   updateMataPelajaranController,
 } from "../controller/mataPelajaranController.js";
 
 const router = express.Router();
 
-router.post("/mapel/create", AuthMiddleware ,createMataPelajaranController);
+router.post("/mapel/create", AuthMiddleware, createMataPelajaranController);
 router.get("/mapel/get/:id", getMataPelajaranByIdController);
 router.put("/mapel/update/:id", updateMataPelajaranController);
 router.delete("/mapel/delete/:id", deleteMataPelajaranController);
 router.get("/mapel", getAllMataPelajaranController);
+router.get("/mapel-input", getAllMataPelajaranInputController);
 
 export default router;

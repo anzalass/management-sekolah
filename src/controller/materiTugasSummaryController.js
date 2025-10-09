@@ -19,6 +19,7 @@ import {
   getSummaryTugasById,
   getTugasAndSummaryByTugasID,
   getTugasMapelById,
+  updateMateriMapel,
 } from "../services/materiTugasSummaryService.js";
 import fileUpload from "../utils/pdfUpload.js";
 
@@ -35,6 +36,28 @@ export const handleCreateMateriMapel = async (req, res) => {
       });
     } catch (error) {
       return res.status(500).json({ success: false, message: error.message });
+    }
+  });
+};
+
+export const handleUpdateMateriMapel = async (req, res) => {
+  fileUpload.single("pdf")(req, res, async (err) => {
+    try {
+      const { id } = req.params;
+      const data = req.body;
+      const file = req.file; // ambil dari multer
+
+      const updatedMateri = await updateMateriMapel(id, data, file);
+
+      return res.status(200).json({
+        message: "Materi berhasil diperbarui",
+        data: updatedMateri,
+      });
+    } catch (error) {
+      console.error("Error update materi:", error);
+      res.status(500).json({
+        message: prismaErrorHandler(error) || "Gagal memperbarui materi",
+      });
     }
   });
 };
@@ -74,7 +97,7 @@ export const handleDeleteMateriMapel = async (req, res) => {
 
 export const handleCreateSummaryMateri = async (req, res) => {
   try {
-    const result = await createSummaryMateri(req.body);
+    const result = await createSummaryMateri(req.body, req.files);
     return res.status(201).json({ success: true, data: result });
   } catch (error) {
     return res.status(500).json({ success: false, message: error.message });
@@ -133,6 +156,34 @@ export const handleCreateTugasMapel = async (req, res) => {
   });
 };
 
+export const handleUpdateTugasMapel = async (req, res) => {
+  fileUpload.single("pdf")(req, res, async (err) => {
+    try {
+      if (err) {
+        return res
+          .status(400)
+          .json({ success: false, message: "Gagal upload file" });
+      }
+
+      const { id } = req.params;
+
+      const updated = await updateTugasMapel(id, req.body, req.file);
+
+      return res.status(200).json({
+        message: "Berhasil memperbarui tugas",
+        success: true,
+        data: updated,
+      });
+    } catch (error) {
+      console.error("Error di handleUpdateTugasMapel:", error);
+      return res.status(500).json({
+        success: false,
+        message: error.message || "Terjadi kesalahan",
+      });
+    }
+  });
+};
+
 export const handleGetAllTugasMapel = async (req, res) => {
   try {
     const result = await getAllTugasMapel();
@@ -180,7 +231,7 @@ export const handleGetTugasAndSummaryByTugasiID = async (req, res) => {
 
 export const handleCreateSummaryTugas = async (req, res) => {
   try {
-    const result = await createSummaryTugas(req.body);
+    const result = await createSummaryTugas(req.body, req.files);
     return res.status(201).json({ success: true, data: result });
   } catch (error) {
     return res.status(500).json({ success: false, message: error.message });

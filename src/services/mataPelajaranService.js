@@ -8,8 +8,6 @@ export const createMataPelajaran = async (data) => {
     const result = await prisma.mata_Pelajaran.create({
       data: {
         nama,
-        kelas,
-        idGuru: guruId,
       },
     });
     return result;
@@ -27,8 +25,6 @@ export const updateMataPelajaran = async (id, data) => {
       where: { id },
       data: {
         nama,
-        kelas,
-        guruId, // update guru juga bisa
       },
     });
     return result;
@@ -43,9 +39,6 @@ export const getMataPelajaranById = async (id) => {
   try {
     const mataPelajaran = await prisma.mata_Pelajaran.findUnique({
       where: { id },
-      include: {
-        Guru: true, // ambil data guru nya juga
-      },
     });
     if (!mataPelajaran) {
       throw new Error("Mata Pelajaran not found");
@@ -81,6 +74,17 @@ export const getAllMataPelajaran = async ({
     const total = await prisma.mata_Pelajaran.count({ where });
 
     return { data, total, page, pageSize };
+  } catch (error) {
+    console.error(error);
+    const errorMessage = prismaErrorHandler(error);
+    throw new Error(errorMessage);
+  }
+};
+
+export const getAllMataPelajaranInput = async () => {
+  try {
+    const data = await prisma.mata_Pelajaran.findMany({});
+    return data;
   } catch (error) {
     console.error(error);
     const errorMessage = prismaErrorHandler(error);

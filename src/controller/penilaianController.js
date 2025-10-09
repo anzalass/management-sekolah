@@ -14,6 +14,8 @@ import {
 export const createJenisNilaiController = async (req, res) => {
   try {
     const data = req.body;
+    console.log("dtttt", data);
+
     await createJenisNilai(data);
     return res
       .status(201)

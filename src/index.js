@@ -42,7 +42,7 @@ import jadwalRoutes from "./routes/jadwalPelajaranRoutes.js";
 import janjiTemuRoutes from "./routes/siswa/janjiTemuRoutes.js";
 import ujianRoutes from "./routes/ujianIframeRoutes.js";
 import weeklyActivity from "./routes/weeklyActivityRoutes.js";
-
+import notifikasiRoutes from "./routes/notifikasiRoutes.js";
 import { fileURLToPath } from "url";
 import path from "path";
 import fs from "fs";
@@ -113,6 +113,7 @@ app.use("/api/v1", perizinanSiswa);
 app.use("/api/v1", janjiTemuRoutes);
 app.use("/api/v1", ujianRoutes);
 app.use("/api/v1", weeklyActivity);
+app.use("/api/v1", notifikasiRoutes);
 
 app.get("/api/v1/view-image/:imageName", (req, res) => {
   const { imageName } = req.params;

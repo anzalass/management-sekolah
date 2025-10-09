@@ -4,6 +4,7 @@ import {
   deleteFromCloudinary,
   uploadToCloudinary,
 } from "../utils/ImageHandler.js";
+import { createNotifikasi } from "./notifikasiService.js";
 const prisma = new PrismaClient();
 
 export const createKelasMapel = async (data, banner) => {
@@ -136,8 +137,12 @@ export const updateKelasMapel = async (id, data, banner) => {
           namaMapel,
           ruangKelas,
           kelas,
-          banner: imageUploadResult?.secure_url || "",
-          bannerId: imageUploadResult?.public_id || "",
+          banner: imageUploadResult.secure_url
+            ? imageUploadResult?.secure_url
+            : oldKelas.banner,
+          bannerId: imageUploadResult.public_id
+            ? imageUploadResult.public_id
+            : oldKelas.bannerId,
         },
       });
     });
@@ -222,10 +227,33 @@ export const addSiswatoKelasKelasMapel = async (data) => {
         throw new Error("Siswa dengan NIS tersebut sudah ada di dalam kelas.");
       }
 
+      const kelas = await tx.kelasDanMapel.findUnique({
+        where: {
+          id: idKelas,
+        },
+        select: {
+          namaMapel: true,
+          idGuru: true,
+          id: true,
+        },
+      });
+
       // Tambahkan siswa jika belum ada
-      await tx.daftarSiswaMapel.create({
+      const addSiswa = await tx.daftarSiswaMapel.create({
         data: { idKelas, namaSiswa, nisSiswa, idSiswa },
       });
+
+      if (addSiswa) {
+        await createNotifikasi({
+          idSiswa: addSiswa.idSiswa,
+          idTerkait: addSiswa.id,
+          kategori: "Menambah Siswa",
+          createdBy: kelas.idGuru,
+          idKelas: id,
+          redirectSiswa: "/siswa/kelas",
+          keterangan: `Anda ditambahkan ke dalam kelas ${kelas.namaMapel}`,
+        });
+      }
     });
   } catch (error) {
     console.log(error);
@@ -245,9 +273,32 @@ export const removeSiswaFromKelasMapel = async (id) => {
         throw new Error("Data tidak ditemukan, tidak bisa dihapus");
       }
 
-      await tx.daftarSiswaMapel.delete({
+      const removeSiswa = await tx.daftarSiswaMapel.delete({
         where: { id },
       });
+
+      const kelas = await tx.kelasDanMapel.findUnique({
+        where: {
+          id: id,
+        },
+        select: {
+          namaMapel: true,
+          idGuru: true,
+          id: true,
+        },
+      });
+
+      if (removeSiswa) {
+        await createNotifikasi({
+          idSiswa: removeSiswa.idSiswa,
+          idTerkait: removeSiswa.id,
+          kategori: "Menghapus Siswa",
+          createdBy: kelas.idGuru,
+          idKelas: id,
+          redirectSiswa: "/siswa/kelas",
+          keterangan: `Anda dihapus dari kelas ${kelas.namaMapel}`,
+        });
+      }
     });
   } catch (error) {
     console.log(error);

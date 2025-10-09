@@ -4,10 +4,8 @@ import {
   deleteFromCloudinary,
   uploadToCloudinary,
 } from "../utils/ImageHandler.js";
-import {
-  deleteWeeklyActivity,
-  deleteWeeklyActivityIdKelas,
-} from "./weeklyActivityService.js";
+import { deleteWeeklyActivityIdKelas } from "./weeklyActivityService.js";
+import { createNotifikasi } from "./notifikasiService.js";
 const prisma = new PrismaClient();
 
 export const createKelasWaliKelas = async (data, banner) => {
@@ -81,8 +79,12 @@ export const updateKelasWaliKelas = async (id, data, banner) => {
           ruangKelas,
           periode,
           guru,
-          banner: imageUploadResult?.secure_url || "",
-          bannerId: imageUploadResult?.public_id || "",
+          banner: imageUploadResult.secure_url
+            ? imageUploadResult?.secure_url
+            : oldKelas.banner,
+          bannerId: imageUploadResult.public_id
+            ? imageUploadResult.public_id
+            : oldKelas.bannerId,
         },
       });
     });
@@ -111,6 +113,11 @@ export const deleteKelasWaliKelas = async (id) => {
         },
       });
 
+      await tx.jadwalPelajaran.deleteMany({
+        where: {
+          idKelas: id,
+        },
+      });
       // hapus kelasnya
       await tx.kelas.delete({
         where: { id },
@@ -139,11 +146,22 @@ export const addSiswatoKelasWaliKelas = async (data) => {
         where: { idKelas, idSiswa },
       });
 
+      const kelas = await tx.kelas.findUnique({
+        where: {
+          id: idKelas,
+        },
+        select: {
+          nama: true,
+          idGuru: true,
+          id: true,
+        },
+      });
+
       if (existing) {
         throw new Error("Siswa sudah terdaftar di kelas ini");
       }
 
-      await tx.daftarSiswaKelas.create({
+      const addSiswa = await tx.daftarSiswaKelas.create({
         data: {
           nisSiswa,
           idKelas,
@@ -152,6 +170,18 @@ export const addSiswatoKelasWaliKelas = async (data) => {
           rapotSiswa: "Belum Dibagikan",
         },
       });
+
+      if (addSiswa) {
+        await createNotifikasi({
+          idSiswa: addSiswa.idSiswa,
+          idTerkait: addSiswa.id,
+          kategori: "Menambahkan Siswa Kelas",
+          createdBy: kelas.idGuru,
+          idKelas: kelas.id,
+          redirectSiswa: "/siswa/kelas",
+          keterangan: `Anda ditambahkan ke dalam kelas ${kelas.nama}`,
+        });
+      }
     });
   } catch (error) {
     console.log(error);
@@ -180,9 +210,32 @@ export const getSiswaByIdKelas = async (idKelas) => {
 export const deleteSiswatoKelasWaliKelas = async (id) => {
   try {
     await prisma.$transaction(async (tx) => {
-      await tx.daftarSiswaKelas.delete({
+      const removeSiswa = await tx.daftarSiswaKelas.delete({
         where: { id: id },
       });
+
+      const kelas = await tx.kelas.findUnique({
+        where: {
+          id: id,
+        },
+        select: {
+          nama: true,
+          idGuru: true,
+          id: true,
+        },
+      });
+
+      if (removeSiswa) {
+        await createNotifikasi({
+          idSiswa: removeSiswa.idSiswa,
+          idTerkait: removeSiswa.id,
+          kategori: "Menghapus Siswa",
+          createdBy: kelas.idGuru,
+          idKelas: id,
+          redirectSiswa: "/siswa/kelas",
+          keterangan: `Anda dihapus dari kelas ${kelas.nama}`,
+        });
+      }
     });
   } catch (error) {
     console.log(error);
