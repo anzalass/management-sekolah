@@ -43,6 +43,7 @@ export const getAllNews = async (page, pageSize, search) => {
         mode: "insensitive",
       },
     },
+    orderBy: { createdAt: "desc" },
     skip: skip,
     take: pageSize,
   });
