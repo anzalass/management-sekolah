@@ -413,6 +413,8 @@ model PengumumanKelas {
 model CatatanPerkembanganSiswa  {
   id          String @id @default(uuid())
   idKelas     String?
+  namaGuru    String?
+  kategori    String
   idSiswa     String
   content     String
   time        DateTime

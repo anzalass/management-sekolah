@@ -4,7 +4,10 @@ import { prismaErrorHandler } from "../utils/errorHandlerPrisma.js";
 const prisma = new PrismaClient();
 
 import { addHours } from "date-fns";
-import { createNotifikasi } from "./notifikasiService.js";
+import {
+  createNotifikasi,
+  deleteNotifikasiByIdTerkait,
+} from "./notifikasiService.js";
 
 export const createKehadiranSiswa = async (data) => {
   try {
@@ -66,7 +69,7 @@ export const createKehadiranSiswa = async (data) => {
         idKelas: idKelas,
         createdBy: kelas.idGuru,
         redirectSiswa: "/siswa/log-presensi",
-        keterangan: `Kehadiran Pukul ${kehadiran.waktu.toLocaleDateString()}`,
+        keterangan: `Detail kehadiran ${kehadiran.waktu.toLocaleDateString()}`,
       });
     }
 
@@ -126,6 +129,7 @@ export const deleteKehadiranSiswa = async (id) => {
     const deleted = await prisma.kehadiranSiswa.delete({
       where: { id },
     });
+    await deleteNotifikasiByIdTerkait(id);
     return deleted;
   } catch (error) {
     console.log(error);
@@ -204,6 +208,18 @@ export const updateKeteranganKehadiran = async (id, keterangan) => {
     const updated = await prisma.kehadiranSiswa.update({
       where: { id },
       data: { keterangan },
+    });
+
+    await deleteNotifikasiByIdTerkait(id);
+    await createNotifikasi({
+      createdBy: "",
+      idGuru: "",
+      idKelas: updated.idKelas,
+      idSiswa: updated.idSiswa,
+      idTerkait: updated.id,
+      kategori: "Kehadiran Siswa",
+      redirectSiswa: "/siswa/log-presensi",
+      keterangan: `Detail kehadiran : ${updated.waktu.toLocaleDateString()}`,
     });
 
     return updated;

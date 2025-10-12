@@ -249,7 +249,7 @@ export const addSiswatoKelasKelasMapel = async (data) => {
           idTerkait: addSiswa.id,
           kategori: "Menambah Siswa",
           createdBy: kelas.idGuru,
-          idKelas: id,
+          idKelas: kelas.id,
           redirectSiswa: "/siswa/kelas",
           keterangan: `Anda ditambahkan ke dalam kelas ${kelas.namaMapel}`,
         });
@@ -294,12 +294,27 @@ export const removeSiswaFromKelasMapel = async (id) => {
           idTerkait: removeSiswa.id,
           kategori: "Menghapus Siswa",
           createdBy: kelas.idGuru,
-          idKelas: id,
+          idKelas: removeSiswa.idKelas,
           redirectSiswa: "/siswa/kelas",
           keterangan: `Anda dihapus dari kelas ${kelas.namaMapel}`,
         });
       }
     });
+  } catch (error) {
+    console.log(error);
+    const errorMessage = prismaErrorHandler(error);
+    throw new Error(errorMessage);
+  }
+};
+
+export const getKelasMapelById = async (id) => {
+  try {
+    const data = await prisma.kelasDanMapel.findUnique({
+      where: {
+        id,
+      },
+    });
+    return data;
   } catch (error) {
     console.log(error);
     const errorMessage = prismaErrorHandler(error);

@@ -4,6 +4,7 @@ import {
   deleteFromCloudinary,
   uploadToCloudinary,
 } from "../utils/ImageHandler.js";
+import { createNotifikasi } from "./notifikasiService.js";
 const prisma = new PrismaClient();
 
 export const createTagihan = async (data) => {
@@ -205,6 +206,17 @@ export const bayarTagihan = async (idTagihan, metodeBayar) => {
         },
       });
 
+      await createNotifikasi({
+        createdBy: "",
+        idGuru: "",
+        idKelas: "",
+        idSiswa: updatedTagihan.idSiswa,
+        idTerkait: updatedTagihan.id,
+        kategori: "Pembayaran",
+        keterangan: `Tagihan ${updatedTagihan.nama} berhasil dibayar`,
+        redirectSiswa: "/siswa/pembayaran",
+      });
+
       return { updatedTagihan, riwayat };
     });
   } catch (error) {
@@ -335,6 +347,17 @@ export const buktiTidakValid = async (id) => {
         buktiId: "",
         buktiId: "",
       },
+    });
+    await createNotifikasi({
+      createdBy: "",
+      idGuru: "",
+      idKelas: "",
+      idSiswa: tagihan.idSiswa,
+      idTerkait: id,
+      kategori: "Pembayaran",
+      keterangan: `Bukti pembayaran ${tagihan.nama} tidak valid`,
+      redirectGuru: "",
+      redirectSiswa: "/siswa/pembayaran",
     });
   } catch (error) {
     console.log(error);

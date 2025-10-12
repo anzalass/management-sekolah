@@ -7,13 +7,15 @@ import {
 
 const prisma = new PrismaClient();
 
-export const createCatatan = async (data) => {
+export const createCatatan = async (data, nama) => {
   try {
     const cttn = await prisma.catatanPerkembanganSiswa.create({
       data: {
         idKelas: data.idKelas,
         idSiswa: data.idSiswa,
         content: data.content,
+        kategori: data.kategori,
+        namaGuru: nama,
         time: new Date(),
       },
     });
@@ -33,11 +35,11 @@ export const createCatatan = async (data) => {
       await createNotifikasi({
         idSiswa: cttn.idSiswa,
         idTerkait: cttn.id,
-        kategori: "Menambahkan Catatan Siswa Kelas",
+        kategori: "Catatan Siswa",
         createdBy: kelas.idGuru,
         idKelas: kelas.id,
         redirectSiswa: "/siswa/catatan-perkembangan",
-        keterangan: `Catatan baru untukmu : ${cttn.content}`,
+        keterangan: `Catatan baru untukmu `,
       });
     }
   } catch (error) {
@@ -60,13 +62,13 @@ export const getAllCatatan = async () => {
   }
 };
 
-export const getAllCatataByIdKelasDanIdSiswa = async (idKelas, idSiswa) => {
+export const getAllCatataByIdKelasDanIdSiswa = async (idSiswa) => {
   try {
     return await prisma.catatanPerkembanganSiswa.findMany({
       where: {
-        idKelas,
         idSiswa,
       },
+      include: { Kelas: true },
       orderBy: { time: "desc" },
     });
   } catch (error) {
@@ -104,6 +106,7 @@ export const getCatatanByIdKelas = async (idKelas) => {
       id: item.id,
       idKelas: item.idKelas,
       idSiswa: item.idSiswa,
+      kategori: item.kategori,
       content: item.content,
       time: item.time,
       kelasNama: item.Kelas?.nama || null,
@@ -140,11 +143,11 @@ export const updateCatatan = async (id, data) => {
       await createNotifikasi({
         idSiswa: cttn.idSiswa,
         idTerkait: cttn.id,
-        kategori: "Menambahkan Catatan Siswa Kelas",
+        kategori: "Catatan Siswa",
         createdBy: kelas.idGuru,
         idKelas: kelas.id,
         redirectSiswa: "/siswa/catatan-perkembangan",
-        keterangan: `Catatan baru untukmu : ${cttn.content}`,
+        keterangan: `Catatan baru untukmu`,
       });
     }
   } catch (error) {

@@ -3,6 +3,7 @@ import {
   getNotifikasiController,
   updateStatusSiswaController,
   updateStatusGuruController,
+  getNotifikasiControllerTotal,
 } from "../controller/notifikasiController.js";
 import { AuthMiddleware } from "../utils/authMiddleware.js";
 
@@ -10,6 +11,7 @@ const router = express.Router();
 
 // Ambil semua notifikasi user
 router.get("/notifikasi", AuthMiddleware, getNotifikasiController);
+router.get("/notifikasi-total", AuthMiddleware, getNotifikasiControllerTotal);
 
 // Update & hapus notifikasi siswa
 router.put("/notifikasi/siswa", AuthMiddleware, updateStatusSiswaController);

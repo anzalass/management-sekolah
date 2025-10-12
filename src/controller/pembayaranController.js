@@ -17,6 +17,7 @@ import {
 const prisma = new PrismaClient();
 import { v4 as uuidv4 } from "uuid"; // kalau pakai ESModule
 import memoryUpload from "../utils/multer.js";
+import { createNotifikasi } from "../services/notifikasiService.js";
 // atau
 // const { v4: uuidv4 } = require('uuid'); // kalau pakai CommonJS
 
@@ -193,25 +194,36 @@ export const midtransNotificationController = async (req, res) => {
 
     // catat riwayat pembayaran
 
-    await prisma.riwayatPembayaran.create({
-      data: {
-        namaSiswa: tagihan.namaSiswa,
-        nisSiswa: tagihan.nisSiswa,
-        idSiswa: tagihan.idSiswa,
-        idTagihan: tagihanNotif.idTagihan,
-        waktuBayar: new Date(),
-        metodeBayar: "midtrans",
-        status: statusPembayaran,
-      },
-    });
-
     if (transactionStatus === "settlement" || transactionStatus === "capture") {
       await prisma.snapUrl.deleteMany({
         where: {
           idTagihan: tagihanNotif.idTagihan,
         },
       });
+      await prisma.riwayatPembayaran.create({
+        data: {
+          namaSiswa: tagihan.namaSiswa,
+          nisSiswa: tagihan.nisSiswa,
+          idSiswa: tagihan.idSiswa,
+          idTagihan: tagihanNotif.idTagihan,
+          waktuBayar: new Date(),
+          metodeBayar: "midtrans",
+          status: statusPembayaran,
+        },
+      });
     }
+
+    await createNotifikasi({
+      createdBy: "",
+      idGuru: "",
+      idKelas: "",
+      idSiswa: tagihan.idSiswa,
+      idTerkait: tagihan.id,
+      kategori: "Pembayaran",
+      keterangan: `Status pembayaran ${tagihan.status}`,
+      redirectSiswa: "/siswa/pembayaran",
+      redirectGuru: "",
+    });
 
     return res.json({ success: true });
   } catch (err) {

@@ -129,6 +129,7 @@ export const dashboardOverview = async () => {
           },
         },
       },
+      take: 5,
     });
 
     // === Return Object untuk Frontend ===
@@ -224,6 +225,7 @@ export const dashboardWaliKelas = async (idKelas) => {
       idSiswa: c.Siswa.id,
       nisSiswa: c.Siswa.nis,
       nama: c.Siswa.nama,
+      kategori: c.kategori,
       catatan: c.content,
     }));
 
