@@ -173,7 +173,7 @@ export const createNilaiSiswa = async (data) => {
         await createNotifikasi({
           idSiswa: created.idSiswa,
           idTerkait: created.id,
-          kategori: "Menambahkan Nilai Siswa",
+          kategori: "Nilai",
           createdBy: kelas.idGuru,
           idKelas: kelas.id,
           redirectSiswa: "/siswa/nilai",
@@ -216,7 +216,7 @@ export const updateNilaiSiswa = async (id, data) => {
         await createNotifikasi({
           idSiswa: updated.idSiswa,
           idTerkait: updated.id,
-          kategori: "Menambahkan Nilai Siswa",
+          kategori: "Nilai",
           createdBy: kelas.idGuru,
           idKelas: kelas.id,
           redirectSiswa: "/siswa/nilai",

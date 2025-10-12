@@ -175,7 +175,7 @@ export const addSiswatoKelasWaliKelas = async (data) => {
         await createNotifikasi({
           idSiswa: addSiswa.idSiswa,
           idTerkait: addSiswa.id,
-          kategori: "Menambahkan Siswa Kelas",
+          kategori: "Menambahkan Siswa",
           createdBy: kelas.idGuru,
           idKelas: kelas.id,
           redirectSiswa: "/siswa/kelas",
@@ -233,7 +233,7 @@ export const deleteSiswatoKelasWaliKelas = async (id) => {
           createdBy: kelas.idGuru,
           idKelas: id,
           redirectSiswa: "/siswa/kelas",
-          keterangan: `Anda dihapus dari kelas ${kelas.nama}`,
+          keterangan: `Anda dikeluarkan dari kelas ${kelas.nama}`,
         });
       }
     });

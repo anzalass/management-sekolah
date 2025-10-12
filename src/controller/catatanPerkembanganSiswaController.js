@@ -25,8 +25,7 @@ export const getAllCatatan = async (req, res, next) => {
 
 export const getAllCatatanByIdSiswaIdKelas = async (req, res, next) => {
   try {
-    const result = await catatanService.getAllCatatanByIdSiswaIdKelas(
-      req.user.idKelas,
+    const result = await catatanService.getAllCatataByIdKelasDanIdSiswa(
       req.user.idGuru
     );
     res.json(result);

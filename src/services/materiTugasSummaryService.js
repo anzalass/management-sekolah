@@ -4,6 +4,12 @@ import {
   deleteFromCloudinary,
   uploadToCloudinary,
 } from "../utils/ImageHandler.js";
+import {
+  createNotifikasi,
+  deleteNotifikasiByIdTerkait,
+} from "./notifikasiService.js";
+import { getDetailKelasMapel, getKelasMapelById } from "./kelasMapelService.js";
+import { getNamaSiswa } from "./userService.js";
 
 const prisma = new PrismaClient();
 
@@ -26,7 +32,7 @@ export const createMateriMapel = async (data, file) => {
     console.log("pdf", file);
     console.log("res pdf", UploadResult);
 
-    await prisma.materiMapel.create({
+    const mapel = await prisma.materiMapel.create({
       data: {
         judul: data.judul,
         tanggal: new Date(),
@@ -37,6 +43,19 @@ export const createMateriMapel = async (data, file) => {
         pdfUrl: UploadResult?.secure_url || null,
         pdfUrlId: UploadResult?.public_id || null,
       },
+    });
+
+    const kelas = await getKelasMapelById(mapel.idKelasMapel);
+    await createNotifikasi({
+      idTerkait: mapel.id,
+      createdBy: kelas.idGuru,
+      idGuru: kelas.idGuru,
+      idKelas: mapel.idKelasMapel,
+      idSiswa: "",
+      kategori: "Materi",
+      keterangan: `Materi baru ditambahkan, pelajaran ${kelas.namaMapel}`,
+      redirectGuru: "",
+      redirectSiswa: `/siswa/kelas/${kelas.id}/materi/${mapel.id}`,
     });
   } catch (error) {
     console.log(error);
@@ -148,6 +167,8 @@ export const deleteMateriMapel = async (id) => {
       where: { id: dataMateri.id },
     });
 
+    await deleteNotifikasiByIdTerkait(id);
+
     return { message: "Data berhasil dihapus" };
   } catch (error) {
     console.error(error);
@@ -168,6 +189,21 @@ export const createSummaryMateri = async (data, files) => {
       data2.id,
       files
     );
+
+    const materi = await getNamaMateriMapelById(data2.id);
+    const siswa = await getNamaSiswa(data2.idSiswa);
+    const kelas = await getKelasMapelById(data2.idKelasMapel);
+    await createNotifikasi({
+      idGuru: kelas.idGuru,
+      createdBy: data2.idSiswa,
+      idKelas: data2.idKelasMapel,
+      idSiswa: data2.idSiswa,
+      idTerkait: data2.id,
+      kategori: "Summary",
+      keterangan: `${siswa.nama} telah mengumpulkan summary materi : ${materi.judul}`,
+      redirectGuru: "",
+      redirectSiswa: `/mengajar/kelas-mapel/${data2.idKelasMapel}/materi/${data2.id}`,
+    });
   } catch (error) {
     console.log(error);
     const errorMessage = prismaErrorHandler(error);
@@ -203,9 +239,10 @@ export const getSummaryMateriById = async (id) => {
 export const deleteSummaryMateri = async (id) => {
   try {
     await deleteFotoSummaryMateriIDSummaryMateri(id);
-    return await prisma.summaryMateri.delete({
+    await prisma.summaryMateri.delete({
       where: { id },
     });
+    await deleteNotifikasiByIdTerkait(id);
   } catch (error) {
     console.log(error);
     const errorMessage = prismaErrorHandler(error);
@@ -242,7 +279,7 @@ export const createTugasMapel = async (data, file) => {
       UploadResult = await uploadToCloudinary(file.buffer, "tugas", data.judul);
     }
 
-    await prisma.tugasMapel.create({
+    const tugas = await prisma.tugasMapel.create({
       data: {
         judul: data.judul,
         deadline: new Date(`${data.deadline}T00:00:00Z`),
@@ -253,6 +290,18 @@ export const createTugasMapel = async (data, file) => {
         pdfUrl: UploadResult?.secure_url || null,
         pdfUrlId: UploadResult?.public_id || null,
       },
+    });
+    const kelas = await getKelasMapelById(mapel.id);
+    await createNotifikasi({
+      idTerkait: tugas.id,
+      createdBy: kelas.idGuru,
+      idGuru: kelas.idGuru,
+      idKelas: tugas.idKelasMapel,
+      idSiswa: "",
+      kategori: "Tugas",
+      keterangan: `Tuhgas baru ditambahkan, pelajaran ${kelas.namaMapel}`,
+      redirectGuru: "",
+      redirectSiswa: `/siswa/kelas/${kelas.id}/tugas/${tugas.id}`,
     });
   } catch (error) {
     console.log(error);
@@ -335,6 +384,36 @@ export const getTugasMapelById = async (id) => {
   }
 };
 
+export const getNamaTugasMapelById = async (id) => {
+  try {
+    const judul = await prisma.tugasMapel.findUnique({
+      where: { id },
+      select: { judul: true },
+    });
+
+    return judul;
+  } catch (error) {
+    console.log(error);
+    const errorMessage = prismaErrorHandler(error);
+    throw new Error(errorMessage);
+  }
+};
+
+export const getNamaMateriMapelById = async (id) => {
+  try {
+    const judul = await prisma.materiMapel.findUnique({
+      where: { id },
+      select: { judul: true },
+    });
+
+    return judul;
+  } catch (error) {
+    console.log(error);
+    const errorMessage = prismaErrorHandler(error);
+    throw new Error(errorMessage);
+  }
+};
+
 export const deleteTugasMapel = async (id) => {
   try {
     const dataTugas = await prisma.tugasMapel.findUnique({
@@ -359,7 +438,7 @@ export const deleteTugasMapel = async (id) => {
     await prisma.tugasMapel.delete({
       where: { id: dataTugas.id },
     });
-
+    await deleteNotifikasiByIdTerkait(id);
     return { message: "Data berhasil dihapus" };
   } catch (error) {
     console.error(error);
@@ -479,6 +558,21 @@ export const createSummaryTugas = async (data, files) => {
       data2.id,
       files
     );
+
+    const tugas = await getNamaTugasMapelById(data2.idTugas);
+    const siswa = await getNamaSiswa(data2.idSiswa);
+    const kelas = await getKelasMapelById(data2.idKelasMapel);
+    await createNotifikasi({
+      idTerkait: mapel.id,
+      createdBy: kelas.idGuru,
+      idGuru: kelas.idGuru,
+      idKelas: mapel.idKelasMapel,
+      idSiswa: "",
+      kategori: "Summary",
+      keterangan: `${siswa.nama} telah mengumpulkan summary tugas : ${tugas.judul}`,
+      redirectGuru: "",
+      redirectSiswa: `/siswa/kelas/${kelas.id}/materi/${mapel.id}`,
+    });
   } catch (error) {
     console.log(error);
     const errorMessage = prismaErrorHandler(error);
@@ -517,6 +611,7 @@ export const deleteSummaryTugas = async (id) => {
     return await prisma.summaryTugas.delete({
       where: { id },
     });
+    await deleteNotifikasiByIdTerkait(id);
   } catch (error) {
     console.log(error);
     const errorMessage = prismaErrorHandler(error);

@@ -10,7 +10,7 @@ import {
 // Create
 export const createCatatanAkhirSiswaController = async (req, res) => {
   try {
-    const data = await createCatatanAkhirSiswa(req.body);
+    const data = await createCatatanAkhirSiswa(req.body, req.user.nama);
     res.status(201).json({
       message: "Catatan akhir siswa berhasil dibuat",
       data,

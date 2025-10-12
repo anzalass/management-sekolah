@@ -602,6 +602,24 @@ const getAllSiswaMaster = async () => {
   }
 };
 
+const getNamaSiswa = async (id) => {
+  try {
+    const data = await prisma.siswa.findUnique({
+      where: {
+        id,
+      },
+      select: {
+        nama: true,
+      },
+    });
+
+    return data;
+  } catch (error) {
+    const errorMessage = prismaErrorHandler(error);
+    throw new Error(errorMessage);
+  }
+};
+
 export {
   createRiwayatPendidikan,
   deleteRiwayatPendidikan,
@@ -616,4 +634,5 @@ export {
   getGuruByID,
   getSiswaByID,
   getAllSiswaMaster,
+  getNamaSiswa,
 };

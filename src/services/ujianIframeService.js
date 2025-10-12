@@ -1,5 +1,10 @@
 import { PrismaClient } from "@prisma/client";
 import { prismaErrorHandler } from "../utils/errorHandlerPrisma.js";
+import {
+  createNotifikasi,
+  deleteNotifikasiByIdTerkait,
+} from "./notifikasiService.js";
+import { getKelasMapelById } from "./kelasMapelService.js";
 const prisma = new PrismaClient();
 
 /**
@@ -16,6 +21,20 @@ export const createUjianIframeService = async (data) => {
         deadline: new Date(deadline),
         iframe,
       },
+    });
+
+    const kelas = await getKelasMapelById(ujian.idKelasMapel);
+
+    await createNotifikasi({
+      createdBy: kelas.idGuru,
+      idGuru: kelas.idGuru,
+      idKelas: ujian.idKelasMapel,
+      idSiswa: "",
+      kategori: "Ujian",
+      keterangan: `Ujian baru ${kelas.namaMapel} telah ditambahkan`,
+      redirectGuru: "",
+      redirectSiswa: `/siswa/kelas/${kelas.id}/ujian/${ujian.id}`,
+      idTerkait: ujian.id,
     });
 
     return ujian;
@@ -133,6 +152,7 @@ export const deleteUjianIframeService = async (id) => {
     await prisma.ujianIframe.delete({
       where: { id },
     });
+    await deleteNotifikasiByIdTerkait(id);
     return { message: "Ujian berhasil dihapus" };
   } catch (error) {
     throw new Error(`Gagal menghapus ujian: ${error.message}`);
