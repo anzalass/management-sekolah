@@ -305,6 +305,14 @@ export const getRekapAbsensiByKelas = async (idKelas) => {
       waktu: "asc",
     },
   });
+  const namaKelas = await prisma.kelas.findUnique({
+    where: {
+      id: idKelas,
+    },
+    select: {
+      nama: true,
+    },
+  });
 
   // 2. Group dan hitung
   const rekap = absensi.reduce((acc, curr) => {
@@ -334,7 +342,10 @@ export const getRekapAbsensiByKelas = async (idKelas) => {
   }, {});
 
   // 3. Return dalam bentuk array
-  return Object.values(rekap);
+  return {
+    data: Object.values(rekap),
+    namaKelas: namaKelas.nama,
+  };
 };
 
 export const getAbsesniSiswaByKelas = async (idSiswa, idKelas) => {

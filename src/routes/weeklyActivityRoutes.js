@@ -6,7 +6,7 @@ import {
   getWeeklyActivityByIdKelasGuruController,
 } from "../controller/weeklyActivityController.js";
 import memoryUpload from "../utils/multer.js";
-import { AuthMiddleware } from "../utils/authMiddleware.js";
+import { AuthMiddleware, isGuruOnly } from "../utils/authMiddleware.js";
 
 const router = express.Router();
 
@@ -14,6 +14,7 @@ const router = express.Router();
 router.post(
   "/weekly-activity/",
   AuthMiddleware,
+  isGuruOnly,
   memoryUpload.array("foto", 20),
   createWeeklyActivityController
 );
@@ -29,6 +30,7 @@ router.get(
 router.get(
   "/weekly-activity-guru/:idKelas",
   AuthMiddleware,
+  isGuruOnly,
   getWeeklyActivityByIdKelasGuruController
 );
 
@@ -36,6 +38,7 @@ router.get(
 router.delete(
   "/weekly-activity/:id",
   AuthMiddleware,
+  isGuruOnly,
   deleteWeeklyActivityController
 );
 

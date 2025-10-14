@@ -224,6 +224,7 @@ export const createKonseling = async (data) => {
         namaSiswa: data.namaSiswa,
         keterangan: data.keterangan,
         idSiswa: data.idSiswa,
+        kategori: data.kategori,
         nisSiswa: siswa.nis,
         tanggal: new Date(`${data.tanggal}T00:00:00Z`),
       },
@@ -345,6 +346,21 @@ export const getAllKonseling = async (
       pageSize,
       totalPages: Math.ceil(total / pageSize),
     };
+  } catch (error) {
+    console.log(error);
+    const errorMessage = prismaErrorHandler(error);
+    throw new Error(errorMessage);
+  }
+};
+
+export const getKonselingBySiswa = async (idSiswa) => {
+  try {
+    const result = await prisma.konseling.findMany({
+      where: {
+        idSiswa,
+      },
+    });
+    return result;
   } catch (error) {
     console.log(error);
     const errorMessage = prismaErrorHandler(error);

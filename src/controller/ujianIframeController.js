@@ -10,6 +10,10 @@ import {
   SelesaiUjianService,
   updateUjianIframeService,
 } from "../services/ujianIframeService.js";
+import jwt from "jsonwebtoken";
+import dotenv from "dotenv";
+import { createProxyMiddleware } from "http-proxy-middleware";
+dotenv.config();
 
 // CREATE
 export const createUjianIframe = async (req, res) => {
@@ -142,7 +146,11 @@ export const deleteUjianIframe = async (req, res) => {
 
 export const selesaiUjianController = async (req, res) => {
   try {
-    await SelesaiUjianService(req.body);
+    const decoded = jwt.verify(req.body.token, process.env.JWT_SECRET_KEY);
+
+    console.log(decoded);
+
+    await SelesaiUjianService(req.body, decoded.idGuru);
     return res.status(200).json({ message: " Berhasil mengumpulkan ujian" });
   } catch (error) {
     console.error(error);
@@ -179,5 +187,44 @@ export const getSelesaiUjianController = async (req, res) => {
     return res
       .status(500)
       .json({ message: "Terjadi kesalahan server", error: error.message });
+  }
+};
+
+export const proxyUjian = async (req, res, next) => {
+  try {
+    const formUrl = await getUjianIframeByIdService(req.params.id);
+    if (!formUrl) return res.status(404).send("Not found");
+
+    const target = new URL(formUrl.iframe).origin;
+
+    // Buat middleware proxy dinamis
+    const proxy = createProxyMiddleware({
+      target,
+      changeOrigin: true,
+      secure: false,
+      headers: {
+        "X-Frame-Options": "ALLOWALL",
+      },
+      onProxyRes(proxyRes) {
+        // Buka semua frame dan embed policy
+        proxyRes.headers["X-Frame-Options"] = "ALLOWALL";
+        proxyRes.headers["Content-Security-Policy"] =
+          "frame-ancestors *; sandbox allow-forms allow-scripts allow-same-origin;";
+        proxyRes.headers["Cross-Origin-Resource-Policy"] = "cross-origin";
+        proxyRes.headers["Cross-Origin-Embedder-Policy"] = "unsafe-none";
+      },
+      pathRewrite: (path, req) => {
+        const fullPath =
+          new URL(formUrl.iframe).pathname +
+          new URL(req.originalUrl, "https://dummy").search;
+        return fullPath;
+      },
+      logLevel: "debug",
+    });
+
+    proxy(req, res, next);
+  } catch (error) {
+    console.error(error);
+    res.status(500).send("Proxy error");
   }
 };

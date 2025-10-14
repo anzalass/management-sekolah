@@ -199,7 +199,19 @@ export const getSiswaByIdKelas = async (idKelas) => {
       },
     });
 
-    return siswaList;
+    const namaKelas = await prisma.kelas.findUnique({
+      where: {
+        id: idKelas,
+      },
+      select: {
+        nama: true,
+      },
+    });
+
+    return {
+      siswaList,
+      namaKelas: namaKelas.nama,
+    };
   } catch (error) {
     console.log(error);
     const errorMessage = prismaErrorHandler(error);

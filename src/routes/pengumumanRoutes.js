@@ -1,6 +1,6 @@
 import express from "express";
 
-import { AuthMiddleware } from "../utils/authMiddleware.js";
+import { AuthMiddleware, isKepalaSekolah } from "../utils/authMiddleware.js";
 import {
   createPengumumanController,
   deletePengumumanController,
@@ -10,10 +10,35 @@ import {
 } from "../controller/pengumumanController.js";
 const router = express.Router();
 
-router.post("/pengumuman/create", createPengumumanController);
-router.put("/pengumuman/update/:id", updatePengumumanController);
-router.delete("/pengumuman/delete/:id", deletePengumumanController);
-router.get("/pengumuman/get/:id", getPengumumanByIdController);
-router.get("/pengumuman", getAllPengumumanController);
+router.post(
+  "/pengumuman/create",
+  AuthMiddleware,
+  isKepalaSekolah,
+  createPengumumanController
+);
+router.put(
+  "/pengumuman/update/:id",
+  AuthMiddleware,
+  isKepalaSekolah,
+  updatePengumumanController
+);
+router.delete(
+  "/pengumuman/delete/:id",
+  AuthMiddleware,
+  isKepalaSekolah,
+  deletePengumumanController
+);
+router.get(
+  "/pengumuman/get/:id",
+  AuthMiddleware,
+  isKepalaSekolah,
+  getPengumumanByIdController
+);
+router.get(
+  "/pengumuman",
+  AuthMiddleware,
+  isKepalaSekolah,
+  getAllPengumumanController
+);
 
 export default router;

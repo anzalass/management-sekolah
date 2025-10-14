@@ -12,19 +12,70 @@ import {
   UpdateTagihanController,
   uploadBuktiTagihanController,
 } from "../controller/pembayaranController.js";
+import { AuthMiddleware, hasRole, isSiswa } from "../utils/authMiddleware.js";
 
 const router = express.Router();
 
-router.get("/pembayaran/", GetAllTagihanController);
-router.get("/pembayaran/:id", GetTagihanByIdController);
-router.post("/pembayaran/", CreateTagihanController);
-router.put("/pembayaran/:id", UpdateTagihanController);
-router.delete("/pembayaran/:id", DeleteTagihanController);
-router.post("/bayar-tagihan/:id", BayarTagihanManualController);
-router.get("/riwayat-pembayaran", GetAllRiwayatPembayaranController);
-router.post("/bayar-midtrans/:idTagihan", bayarTagihanMidtransController);
+router.get(
+  "/pembayaran/",
+  AuthMiddleware,
+  hasRole("Kepala Sekolah", "Guru TU"),
+  GetAllTagihanController
+);
+router.get(
+  "/pembayaran/:id",
+  AuthMiddleware,
+  hasRole("Kepala Sekolah", "Guru TU"),
+  GetTagihanByIdController
+);
+router.post(
+  "/pembayaran/",
+  AuthMiddleware,
+  hasRole("Kepala Sekolah", "Guru TU"),
+  CreateTagihanController
+);
+router.put(
+  "/pembayaran/:id",
+  AuthMiddleware,
+  hasRole("Kepala Sekolah", "Guru TU"),
+  UpdateTagihanController
+);
+router.delete(
+  "/pembayaran/:id",
+  AuthMiddleware,
+  hasRole("Kepala Sekolah", "Guru TU"),
+  DeleteTagihanController
+);
+router.post(
+  "/bayar-tagihan/:id",
+  AuthMiddleware,
+  hasRole("Kepala Sekolah", "Guru TU"),
+  BayarTagihanManualController
+);
+router.get(
+  "/riwayat-pembayaran",
+  AuthMiddleware,
+  hasRole("Kepala Sekolah", "Guru TU"),
+  GetAllRiwayatPembayaranController
+);
+router.post(
+  "/bayar-midtrans/:idTagihan",
+  AuthMiddleware,
+  isSiswa,
+  bayarTagihanMidtransController
+);
 router.post("/midtrans/notif", midtransNotificationController);
-router.patch("/pembayaran-upload-bukti/:id", uploadBuktiTagihanController);
-router.patch("/pembayaran-bukti-tidak-valid/:id", buktiTidakValidController);
+router.patch(
+  "/pembayaran-upload-bukti/:id",
+  AuthMiddleware,
+  isSiswa,
+  uploadBuktiTagihanController
+);
+router.patch(
+  "/pembayaran-bukti-tidak-valid/:id",
+  AuthMiddleware,
+  hasRole("Kepala Sekolah", "Guru TU"),
+  buktiTidakValidController
+);
 
 export default router;

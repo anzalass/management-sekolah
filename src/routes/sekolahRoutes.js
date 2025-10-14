@@ -5,9 +5,20 @@ import {
   getSekolahController,
   updateSekolahController,
 } from "../controller/sekolahController.js";
+import { AuthMiddleware, isKepalaSekolah } from "../utils/authMiddleware.js";
 
-router.put("/sekolah", updateSekolahController);
-router.post("/sekolah/create", createSekolahController);
-router.get("/sekolah", getSekolahController);
+router.put(
+  "/sekolah",
+  AuthMiddleware,
+  isKepalaSekolah,
+  updateSekolahController
+);
+router.post(
+  "/sekolah/create",
+  AuthMiddleware,
+  isKepalaSekolah,
+  createSekolahController
+);
+router.get("/sekolah", AuthMiddleware, isKepalaSekolah, getSekolahController);
 
 export default router;

@@ -7,14 +7,35 @@ import {
   getAllRuangController,
   getAllRuangController2,
 } from "../controller/ruangController.js";
+import { AuthMiddleware, isKepalaSekolah } from "../utils/authMiddleware.js";
 
 const router = express.Router();
 
-router.post("/ruang/create", createRuangController);
-router.get("/ruang/get/:id", getRuangByIdController);
-router.put("/ruang/update/:id", updateRuangController);
-router.delete("/ruang/delete/:id", deleteRuangController);
-router.get("/ruang", getAllRuangController);
-router.get("/ruang2", getAllRuangController2);
+router.post(
+  "/ruang/create",
+  AuthMiddleware,
+  isKepalaSekolah,
+  createRuangController
+);
+router.get(
+  "/ruang/get/:id",
+  AuthMiddleware,
+  isKepalaSekolah,
+  getRuangByIdController
+);
+router.put(
+  "/ruang/update/:id",
+  AuthMiddleware,
+  isKepalaSekolah,
+  updateRuangController
+);
+router.delete(
+  "/ruang/delete/:id",
+  AuthMiddleware,
+  isKepalaSekolah,
+  deleteRuangController
+);
+router.get("/ruang", AuthMiddleware, isKepalaSekolah, getAllRuangController);
+router.get("/ruang2", AuthMiddleware, getAllRuangController2);
 
 export default router;

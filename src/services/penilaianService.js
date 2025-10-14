@@ -427,5 +427,14 @@ export const getRekapNilaiKelasBaru = async (idKelas) => {
     (a, b) => b.rataRata - a.rataRata
   );
 
-  return { data: sortedData };
+  const namaKelas = await prisma.kelas.findUnique({
+    where: {
+      id: idKelas,
+    },
+    select: {
+      nama: true,
+    },
+  });
+
+  return { data: sortedData, namaKelas: namaKelas.nama };
 };

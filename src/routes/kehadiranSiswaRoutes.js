@@ -15,7 +15,7 @@ const router = express.Router();
 router.post("/kehadiran", createKehadiranHandler);
 router.post("/kehadiran-manual", createKehadiranManualHandler);
 
-router.delete("/kehadiran/:id", deleteKehadiranHandler);
+router.delete("/kehadiran-manual/:id", deleteKehadiranHandler);
 router.get(
   "/kehadiran/hari-ini/:idKelas",
   getSiswaByKelasWithKehadiranHariIniHandler

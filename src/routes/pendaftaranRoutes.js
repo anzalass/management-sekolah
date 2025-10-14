@@ -6,14 +6,39 @@ import {
   getPendaftaranByIdController,
   getAllPendaftaranController,
   updatePendaftaranController,
-  deletePendaftaranController
+  deletePendaftaranController,
 } from "../controller/pendaftaranController.js"; // Adjust path as needed
-import { AuthMiddleware } from "../utils/authMiddleware.js";
+import { AuthMiddleware, isKepalaSekolah } from "../utils/authMiddleware.js";
 
-router.post("/pendaftaran/", createPendaftaranController);
-router.get("/pendaftaran", getAllPendaftaranController);
-router.get("/pendaftaran/:id", getPendaftaranByIdController);
-router.put("/pendaftaran/update/:id", AuthMiddleware, updatePendaftaranController);
-router.delete("/pendaftaran/delete/:id", AuthMiddleware, deletePendaftaranController);
+router.post(
+  "/pendaftaran/",
+  AuthMiddleware,
+  isKepalaSekolah,
+  createPendaftaranController
+);
+router.get(
+  "/pendaftaran",
+  AuthMiddleware,
+  isKepalaSekolah,
+  getAllPendaftaranController
+);
+router.get(
+  "/pendaftaran/:id",
+  AuthMiddleware,
+  isKepalaSekolah,
+  getPendaftaranByIdController
+);
+router.put(
+  "/pendaftaran/update/:id",
+  AuthMiddleware,
+  isKepalaSekolah,
+  updatePendaftaranController
+);
+router.delete(
+  "/pendaftaran/delete/:id",
+  AuthMiddleware,
+  isKepalaSekolah,
+  deletePendaftaranController
+);
 
 export default router;

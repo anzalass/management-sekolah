@@ -159,11 +159,11 @@ export const deleteUjianIframeService = async (id) => {
   }
 };
 
-export const SelesaiUjianService = async (data) => {
+export const SelesaiUjianService = async (data, idSiswa) => {
   try {
     await prisma.selesaiUjian.create({
       data: {
-        idSiswa: data.idSiswa,
+        idSiswa: idSiswa,
         idKelasMapel: data.idKelasMapel,
         idUjianIframe: data.idUjianIframe,
         status: "Selesai",

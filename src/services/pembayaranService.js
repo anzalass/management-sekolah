@@ -337,6 +337,12 @@ export const buktiTidakValid = async (id) => {
       },
     });
 
+    await prisma.riwayatPembayaran.deleteMany({
+      where: {
+        idTagihan: tagihan.id,
+      },
+    });
+
     await deleteFromCloudinary(tagihan.buktiId);
     await prisma.tagihan.update({
       where: {

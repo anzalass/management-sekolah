@@ -12,12 +12,14 @@ import {
   getAllSummaryMateri,
   getAllTugasMapel,
   getMateriAndSummaryByMateriID,
+  getMateriAndSummarySiswa,
   getMateriMapelById,
   getSummaryByMateriId,
   getSummaryByTugasId,
   getSummaryMateriById,
   getSummaryTugasById,
   getTugasAndSummaryByTugasID,
+  getTugasAndSummarySiswa,
   getTugasMapelById,
   updateMateriMapel,
 } from "../services/materiTugasSummaryService.js";
@@ -272,6 +274,34 @@ export const handleGetSummaryByTugasId = async (req, res) => {
     const result = await getSummaryByTugasId(req.params.idTugas);
     return res.status(200).json({ success: true, data: result });
   } catch (error) {
+    return res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+export const handleGetMateriAndSummaryByMateriIdSiswa = async (req, res) => {
+  try {
+    const result = await getMateriAndSummarySiswa(
+      req.params.idMateri,
+      req.user.idGuru
+    );
+    return res.status(200).json({ success: true, data: result });
+  } catch (error) {
+    console.log(error);
+
+    return res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+export const handleGetTugasAndSummaryByTugasIdSiswa = async (req, res) => {
+  try {
+    const result = await getTugasAndSummarySiswa(
+      req.params.idTugas,
+      req.user.idGuru
+    );
+    return res.status(200).json({ success: true, data: result });
+  } catch (error) {
+    console.log(error);
+
     return res.status(500).json({ success: false, message: error.message });
   }
 };
