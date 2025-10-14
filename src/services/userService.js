@@ -541,6 +541,25 @@ const getAllGuru = async ({ page = 1, pageSize = 10, nama = "", nip = "" }) => {
   }
 };
 
+const getAllGuruMaster = async () => {
+  try {
+    const data = await prisma.guru.findMany({
+      select: {
+        nama: true,
+        id: true,
+        jabatan: true,
+      },
+    });
+
+    return {
+      data,
+    };
+  } catch (error) {
+    const errorMessage = prismaErrorHandler(error);
+    throw new Error(errorMessage);
+  }
+};
+
 const getAllSiswa = async ({
   page = 1,
   pageSize = 10,
@@ -635,4 +654,5 @@ export {
   getSiswaByID,
   getAllSiswaMaster,
   getNamaSiswa,
+  getAllGuruMaster,
 };

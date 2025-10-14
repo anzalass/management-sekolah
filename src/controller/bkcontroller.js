@@ -5,6 +5,7 @@ import {
   deletePelanggaranPrestasi,
   getAllKonseling,
   getKonselingById,
+  getKonselingBySiswa,
   getPelanggaranPrestasiById,
   getPelanggaranPrestasiList,
   updateKonseling,
@@ -136,6 +137,17 @@ export const removePelanggaranPrestasiController = async (req, res) => {
     return res
       .status(201)
       .json({ message: `Berhasil menghapus ${tipeController}`, success: true });
+  } catch (error) {
+    return res.status(500).json({ message: error.message, success: false });
+  }
+};
+
+export const getKonselingBySiswaController = async (req, res) => {
+  try {
+    const data = await getKonselingBySiswa(req.user.idGuru);
+    return res
+      .status(201)
+      .json({ message: `Berhasil mendapatkan data`, success: true, data });
   } catch (error) {
     return res.status(500).json({ message: error.message, success: false });
   }

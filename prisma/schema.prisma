@@ -276,6 +276,7 @@ model Konseling  {
   nisSiswa String
   namaSiswa String
   tanggal DateTime
+  kategori String
   keterangan String
   Siswa          Siswa @relation(fields: [idSiswa], references: [id])
 

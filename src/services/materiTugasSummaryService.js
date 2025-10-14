@@ -181,6 +181,8 @@ export const deleteMateriMapel = async (id) => {
 
 export const createSummaryMateri = async (data, files) => {
   try {
+    console.log(data);
+
     const data2 = await prisma.summaryMateri.create({ data });
     await uploadFotoSummaryMateri(
       data2.idMateri,
@@ -190,7 +192,7 @@ export const createSummaryMateri = async (data, files) => {
       files
     );
 
-    const materi = await getNamaMateriMapelById(data2.id);
+    const materi = await getNamaMateriMapelById(data2.idMateri);
     const siswa = await getNamaSiswa(data2.idSiswa);
     const kelas = await getKelasMapelById(data2.idKelasMapel);
     await createNotifikasi({
@@ -200,7 +202,7 @@ export const createSummaryMateri = async (data, files) => {
       idSiswa: data2.idSiswa,
       idTerkait: data2.id,
       kategori: "Summary",
-      keterangan: `${siswa.nama} telah mengumpulkan summary materi : ${materi.judul}`,
+      keterangan: `${siswa.nama} telah mengumpulkan summary materi : ${materi?.judul}`,
       redirectGuru: "",
       redirectSiswa: `/mengajar/kelas-mapel/${data2.idKelasMapel}/materi/${data2.id}`,
     });
@@ -291,7 +293,7 @@ export const createTugasMapel = async (data, file) => {
         pdfUrlId: UploadResult?.public_id || null,
       },
     });
-    const kelas = await getKelasMapelById(mapel.id);
+    const kelas = await getKelasMapelById(tugas.idKelasMapel);
     await createNotifikasi({
       idTerkait: tugas.id,
       createdBy: kelas.idGuru,
@@ -299,7 +301,7 @@ export const createTugasMapel = async (data, file) => {
       idKelas: tugas.idKelasMapel,
       idSiswa: "",
       kategori: "Tugas",
-      keterangan: `Tuhgas baru ditambahkan, pelajaran ${kelas.namaMapel}`,
+      keterangan: `Tugas baru ditambahkan, pelajaran ${kelas.namaMapel}`,
       redirectGuru: "",
       redirectSiswa: `/siswa/kelas/${kelas.id}/tugas/${tugas.id}`,
     });
@@ -553,8 +555,9 @@ export const createSummaryTugas = async (data, files) => {
   try {
     const data2 = await prisma.summaryTugas.create({ data });
     await uploadFotoSummaryTugas(
-      data2.idMateri,
+      data2.idTugas,
       data2.idSiswa,
+      data2.idKelasMapel,
       data2.id,
       files
     );
@@ -563,15 +566,15 @@ export const createSummaryTugas = async (data, files) => {
     const siswa = await getNamaSiswa(data2.idSiswa);
     const kelas = await getKelasMapelById(data2.idKelasMapel);
     await createNotifikasi({
-      idTerkait: mapel.id,
+      idTerkait: data2.id,
       createdBy: kelas.idGuru,
       idGuru: kelas.idGuru,
-      idKelas: mapel.idKelasMapel,
+      idKelas: data2.idKelasMapel,
       idSiswa: "",
       kategori: "Summary",
       keterangan: `${siswa.nama} telah mengumpulkan summary tugas : ${tugas.judul}`,
       redirectGuru: "",
-      redirectSiswa: `/siswa/kelas/${kelas.id}/materi/${mapel.id}`,
+      redirectSiswa: `/siswa/kelas/${kelas.id}/materi/${data2.id}`,
     });
   } catch (error) {
     console.log(error);
@@ -635,6 +638,78 @@ export const getSummaryByTugasId = async (idTugas) => {
   }
 };
 
+export const getMateriAndSummarySiswa = async (idMateri, idSiswa) => {
+  try {
+    const materi = await prisma.materiMapel.findUnique({
+      where: {
+        id: idMateri,
+      },
+    });
+
+    const summarySiswa = await prisma.summaryMateri.findFirst({
+      where: {
+        idMateri,
+        idSiswa,
+      },
+      include: {
+        FotoSummaryMateri: true,
+      },
+    });
+
+    const kelas = await prisma.kelasDanMapel.findUnique({
+      where: {
+        id: materi.idKelasMapel,
+      },
+    });
+
+    return {
+      materi,
+      nama: kelas.namaMapel,
+      summarySiswa,
+    };
+  } catch (error) {
+    console.log(error);
+    const errorMessage = prismaErrorHandler(error);
+    throw new Error(errorMessage);
+  }
+};
+
+export const getTugasAndSummarySiswa = async (idTugas, idSiswa) => {
+  try {
+    const tugas = await prisma.tugasMapel.findUnique({
+      where: {
+        id: idTugas,
+      },
+    });
+
+    const summarySiswa = await prisma.summaryTugas.findFirst({
+      where: {
+        idTugas,
+        idSiswa,
+      },
+      include: {
+        FotoSummaryTugas: true,
+      },
+    });
+
+    const kelas = await prisma.kelasDanMapel.findUnique({
+      where: {
+        id: tugas.idKelasMapel,
+      },
+    });
+
+    return {
+      tugas,
+      nama: kelas.namaMapel,
+      summarySiswa,
+    };
+  } catch (error) {
+    console.log(error);
+    const errorMessage = prismaErrorHandler(error);
+    throw new Error(errorMessage);
+  }
+};
+
 export const uploadFotoSummaryMateri = async (
   idMateri,
   idSiswa,
@@ -674,6 +749,7 @@ export const uploadFotoSummaryMateri = async (
 export const uploadFotoSummaryTugas = async (
   idTugas,
   idSiswa,
+  idKelasMapel,
   idSummaryTugas,
   files
 ) => {
@@ -689,6 +765,7 @@ export const uploadFotoSummaryTugas = async (
           data: {
             idSiswa,
             idTugas,
+            idKelasMapel,
             idSummaryTugas,
             fotoUrl: uploaded.secure_url,
             fotoId: uploaded.public_id,

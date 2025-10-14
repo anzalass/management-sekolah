@@ -3,6 +3,7 @@ import {
   generateRaport2Controller,
   getRapotSiswaController,
 } from "../controller/raportController.js";
+import { AuthMiddleware } from "../utils/authMiddleware.js";
 
 const router = express.Router();
 // router.get("/generate-raport/:nis", generateRaport);

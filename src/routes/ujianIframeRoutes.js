@@ -10,29 +10,54 @@ import {
   getSelesaiUjianController,
   getUjianIframeByIdGuru,
   deleteSelesaiUjianController,
+  proxyUjian,
 } from "../controller/ujianIframeController.js";
+import {
+  AuthMiddleware,
+  isGuruOnly,
+  isSiswa,
+} from "../utils/authMiddleware.js";
 
 const router = Router();
 
-// CREATE
-router.post("/ujian-iframe", createUjianIframe);
+router.post("/ujian-iframe", AuthMiddleware, isGuruOnly, createUjianIframe);
 
-// GET ALL
-router.get("/ujian-iframe/", getAllUjianIframe);
+router.get("/ujian-iframe", AuthMiddleware, isGuruOnly, getAllUjianIframe);
 
 // GET BY ID
-router.get("/ujian-iframe/:id", getUjianIframeById);
-router.get("/ujian-iframe-guru/:id", getUjianIframeByIdGuru);
+router.get("/ujian-iframe/:id", AuthMiddleware, getUjianIframeById);
+router.get(
+  "/ujian-iframe-guru/:id",
+  AuthMiddleware,
+  isGuruOnly,
+  getUjianIframeByIdGuru
+);
 
 // GET BY ID KELASMAPEL
-router.get("/ujian-iframe/kelas/:idKelasMapel", getUjianIframeByKelasMapel);
+router.get(
+  "/ujian-iframe/kelas/:idKelasMapel",
+  AuthMiddleware,
+  getUjianIframeByKelasMapel
+);
+
+router.get("/ujian-proxy/:id", proxyUjian);
 
 // UPDATE
-router.put("/ujian-iframe/:id", updateUjianIframe);
+router.put("/ujian-iframe/:id", AuthMiddleware, isGuruOnly, updateUjianIframe);
 
 // DELETE
-router.delete("/ujian-iframe/:id", deleteUjianIframe);
+router.delete("/ujian-iframe/:id", isGuruOnly, deleteUjianIframe);
 router.post("/ujian-iframe-selesai", selesaiUjianController);
-router.post("/get-ujian-iframe-selesai", getSelesaiUjianController);
-router.delete("/selesai-ujian/delete/:id", deleteSelesaiUjianController);
+router.post(
+  "/get-ujian-iframe-selesai",
+  AuthMiddleware,
+  isSiswa,
+  getSelesaiUjianController
+);
+router.delete(
+  "/selesai-ujian/delete/:id",
+  AuthMiddleware,
+  isGuruOnly,
+  deleteSelesaiUjianController
+);
 export default router;

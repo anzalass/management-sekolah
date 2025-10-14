@@ -9,6 +9,7 @@ import {
   createNotifikasi,
   deleteNotifikasiByIdTerkait,
 } from "../notifikasiService.js";
+import { getNamaSiswa } from "../userService.js";
 
 const prisma = new PrismaClient();
 
@@ -228,6 +229,8 @@ export const updateStatusPerizinanSiswa = async (id, status) => {
       },
     });
 
+    const nama = await getNamaSiswa(izin.idSiswa);
+
     if (izin) {
       await createNotifikasi({
         idSiswa: izin.idSiswa,
@@ -236,11 +239,13 @@ export const updateStatusPerizinanSiswa = async (id, status) => {
         idTerkait: izin.id,
         redirectGuru: `/mengajar/walikelas/${izin.idKelas}`,
         redirectSiswa: `/siswa/perizinan`,
-        keterangan: `${siswa.nama} mengajukan izin`,
+        keterangan: `${nama} mengajukan izin`,
         createdBy: izin.idSiswa,
       });
     }
   } catch (error) {
+    console.log(error);
+
     throw new Error(prismaErrorHandler(error));
   }
 };

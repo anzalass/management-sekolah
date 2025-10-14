@@ -12,6 +12,7 @@ import {
   getGuruByID,
   getSiswaByID,
   getAllSiswaMaster,
+  getAllGuruMaster,
 } from "../services/userService.js";
 import memoryUpload from "../utils/multer.js";
 import upload from "../utils/multer.js";
@@ -159,6 +160,20 @@ export const getAllGuruController = async (req, res, next) => {
       nama: req.query.nama || "",
       nip: req.query.nip || "",
     });
+
+    return res.status(200).json({
+      message: "Berhasil mendapatkan semua guru",
+      result,
+    });
+  } catch (error) {
+    console.error("Error di getAllGuruController:", error); // Log error di backend
+    return res.status(500).json({ message: error.message });
+  }
+};
+
+export const getAllGuruMasterController = async (req, res, next) => {
+  try {
+    const result = await getAllGuruMaster();
 
     return res.status(200).json({
       message: "Berhasil mendapatkan semua guru",

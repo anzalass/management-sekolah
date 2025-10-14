@@ -184,11 +184,23 @@ export const dashboardKelasMapel = async (idKelas) => {
       ]
     );
 
+    const namaKelas = await prisma.kelasDanMapel.findUnique({
+      where: {
+        id: idKelas,
+      },
+      select: {
+        namaMapel: true,
+        kelas: true,
+      },
+    });
+
     return {
       siswaKelas,
       materiKelas,
       tugasKelas,
       ujianKelas,
+      namaKelas: namaKelas.namaMapel,
+      kelas: namaKelas.kelas,
     };
   } catch (error) {
     console.log(error);
@@ -199,6 +211,14 @@ export const dashboardKelasMapel = async (idKelas) => {
 
 export const dashboardWaliKelas = async (idKelas) => {
   try {
+    const namaKelas = await prisma.kelas.findUnique({
+      where: {
+        id: idKelas,
+      },
+      select: {
+        nama: true,
+      },
+    });
     const catatan = await prisma.catatanPerkembanganSiswa.findMany({
       where: {
         idKelas: idKelas,
@@ -232,6 +252,7 @@ export const dashboardWaliKelas = async (idKelas) => {
     return {
       pengumuman,
       catatanMap,
+      namaKelas: namaKelas.nama,
     };
   } catch (error) {
     console.log(error);
@@ -266,7 +287,7 @@ export const getSideBarGuru = async (idGuru, jabatan) => {
       {
         title: "Dashboard",
         url: "/mengajar",
-        icon: "dashboard",
+        icon: "mengajar",
         isActive: false,
         shortcut: ["d", "d"],
         items: [],
@@ -274,7 +295,7 @@ export const getSideBarGuru = async (idGuru, jabatan) => {
       {
         title: "Kelas",
         url: "",
-        icon: "dashboard",
+        icon: "kelas",
         isActive: false,
         shortcut: ["d", "d"],
         items: kelasWaliKelas.map((k) => ({
@@ -287,7 +308,7 @@ export const getSideBarGuru = async (idGuru, jabatan) => {
       {
         title: "Mata Pelajaran",
         url: "",
-        icon: "dashboard",
+        icon: "mapel",
         isActive: false,
         shortcut: ["d", "d"],
         items: kelasMapel.map((km) => ({
@@ -300,7 +321,7 @@ export const getSideBarGuru = async (idGuru, jabatan) => {
       {
         title: "Jadwal Mengajar",
         url: "/mengajar/jadwal-mengajar",
-        icon: "dashboard",
+        icon: "jadwalmengajar",
         isActive: false,
         shortcut: ["d", "d"],
         items: [],
@@ -308,7 +329,7 @@ export const getSideBarGuru = async (idGuru, jabatan) => {
       {
         title: "Janji Temu",
         url: "/mengajar/janji-temu",
-        icon: "dashboard",
+        icon: "janjitemu",
         isActive: false,
         shortcut: ["d", "d"],
         items: [],
@@ -316,7 +337,7 @@ export const getSideBarGuru = async (idGuru, jabatan) => {
       {
         title: "Perizinan & Kehadiran",
         url: "/mengajar/perizinan-kehadiran",
-        icon: "dashboard",
+        icon: "clipboard",
         isActive: false,
         shortcut: ["d", "d"],
         items: [],
@@ -337,7 +358,7 @@ export const getSideBarGuru = async (idGuru, jabatan) => {
       data.push({
         title: "Data Konseling Siswa",
         url: "", // misalnya /dashboard
-        icon: "home", // bisa disesuaikan dengan icon library
+        icon: "messagecircleheart", // bisa disesuaikan dengan icon library
         isActive: false,
         shortcut: ["u", "u"],
         items: [
@@ -359,7 +380,7 @@ export const getSideBarGuru = async (idGuru, jabatan) => {
       data.push({
         title: "E - Perpustakaan",
         url: "", // misalnya /dashboard
-        icon: "home", // bisa disesuaikan dengan icon library
+        icon: "book", // bisa disesuaikan dengan icon library
         isActive: false,
         shortcut: ["u", "u"],
         items: [
@@ -381,7 +402,7 @@ export const getSideBarGuru = async (idGuru, jabatan) => {
       data.push({
         title: "E - Pembayaran",
         url: "", // misalnya /dashboard
-        icon: "home", // bisa disesuaikan dengan icon library
+        icon: "billing", // bisa disesuaikan dengan icon library
         isActive: false,
         shortcut: ["u", "u"],
         items: [
@@ -400,8 +421,6 @@ export const getSideBarGuru = async (idGuru, jabatan) => {
         ],
       });
     }
-
-    console.log("jbtn", jabatan);
 
     return data;
   } catch (error) {
