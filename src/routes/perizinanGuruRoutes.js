@@ -46,10 +46,5 @@ router.delete(
   isKepalaSekolah,
   deletePerizinanGuruController
 );
-router.get(
-  "/perizinan-guru",
-  AuthMiddleware,
-  isKepalaSekolah,
-  getPerizinanGuruController
-);
+router.get("/perizinan-guru", AuthMiddleware, getPerizinanGuruController);
 export default router;
