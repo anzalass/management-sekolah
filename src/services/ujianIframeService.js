@@ -161,15 +161,58 @@ export const deleteUjianIframeService = async (id) => {
 
 export const SelesaiUjianService = async (data, idSiswa) => {
   try {
-    await prisma.selesaiUjian.create({
-      data: {
+    const existing = await prisma.selesaiUjian.findFirst({
+      where: {
         idSiswa: idSiswa,
         idKelasMapel: data.idKelasMapel,
         idUjianIframe: data.idUjianIframe,
-        status: "Selesai",
-        createdAt: new Date(),
       },
     });
+
+    if (existing && existing?.status === "Sedang Berlangsung") {
+      await prisma.selesaiUjian.update({
+        where: { id: existing.id },
+        data: {
+          status: "Selesai",
+        },
+      });
+    }
+  } catch (error) {
+    throw new Error(`Gagal mengumpulkan ujian: ${error.message}`);
+  }
+};
+
+export const SedangBerlangsungUjianService = async (data) => {
+  try {
+    // Cek apakah sudah ada record ujian sebelumnya
+    const existing = await prisma.selesaiUjian.findFirst({
+      where: {
+        idSiswa: data.idSiswa,
+        idKelasMapel: data.idKelasMapel,
+        idUjianIframe: data.idUjianIframe,
+      },
+    });
+
+    if (existing && existing?.status === "Sedang Berlangsung") {
+      // Kalau sedang berlangsung → update jadi selesai
+      await prisma.selesaiUjian.update({
+        where: { id: existing.id },
+        data: {
+          status: "Selesai",
+        },
+      });
+    } else {
+      // Kalau status kosong/null → buat baru dengan status Sedang Berlangsung
+      await prisma.selesaiUjian.create({
+        data: {
+          idSiswa: data.idSiswa,
+          idKelasMapel: data.idKelasMapel,
+          idUjianIframe: data.idUjianIframe,
+          status: "Sedang Berlangsung",
+          createdAt: new Date(),
+        },
+      });
+    }
   } catch (error) {
     throw new Error(`Gagal mengumpulkan ujian: ${error.message}`);
   }
@@ -184,7 +227,7 @@ export const getSelesaiUjian = async (idKelasMapel, idSiswa, idUjianIframe) => {
         idUjianIframe: idUjianIframe,
       },
     });
-    if (data) {
+    if (data.status === "Selesai") {
       return "Selesai";
     } else {
       return "Belum Selesai";

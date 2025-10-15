@@ -7,6 +7,7 @@ import {
   getUjianIframeByIdGuruService,
   getUjianIframeByIdService,
   getUjianIframeByKelasMapelService,
+  SedangBerlangsungUjianService,
   SelesaiUjianService,
   updateUjianIframeService,
 } from "../services/ujianIframeService.js";
@@ -151,6 +152,18 @@ export const selesaiUjianController = async (req, res) => {
     console.log(decoded);
 
     await SelesaiUjianService(req.body, decoded.idGuru);
+    return res.status(200).json({ message: " Berhasil mengumpulkan ujian" });
+  } catch (error) {
+    console.error(error);
+    return res
+      .status(500)
+      .json({ message: "Terjadi kesalahan server", error: error.message });
+  }
+};
+
+export const sedangBerlangsungUjianController = async (req, res) => {
+  try {
+    await SedangBerlangsungUjianService(req.body);
     return res.status(200).json({ message: " Berhasil mengumpulkan ujian" });
   } catch (error) {
     console.error(error);

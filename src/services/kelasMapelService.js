@@ -88,7 +88,10 @@ export const getDetailKelasMapel = async (id, idSiswa) => {
 
     const ujianWithPast = detail.UjianIframe.map((ujian) => ({
       ...ujian,
-      past: ujian.SelesaiUjian.length > 0,
+      past:
+        ujian.SelesaiUjian.length > 0 &&
+        ujian?.SelesaiUjian[0]?.status === "Selesai",
+      staus: ujian.SelesaiUjian[0]?.status,
     }));
 
     return {
