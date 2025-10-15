@@ -279,7 +279,7 @@ export const removeSiswaFromKelasMapel = async (id) => {
 
       const kelas = await tx.kelasDanMapel.findUnique({
         where: {
-          id: id,
+          id: existing.idKelas,
         },
         select: {
           namaMapel: true,
@@ -293,7 +293,7 @@ export const removeSiswaFromKelasMapel = async (id) => {
           idSiswa: removeSiswa.idSiswa,
           idTerkait: removeSiswa.id,
           kategori: "Menghapus Siswa",
-          createdBy: kelas.idGuru,
+          createdBy: kelas?.idGuru,
           idKelas: removeSiswa.idKelas,
           redirectSiswa: "/siswa/kelas",
           keterangan: `Anda dihapus dari kelas ${kelas.namaMapel}`,
