@@ -11,6 +11,7 @@ import {
   getUjianIframeByIdGuru,
   deleteSelesaiUjianController,
   proxyUjian,
+  sedangBerlangsungUjianController,
 } from "../controller/ujianIframeController.js";
 import {
   AuthMiddleware,
@@ -48,6 +49,12 @@ router.put("/ujian-iframe/:id", AuthMiddleware, isGuruOnly, updateUjianIframe);
 // DELETE
 router.delete("/ujian-iframe/:id", isGuruOnly, deleteUjianIframe);
 router.post("/ujian-iframe-selesai", selesaiUjianController);
+router.post(
+  "/ujian-iframe-berlangsung",
+  AuthMiddleware,
+  sedangBerlangsungUjianController
+);
+
 router.post(
   "/get-ujian-iframe-selesai",
   AuthMiddleware,
