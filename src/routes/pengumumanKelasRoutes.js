@@ -42,4 +42,18 @@ router.delete(
   pengumumanKelasController.deletePengumumanKelas
 );
 
+router.get(
+  "/pengumuman-data-kelas",
+  AuthMiddleware,
+  isGuruOnly,
+  pengumumanKelasController.getAllKelasAndMapelByGuruController
+);
+
+router.get(
+  "/pengumuman-kelas-guru",
+  AuthMiddleware,
+  isGuruOnly,
+  pengumumanKelasController.getPengumumanKelasByKelasByGuru
+);
+
 export default router;

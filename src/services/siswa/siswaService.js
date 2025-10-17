@@ -163,7 +163,11 @@ export const getPerizinanByIdSiswa = async () => {
 export const getPengumuman = async (idSiswa) => {
   try {
     // ambil kelas yang diikuti siswa
+
     const kelassiswa = await prisma.daftarSiswaKelas.findMany({
+      where: { idSiswa },
+    });
+    const kelassiswaMapel = await prisma.daftarSiswaMapel.findMany({
       where: { idSiswa },
     });
 
@@ -173,6 +177,14 @@ export const getPengumuman = async (idSiswa) => {
     for (let i = 0; i < kelassiswa.length; i++) {
       const dataPengumumanKelas = await prisma.pengumumanKelas.findMany({
         where: { idKelas: kelassiswa[i].idKelas },
+        orderBy: { time: "desc" },
+      });
+      pengumumanKelas = [...pengumumanKelas, ...dataPengumumanKelas];
+    }
+
+    for (let i = 0; i < kelassiswaMapel.length; i++) {
+      const dataPengumumanKelas = await prisma.pengumumanKelas.findMany({
+        where: { idKelas: kelassiswaMapel[i].idKelas },
         orderBy: { time: "desc" },
       });
       pengumumanKelas = [...pengumumanKelas, ...dataPengumumanKelas];

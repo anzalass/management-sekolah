@@ -57,6 +57,7 @@ model Guru {
   jadwalMengajar jadwalMengajar[]
   PerizinanGuru PerizinanGuru[]
   JanjiTemu JanjiTemu[]
+  PengumumanKelas PengumumanKelas[]
 
 }
 
@@ -106,7 +107,6 @@ model Kelas {
   Guru              Guru?          @relation(fields: [idGuru], references: [id])
   DaftarSiswaKelas  DaftarSiswaKelas[] 
   PerizinanSiswa    PerizinanSiswa[]
-  PengumumanKelas   PengumumanKelas[]
   CatatanPerkembanganSiswa CatatanPerkembanganSiswa[]
   JadwalPelajaran     JadwalPelajaran[]
   WeeklyActivity WeeklyActivity[]
@@ -403,11 +403,13 @@ model Pengumuman {
 
 model PengumumanKelas {
   id          String @id @default(uuid())
+  idGuru      String?
   idKelas     String
   title       String
   time        DateTime
   content     String
-  Kelas       Kelas  @relation(fields: [idKelas], references: [id])
+  Guru       Guru?  @relation(fields: [idGuru], references: [id])
+
 }
 
 

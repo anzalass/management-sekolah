@@ -535,7 +535,7 @@ export const getTugasAndSummaryByTugasID = async (id) => {
       nama: item.Siswa.nama,
       content: item.content,
       fotoSiswa: item.Siswa?.foto || null,
-      waktu: item.createdAt,
+      waktu: item.waktu,
       fotoSummary: item.FotoSummaryTugas,
     }));
 
