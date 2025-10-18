@@ -142,12 +142,34 @@ export const getJenisNilaiByKelasMapel = async (idKelasMapel) => {
 export const createNilaiSiswa = async (data) => {
   try {
     const jenisNilai = await prisma.jenisNilai.findUnique({
+      where: { id: data.idJenisNilai },
+    });
+
+    const existing = await prisma.nilaiSiswa.findFirst({
       where: {
-        id: data.idJenisNilai,
+        idJenisNilai: data.idJenisNilai,
+        idSiswa: data.idSiswa,
+        idKelasDanMapel: data.idKelasDanMapel,
       },
     });
-    const result = await prisma.$transaction(async (tx) => {
-      const created = await tx.nilaiSiswa.create({
+
+    let result;
+
+    if (existing) {
+      result = await prisma.nilaiSiswa.update({
+        where: {
+          idSiswa_idJenisNilai: {
+            idSiswa: data.idSiswa,
+            idJenisNilai: data.idJenisNilai,
+          },
+        },
+        data: {
+          nilai: data.nilai,
+          createdAt: new Date(),
+        },
+      });
+    } else {
+      result = await prisma.nilaiSiswa.create({
         data: {
           jenisNilai: jenisNilai?.jenis,
           idSiswa: data.idSiswa,
@@ -157,34 +179,27 @@ export const createNilaiSiswa = async (data) => {
           createdAt: new Date(),
         },
       });
+    }
 
-      const kelas = await prisma.kelasDanMapel.findUnique({
-        where: {
-          id: created.idKelasDanMapel,
-        },
-        select: {
-          namaMapel: true,
-          idGuru: true,
-          id: true,
-        },
-      });
-
-      if (created) {
-        await createNotifikasi({
-          idSiswa: created.idSiswa,
-          idTerkait: created.id,
-          kategori: "Nilai",
-          createdBy: kelas.idGuru,
-          idKelas: kelas.id,
-          redirectSiswa: "/siswa/nilai",
-          keterangan: `Kamu mendapatkan nilai : ${created.nilai} dari mata pelajaran : ${kelas.namaMapel} dari penilaian : ${created.jenisNilai}`,
-        });
-      }
-      return created;
+    // Buat notifikasi setelah berhasil
+    const kelas = await prisma.kelasDanMapel.findUnique({
+      where: { id: result.idKelasDanMapel },
+      select: { namaMapel: true, idGuru: true, id: true },
     });
+
+    await createNotifikasi({
+      idSiswa: result.idSiswa,
+      idTerkait: result.id,
+      kategori: "Nilai",
+      createdBy: kelas.idGuru,
+      idKelas: kelas.id,
+      redirectSiswa: "/siswa/nilai",
+      keterangan: `Kamu mendapatkan nilai : ${result.nilai} dari mata pelajaran : ${kelas.namaMapel} dari penilaian : ${result.jenisNilai}`,
+    });
+
     return result;
   } catch (error) {
-    console.log(error);
+    console.error(error);
     const errorMessage = prismaErrorHandler(error);
     throw new Error(errorMessage);
   }
