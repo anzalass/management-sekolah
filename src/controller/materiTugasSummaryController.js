@@ -22,6 +22,7 @@ import {
   getTugasAndSummarySiswa,
   getTugasMapelById,
   updateMateriMapel,
+  updateTugasMapel,
 } from "../services/materiTugasSummaryService.js";
 import fileUpload from "../utils/pdfUpload.js";
 
