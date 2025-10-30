@@ -149,7 +149,7 @@ export const getPerizinanByIdSiswa = async () => {
         idSiswa,
       },
       orderBy: {
-        time: "desc",
+        time: "asc",
       },
     });
     return perizinanSiswa;
