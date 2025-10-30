@@ -221,11 +221,20 @@ export const getNotifikasiByIDPenggunaTotal = async (id) => {
     const notifikasi = await prisma.notifikasi.findMany({
       where: {
         status: "Belum Terbaca",
-        OR: [
-          { idSiswa: id },
-          { idGuru: id },
-          { idKelas: { in: uniqueIdKelas } },
-        ],
+        OR: [{ idSiswa: id }, { idGuru: id }],
+        NOT: {
+          createdBy: id, // 🚀 filter supaya ga ambil notif yang dibuat user sendiri
+        },
+      },
+      orderBy: {
+        createdAt: "desc",
+      },
+    });
+
+    const notifikasi2 = await prisma.notifikasi.findMany({
+      where: {
+        status: "Belum Terbaca",
+        OR: [{ idKelas: { in: uniqueIdKelas } }],
         NOT: {
           createdBy: id, // 🚀 filter supaya ga ambil notif yang dibuat user sendiri
         },
@@ -244,7 +253,10 @@ export const getNotifikasiByIDPenggunaTotal = async (id) => {
 
     return {
       uniqueNotif: uniqueNotif || [],
-      total: uniqueNotif.length || 0,
+      total:
+        notifikasi2.length > 0
+          ? uniqueNotif.length + 1
+          : uniqueNotif.length || 0,
     };
   } catch (error) {
     console.error(error);

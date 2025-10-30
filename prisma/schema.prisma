@@ -312,17 +312,17 @@ model Inventaris {
   hargaBeli    Int
   waktuPengadaan DateTime
   keterangan   String
-  Pemeliharaan_Inventaris Pemeliharaan_Inventaris[]
+  HistoryInventaris HistoryInventaris[]
 }
 
-model Pemeliharaan_Inventaris {
+model HistoryInventaris {
   id              String     @id @default(uuid())
   idinventaris    String?
   nama            String
   status          String
   quantity        Int
-  ruang String
-  biaya           Int
+  ruang String?
+  biaya           Int?
   tanggal         DateTime
   keterangan      String
   Inventaris      Inventaris? @relation(fields: [idinventaris], references: [id])

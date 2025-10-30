@@ -49,7 +49,7 @@ export const updateInventaris = async (id, data) => {
 export const deleteInventaris = async (id) => {
   try {
     await prisma.$transaction(async (tx) => {
-      await tx.pemeliharaan_Inventaris.deleteMany({
+      await tx.historyInventaris.deleteMany({
         where: { idinventaris: id },
       });
 
@@ -211,12 +211,13 @@ export const getAllJenisInventaris = async ({
 };
 
 export const createPemeliharaanInventaris = async (data) => {
-  const { nama, hargaMaintenance, keterangan, quantity, idinventaris, status } =
-    data;
+  const { nama, hargaMaintenance, keterangan, quantity, id, status } = data;
+
+  console.log("biaya", hargaMaintenance);
 
   try {
     const inventaris = await prisma.inventaris.findUnique({
-      where: { id: idinventaris }, // Cek apakah inventaris ada
+      where: { id: id }, // Cek apakah inventaris ada
     });
 
     if (!inventaris) {
@@ -227,23 +228,21 @@ export const createPemeliharaanInventaris = async (data) => {
     const tgl = new Date(now.getFullYear(), now.getMonth(), now.getDate());
     tgl.setUTCHours(0, 0, 0, 0); // Set waktu ke 00:00:00 UTC
 
-    await prisma.pemeliharaan_Inventaris.create({
+    await prisma.historyInventaris.create({
       data: {
         tanggal: tgl,
         nama,
-        biaya: status === "Sedang Maintenence" ? parseInt(hargaMaintenance) : 0,
+        biaya: status === "Sedang Maintenance" ? parseInt(hargaMaintenance) : 0,
         keterangan,
         ruang: inventaris.ruang,
         quantity: parseInt(quantity),
         status: status,
-        Inventaris: {
-          connect: { id: idinventaris },
-        },
+        idinventaris: id,
       },
     });
 
     await prisma.inventaris.update({
-      where: { id: idinventaris },
+      where: { id: id },
       data: {
         quantity: inventaris.quantity - parseInt(quantity),
       },
@@ -256,12 +255,58 @@ export const createPemeliharaanInventaris = async (data) => {
 };
 
 export const updatePemeliharaanInventaris = async (id, data) => {
-  const { nama, biaya, tanggal, keterangan, status } = data;
+  const {
+    idinventaris,
+    nama,
+    hargaMaintenance,
+    tanggal,
+    keterangan,
+    status,
+    quantity,
+  } = data;
+
+  console.log("hargaMaintenance", hargaMaintenance);
+
   try {
-    await prisma.$transaction(async () => {
-      await prisma.pemeliharaan_Inventaris.update({
+    await prisma.$transaction(async (tx) => {
+      // 1️⃣ Ambil data history lama
+      const oldHistory = await tx.historyInventaris.findUnique({
         where: { id },
-        data: { nama, biaya, tanggal, keterangan, status },
+        select: { quantity: true },
+      });
+
+      if (!oldHistory) {
+        throw new Error("Data history tidak ditemukan");
+      }
+
+      // 2️⃣ Tambahkan kembali stok lama ke inventaris
+      await tx.inventaris.update({
+        where: { id: idinventaris },
+        data: {
+          quantity: { increment: parseInt(oldHistory.quantity) },
+        },
+      });
+
+      // 3️⃣ Kurangi stok dengan quantity baru
+      await tx.inventaris.update({
+        where: { id: idinventaris },
+        data: {
+          quantity: { decrement: parseInt(quantity) },
+        },
+      });
+
+      // 4️⃣ Update historyInventaris
+      await tx.historyInventaris.update({
+        where: { id },
+        data: {
+          nama,
+          biaya:
+            status === "Sedang Maintenance" ? parseInt(hargaMaintenance) : 0,
+          tanggal,
+          keterangan,
+          status,
+          quantity: parseInt(quantity),
+        },
       });
     });
   } catch (error) {
@@ -273,21 +318,42 @@ export const updatePemeliharaanInventaris = async (id, data) => {
 
 export const deletePemeliharaanInventaris = async (id) => {
   try {
-    await prisma.$transaction(async () => {
-      await prisma.pemeliharaan_Inventaris.delete({ where: { id } });
+    await prisma.$transaction(async (tx) => {
+      // 1️⃣ Ambil data history lama
+      const oldHistory = await tx.historyInventaris.findUnique({
+        where: { id },
+      });
+
+      if (!oldHistory) {
+        throw new Error("Data history inventaris tidak ditemukan");
+      }
+
+      // 2️⃣ Kembalikan stok quantity ke tabel inventaris
+      await tx.inventaris.update({
+        where: { id: oldHistory.idinventaris },
+        data: {
+          quantity: {
+            increment: oldHistory.quantity ?? 0, // pastikan aman kalau null
+          },
+        },
+      });
+
+      // 3️⃣ Hapus data history
+      await tx.historyInventaris.delete({ where: { id } });
     });
+
+    return { success: true, message: "Data pemeliharaan berhasil dihapus" };
   } catch (error) {
-    console.log(error);
+    console.error(error);
     const errorMessage = prismaErrorHandler(error);
     throw new Error(errorMessage);
   }
 };
 
 export const getPemeliharaanInventarisById = async (id) => {
-  const pemeliharaanInventaris =
-    await prisma.pemeliharaan_Inventaris.findUnique({
-      where: { id },
-    });
+  const pemeliharaanInventaris = await prisma.historyInventaris.findUnique({
+    where: { id },
+  });
   if (!pemeliharaanInventaris) {
     throw new Error("Pemeliharaan Inventaris tidak ditemukan");
   }
@@ -321,18 +387,17 @@ export const getAllPemeliharaanInventaris = async ({
       where.tanggal = new Date(`${tanggal}T00:00:00Z`);
     }
 
-    const pemeliharaanInventaris =
-      await prisma.pemeliharaan_Inventaris.findMany({
-        where,
-        skip,
-        take,
-      });
+    const pemeliharaanInventaris = await prisma.historyInventaris.findMany({
+      where,
+      skip,
+      take,
+    });
 
     return {
       data: pemeliharaanInventaris,
       page,
       pageSize,
-      count: await prisma.pemeliharaan_Inventaris.count(),
+      count: await prisma.historyInventaris.count(),
     };
   } catch (error) {
     console.log(error);
@@ -344,14 +409,14 @@ export const getAllPemeliharaanInventaris = async ({
 export const updateStatusPemeliharaan = async (id, status) => {
   try {
     await prisma.$transaction(async () => {
-      const pemeliharaan = await prisma.pemeliharaan_Inventaris.findUnique({
+      const pemeliharaan = await prisma.historyInventaris.findUnique({
         where: { id },
       });
       const inventaris = await prisma.inventaris.findUnique({
         where: { id: pemeliharaan.idinventaris },
       });
 
-      await prisma.pemeliharaan_Inventaris.update({
+      await prisma.historyInventaris.update({
         where: { id },
         data: { status: status },
       });

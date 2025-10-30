@@ -85,34 +85,66 @@ export const createKehadiranSiswaManual = async (data) => {
   try {
     const { idSiswa, idKelas, waktu, keterangan } = data;
 
-    // Ambil waktu lokal Indonesia (WIB)
-    const now = new Date();
-    const waktuWIB = addHours(now, 7); // offset server UTC → WIB
-
-    // Batas awal dan akhir hari (WIB)
-    const tanggalAwal = new Date(waktuWIB);
-    tanggalAwal.setHours(0, 0, 0, 0);
-
-    const tanggalAkhir = new Date(waktuWIB);
-    tanggalAkhir.setHours(23, 59, 59, 999);
-
-    // Cek apakah sudah absen hari ini
-
+    // Pastikan siswa ada
     const siswa = await prisma.siswa.findUnique({
+      where: { id: idSiswa },
+    });
+
+    if (!siswa) {
+      throw new Error("Siswa tidak ditemukan");
+    }
+
+    const waktuInput = new Date(waktu);
+
+    // Tentukan batas waktu hari ini
+    const startOfToday = new Date();
+    startOfToday.setHours(0, 0, 0, 0);
+
+    const endOfToday = new Date();
+    endOfToday.setHours(23, 59, 59, 999);
+
+    // Jika waktu kehadiran adalah hari ini atau masa depan → tolak
+    if (waktuInput >= startOfToday && waktuInput <= endOfToday) {
+      throw new Error("Tidak dapat membuat kehadiran untuk hari ini");
+    }
+
+    if (waktuInput > endOfToday) {
+      throw new Error(
+        "Tidak dapat membuat kehadiran untuk tanggal setelah hari ini"
+      );
+    }
+
+    // Hitung rentang tanggal hari itu (dari 00:00 sampai 23:59)
+    const startOfDay = new Date(waktuInput);
+    startOfDay.setHours(0, 0, 0, 0);
+
+    const endOfDay = new Date(waktuInput);
+    endOfDay.setHours(23, 59, 59, 999);
+
+    // Cek apakah sudah ada kehadiran di hari itu
+    const existingKehadiran = await prisma.kehadiranSiswa.findFirst({
       where: {
-        id: idSiswa,
+        idSiswa,
+        waktu: {
+          gte: startOfDay,
+          lte: endOfDay,
+        },
       },
     });
 
-    // Buat kehadiran baru
+    if (existingKehadiran) {
+      throw new Error("Kehadiran untuk tanggal tersebut sudah tercatat");
+    }
+
+    // Buat kehadiran baru (untuk tanggal masa lalu)
     const kehadiran = await prisma.kehadiranSiswa.create({
       data: {
         idSiswa,
         namaSiswa: siswa.nama,
         nisSiswa: siswa.nis,
         idKelas,
-        waktu: waktu,
-        keterangan: keterangan,
+        waktu: waktuInput,
+        keterangan,
       },
     });
 
