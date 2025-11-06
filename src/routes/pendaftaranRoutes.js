@@ -12,8 +12,7 @@ import { AuthMiddleware, isKepalaSekolah } from "../utils/authMiddleware.js";
 
 router.post(
   "/pendaftaran/",
-  AuthMiddleware,
-  isKepalaSekolah,
+
   createPendaftaranController
 );
 router.get(

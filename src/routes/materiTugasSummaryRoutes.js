@@ -25,14 +25,18 @@ import {
   handleUpdateMateriMapel,
   handleUpdateTugasMapel,
 } from "../controller/materiTugasSummaryController.js";
-import { AuthMiddleware, isGuruOnly } from "../utils/authMiddleware.js";
+import {
+  AuthMiddleware,
+  isGuruOnly,
+  isSiswa,
+} from "../utils/authMiddleware.js";
 import memoryUpload from "../utils/multer.js";
 
 const router = express.Router();
 
 // Materi Mapel
 router.post("/materi", AuthMiddleware, isGuruOnly, handleCreateMateriMapel);
-router.get("/materi", AuthMiddleware, isGuruOnly, handleGetAllMateriMapel);
+router.get("/materi", AuthMiddleware, handleGetAllMateriMapel);
 router.get("/materi/:id", AuthMiddleware, isGuruOnly, handleGetMateriMapelById);
 router.delete(
   "/materi/:id",
@@ -44,13 +48,15 @@ router.put("/materi/:id", AuthMiddleware, isGuruOnly, handleUpdateMateriMapel);
 
 router.post("/tugas", AuthMiddleware, isGuruOnly, handleCreateTugasMapel);
 router.get("/tugas", AuthMiddleware, isGuruOnly, handleGetAllTugasMapel);
-router.get("/tugas/:id", AuthMiddleware, isGuruOnly, handleGetTugasMapelById);
-router.delete("/tugas/:id", handleDeleteTugasMapel);
-router.put("/tugas/:id", handleUpdateTugasMapel);
+router.get("/tugas/:id", AuthMiddleware, handleGetTugasMapelById);
+router.delete("/tugas/:id", AuthMiddleware, isGuruOnly, handleDeleteTugasMapel);
+router.put("/tugas/:id", AuthMiddleware, isGuruOnly, handleUpdateTugasMapel);
 
 // Summary Materi
 router.post(
   "/summary",
+  AuthMiddleware,
+  isSiswa,
   memoryUpload.array("foto", 5),
   handleCreateSummaryMateri
 );
@@ -62,6 +68,8 @@ router.get("/summary/materi/:idMateri", handleGetSummaryByMateriId);
 // Summary Tugas
 router.post(
   "/summary-tugas",
+  AuthMiddleware,
+  isSiswa,
   memoryUpload.array("foto", 5),
   handleCreateSummaryTugas
 );

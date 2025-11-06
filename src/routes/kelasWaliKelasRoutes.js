@@ -9,7 +9,7 @@ import {
   terbitkanRapotController,
   updateKelasWaliKelasController,
 } from "../controller/kelasWalikelasController.js";
-import { AuthMiddleware } from "../utils/authMiddleware.js";
+import { AuthMiddleware, isGuruOnly } from "../utils/authMiddleware.js";
 const router = express.Router();
 
 router.post(
@@ -17,14 +17,46 @@ router.post(
   AuthMiddleware,
   createKelasWaliKelasController
 );
-router.put("/kelas-walikelas/update/:id", updateKelasWaliKelasController);
-router.delete("/kelas-walikelas/delete/:id", deleteKelasWaliKelasController);
-router.get("/kelas-walikelas/get/:id", getKelasWaliKelasByIdController);
-router.post("/kelas-walikelas/add", addSiswatoKelasWaliKelasController);
+router.put(
+  "/kelas-walikelas/update/:id",
+  AuthMiddleware,
+  isGuruOnly,
+  updateKelasWaliKelasController
+);
+router.delete(
+  "/kelas-walikelas/delete/:id",
+  AuthMiddleware,
+  isGuruOnly,
+  deleteKelasWaliKelasController
+);
+router.get(
+  "/kelas-walikelas/get/:id",
+  AuthMiddleware,
+  isGuruOnly,
+  getKelasWaliKelasByIdController
+);
+router.post(
+  "/kelas-walikelas/add",
+  AuthMiddleware,
+  isGuruOnly,
+  addSiswatoKelasWaliKelasController
+);
 router.delete(
   "/kelas-walikelas/remove/:id",
+  AuthMiddleware,
+  isGuruOnly,
   deleteSiswatoKelasWaliKelasController
 );
-router.get("/kelas-walikelas/siswa/:idKelas", getSiswaByIdKelasHandler);
-router.patch("/kelas-walikelas/terbit/:id", terbitkanRapotController);
+router.get(
+  "/kelas-walikelas/siswa/:idKelas",
+  AuthMiddleware,
+  isGuruOnly,
+  getSiswaByIdKelasHandler
+);
+router.patch(
+  "/kelas-walikelas/terbit/:id",
+  AuthMiddleware,
+  isGuruOnly,
+  terbitkanRapotController
+);
 export default router;

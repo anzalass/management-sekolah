@@ -1,5 +1,5 @@
 import express from "express";
-import { AuthMiddleware } from "../utils/authMiddleware.js";
+import { AuthMiddleware, isGuruOnly } from "../utils/authMiddleware.js";
 import {
   absenMasukGuruController,
   absenPulangGuruController,
@@ -8,7 +8,22 @@ import {
 
 const router = express.Router();
 
-router.post("/absen-masuk", AuthMiddleware, absenMasukGuruController);
-router.post("/absen-pulang", AuthMiddleware, absenPulangGuruController);
-router.get("/kehadiran-guru", getKehadiranGuruController);
+router.post(
+  "/absen-masuk",
+  AuthMiddleware,
+  isGuruOnly,
+  absenMasukGuruController
+);
+router.post(
+  "/absen-pulang",
+  AuthMiddleware,
+  isGuruOnly,
+  absenPulangGuruController
+);
+router.get(
+  "/kehadiran-guru",
+  AuthMiddleware,
+  isGuruOnly,
+  getKehadiranGuruController
+);
 export default router;

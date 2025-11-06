@@ -1,5 +1,5 @@
 import express from "express";
-import { AuthMiddleware } from "../utils/authMiddleware.js";
+import { AuthMiddleware, hasRole } from "../utils/authMiddleware.js";
 import {
   createInventarisController,
   deleteInventarisController,
@@ -22,40 +22,93 @@ import {
 
 const router = express.Router();
 
-router.post("/inventaris/create", createInventarisController);
-router.get("/inventaris/get/:id", getInventarisByIdController);
-router.put("/inventaris/update/:id", updateInventarisController);
-router.delete("/inventaris/delete/:id", deleteInventarisController);
-router.get("/inventaris", getAllInventarisController);
+router.post(
+  "/inventaris/create",
+  hasRole("Kepala Sekolah", "Sarpras"),
+  createInventarisController
+);
+router.get(
+  "/inventaris/get/:id",
+  hasRole("Kepala Sekolah", "Sarpras"),
+  getInventarisByIdController
+);
+router.put(
+  "/inventaris/update/:id",
+  hasRole("Kepala Sekolah", "Sarpras"),
+  updateInventarisController
+);
+router.delete(
+  "/inventaris/delete/:id",
+  hasRole("Kepala Sekolah", "Sarpras"),
+  deleteInventarisController
+);
+router.get(
+  "/inventaris",
+  hasRole("Kepala Sekolah", "Sarpras"),
+  getAllInventarisController
+);
 
-router.post("/jenis-inventaris/create", createJenisInventarisController);
-router.get("/jenis-inventaris/get/:id", getJenisInventarisByIdController);
-router.put("/jenis-inventaris/update/:id", updateJenisInventarisController);
-router.delete("/jenis-inventaris/delete/:id", deleteJenisInventarisController);
-router.get("/jenis-inventaris", getAllJenisInventarisController);
+router.post(
+  "/jenis-inventaris/create",
+  hasRole("Kepala Sekolah", "Sarpras"),
+  createJenisInventarisController
+);
+router.get(
+  "/jenis-inventaris/get/:id",
+  hasRole("Kepala Sekolah", "Sarpras"),
+  getJenisInventarisByIdController
+);
+router.put(
+  "/jenis-inventaris/update/:id",
+  hasRole("Kepala Sekolah", "Sarpras"),
+  updateJenisInventarisController
+);
+router.delete(
+  "/jenis-inventaris/delete/:id",
+  hasRole("Kepala Sekolah", "Sarpras"),
+  deleteJenisInventarisController
+);
+router.get(
+  "/jenis-inventaris",
+  hasRole("Kepala Sekolah", "Sarpras"),
+  getAllJenisInventarisController
+);
 
-router.get("/jenis-inventaris2", getAllJenisInventarisController2);
+router.get(
+  "/jenis-inventaris2",
+  hasRole("Kepala Sekolah", "Sarpras"),
+  getAllJenisInventarisController2
+);
 
 router.post(
   "/pemeliharaan-inventaris/create",
+  hasRole("Kepala Sekolah", "Sarpras"),
   createPemeliharaanInventarisController
 );
 router.get(
   "/pemeliharaan-inventaris/get/:id",
+  hasRole("Kepala Sekolah", "Sarpras"),
   getPemeliharaanInventarisByIdController
 );
 router.put(
   "/pemeliharaan-inventaris/update/:id",
+  hasRole("Kepala Sekolah", "Sarpras"),
   updatePemeliharaanInventarisController
 );
 router.delete(
   "/pemeliharaan-inventaris/delete/:id",
+  hasRole("Kepala Sekolah", "Sarpras"),
   deletePemeliharaanInventarisController
 );
-router.get("/pemeliharaan-inventaris", getAllPemeliharaanInventarisController);
+router.get(
+  "/pemeliharaan-inventaris",
+  hasRole("Kepala Sekolah", "Sarpras"),
+  getAllPemeliharaanInventarisController
+);
 
 router.put(
   "/pemeliharaan-inventaris/update-status/:id",
+  hasRole("Kepala Sekolah", "Sarpras"),
   updateStatusPemeliharaanController
 );
 
