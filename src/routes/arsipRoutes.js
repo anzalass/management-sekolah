@@ -4,11 +4,17 @@ import {
   createArsipController,
   deleteArsipController,
 } from "../controller/arsipController.js";
+import { AuthMiddleware, isKepalaSekolah } from "../utils/authMiddleware.js";
 
 const router = express.Router();
 
-router.get("/arsip", getAllArsipController);
-router.post("/arsip", createArsipController);
-router.delete("/arsip/:id", deleteArsipController);
+router.get("/arsip", AuthMiddleware, isKepalaSekolah, getAllArsipController);
+router.post("/arsip", AuthMiddleware, isKepalaSekolah, createArsipController);
+router.delete(
+  "/arsip/:id",
+  AuthMiddleware,
+  isKepalaSekolah,
+  deleteArsipController
+);
 
 export default router;

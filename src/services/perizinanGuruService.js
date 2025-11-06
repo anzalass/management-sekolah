@@ -40,6 +40,26 @@ export const createPerizinanGuru = async (data, foto) => {
 
 export const updateStatusPerizinanGuru = async (id, status) => {
   try {
+    const izin = await prisma.perizinanGuru.findUnique({
+      where: {
+        id: id,
+      },
+    });
+
+    if (status === "disetujui") {
+      await prisma.kehadiranGuru.create({
+        data: {
+          idGuru: izin.idGuru,
+          jamMasuk: new Date(),
+          jamPulang: new Date(),
+          lokasiMasuk: "izin",
+          lokasiPulang: "izin",
+          fotoMasuk: "izin",
+          status: "Izin",
+        },
+      });
+    }
+
     return await prisma.perizinanGuru.update({
       where: { id },
       data: { status },

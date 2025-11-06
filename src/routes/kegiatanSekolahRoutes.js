@@ -1,5 +1,5 @@
 import express from "express";
-import { AuthMiddleware } from "../utils/authMiddleware.js";
+import { AuthMiddleware, isKepalaSekolah } from "../utils/authMiddleware.js";
 import {
   createKegiatanSekolahController,
   deleteKegiatanSekolahController,
@@ -15,29 +15,38 @@ const router = express.Router();
 router.post(
   "/kegiatan-sekolah/create",
   AuthMiddleware,
+  isKepalaSekolah,
   createKegiatanSekolahController
 );
 router.get("/kegiatan-sekolah/get/:id", getKegiatanSekolahByIdController);
 router.put(
   "/kegiatan-sekolah/update/:id",
   AuthMiddleware,
+  isKepalaSekolah,
   updateKegiatanSekolahController
 );
 router.delete(
   "/kegiatan-sekolah/delete/:id",
   AuthMiddleware,
+  isKepalaSekolah,
   deleteKegiatanSekolahController
 );
 router.get(
   "/kegiatan-sekolah",
   AuthMiddleware,
+  isKepalaSekolah,
   getAllKegiatanSekolahController
 );
 
-router.get("/kegiatan-sekolah-2", getAllKegiatanSekolah2Controller);
+router.get(
+  "/kegiatan-sekolah-2",
+  AuthMiddleware,
+  getAllKegiatanSekolah2Controller
+);
 router.put(
   "/kegiatan-sekolah/status/:id",
   AuthMiddleware,
+  isKepalaSekolah,
   updateStatusKegiatanSekolahController
 );
 

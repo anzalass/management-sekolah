@@ -1,5 +1,5 @@
 import express from "express";
-import { AuthMiddleware } from "../utils/authMiddleware.js";
+import { AuthMiddleware, isGuruOnly } from "../utils/authMiddleware.js";
 import {
   createMataPelajaranController,
   deleteMataPelajaranController,
@@ -11,11 +11,36 @@ import {
 
 const router = express.Router();
 
-router.post("/mapel/create", AuthMiddleware, createMataPelajaranController);
-router.get("/mapel/get/:id", getMataPelajaranByIdController);
-router.put("/mapel/update/:id", updateMataPelajaranController);
-router.delete("/mapel/delete/:id", deleteMataPelajaranController);
-router.get("/mapel", getAllMataPelajaranController);
-router.get("/mapel-input", getAllMataPelajaranInputController);
+router.post(
+  "/mapel/create",
+  AuthMiddleware,
+  isGuruOnly,
+  createMataPelajaranController
+);
+router.get(
+  "/mapel/get/:id",
+  AuthMiddleware,
+  isGuruOnly,
+  getMataPelajaranByIdController
+);
+router.put(
+  "/mapel/update/:id",
+  AuthMiddleware,
+  isGuruOnly,
+  updateMataPelajaranController
+);
+router.delete(
+  "/mapel/delete/:id",
+  AuthMiddleware,
+  isGuruOnly,
+  deleteMataPelajaranController
+);
+router.get("/mapel", AuthMiddleware, isGuruOnly, getAllMataPelajaranController);
+router.get(
+  "/mapel-input",
+  AuthMiddleware,
+  isGuruOnly,
+  getAllMataPelajaranInputController
+);
 
 export default router;

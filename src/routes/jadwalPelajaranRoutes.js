@@ -4,14 +4,35 @@ import {
   deleteJadwalPelajaranController,
   getJadwalPelajaranController,
 } from "../controller/jadwalPelajaranController.js";
-import { AuthMiddleware } from "../utils/authMiddleware.js";
+import { AuthMiddleware, isGuruOnly } from "../utils/authMiddleware.js";
 import { getJadwalMengajarByIdGuruController } from "../controller/jadwalMengajarController.js";
 
 const router = express.Router();
 
-router.post("/jadwal", createJadwalPelajaranController);
-router.delete("/jadwal/:id", deleteJadwalPelajaranController);
-router.get("/jadwal/:idKelas", getJadwalPelajaranController);
-router.get("/jadwal-guru", AuthMiddleware, getJadwalMengajarByIdGuruController);
+router.post(
+  "/jadwal",
+  AuthMiddleware,
+  isGuruOnly,
+  createJadwalPelajaranController
+);
+router.delete(
+  "/jadwal/:id",
+  AuthMiddleware,
+  isGuruOnly,
+  deleteJadwalPelajaranController
+);
+router.get(
+  "/jadwal/:idKelas",
+  AuthMiddleware,
+  isGuruOnly,
+  getJadwalPelajaranController
+);
+router.get(
+  "/jadwal-guru",
+  AuthMiddleware,
+  isGuruOnly,
+  AuthMiddleware,
+  getJadwalMengajarByIdGuruController
+);
 
 export default router;

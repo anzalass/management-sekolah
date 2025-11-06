@@ -5,12 +5,33 @@ import {
   getAllListKelasController,
   getAllListKelasInputController,
 } from "../controller/listKelasController.js";
+import { AuthMiddleware, isGuruOnly } from "../utils/authMiddleware.js";
 
 const router = express.Router();
 
-router.post("/list-kelas", createListKelasController); // Create
-router.delete("/list-kelas/:id", deleteListKelasController); // Delete
-router.get("/list-kelas", getAllListKelasController); // Get All
-router.get("/list-kelas-input", getAllListKelasInputController); // Get All
+router.post(
+  "/list-kelas",
+  AuthMiddleware,
+  isGuruOnly,
+  createListKelasController
+); // Create
+router.delete(
+  "/list-kelas/:id",
+  AuthMiddleware,
+  isGuruOnly,
+  deleteListKelasController
+); // Delete
+router.get(
+  "/list-kelas",
+  AuthMiddleware,
+  isGuruOnly,
+  getAllListKelasController
+); // Get All
+router.get(
+  "/list-kelas-input",
+  AuthMiddleware,
+  isGuruOnly,
+  getAllListKelasInputController
+); // Get All
 
 export default router;

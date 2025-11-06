@@ -4,7 +4,7 @@ import {
   deleteJadwalMengajarController,
   updateJadwalMengajarController,
 } from "../controller/jadwalMengajarController.js";
-import { AuthMiddleware } from "../utils/authMiddleware.js";
+import { AuthMiddleware, isGuruOnly } from "../utils/authMiddleware.js";
 
 const router = express.Router();
 
@@ -12,6 +12,7 @@ const router = express.Router();
 router.post(
   "/jadwal-mengajar/create",
   AuthMiddleware,
+  isGuruOnly,
   createJadwalMengajarController
 );
 
@@ -19,6 +20,7 @@ router.post(
 router.put(
   "/jadwal-mengajar/update/:id",
   AuthMiddleware,
+  isGuruOnly,
   updateJadwalMengajarController
 );
 
@@ -26,6 +28,7 @@ router.put(
 router.delete(
   "/jadwal-mengajar/delete/:id",
   AuthMiddleware,
+  isGuruOnly,
   deleteJadwalMengajarController
 );
 
