@@ -27,11 +27,6 @@ router.get(
   isGuruOnly,
   getAllListKelasController
 ); // Get All
-router.get(
-  "/list-kelas-input",
-  AuthMiddleware,
-  isGuruOnly,
-  getAllListKelasInputController
-); // Get All
+router.get("/list-kelas-input", getAllListKelasInputController); // Get All
 
 export default router;

@@ -36,6 +36,6 @@ router.delete(
   deleteRuangController
 );
 router.get("/ruang", AuthMiddleware, isKepalaSekolah, getAllRuangController);
-router.get("/ruang2", AuthMiddleware, getAllRuangController2);
+router.get("/ruang2", getAllRuangController2);
 
 export default router;

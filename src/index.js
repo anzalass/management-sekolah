@@ -46,6 +46,7 @@ import notifikasiRoutes from "./routes/notifikasiRoutes.js";
 import { fileURLToPath } from "url";
 import path from "path";
 import fs from "fs";
+import cookieParser from "cookie-parser";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -60,6 +61,7 @@ app.use(express.json());
 const port = process.env.WEB_PORT || process.env.PORT || 4000; // ⬅️ ini kunci
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 app.use(morgan("dev"));
+app.use(cookieParser()); // ✅ WAJIB!
 app.use(
   cors({
     origin: `${process.env.SERVER_FE}`,
@@ -68,6 +70,8 @@ app.use(
     credentials: true,
   })
 );
+
+// server.js
 
 app.use(bodyParser.json());
 

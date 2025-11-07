@@ -36,11 +36,6 @@ router.delete(
   deleteMataPelajaranController
 );
 router.get("/mapel", AuthMiddleware, isGuruOnly, getAllMataPelajaranController);
-router.get(
-  "/mapel-input",
-  AuthMiddleware,
-  isGuruOnly,
-  getAllMataPelajaranInputController
-);
+router.get("/mapel-input", getAllMataPelajaranInputController);
 
 export default router;
