@@ -26,6 +26,32 @@ export const AuthMiddleware = async (req, res, next) => {
   }
 };
 
+export const AuthMiddleware2 = async (req, res, next) => {
+  // ✅ Ambil dari COOKIE, BUKAN header
+  const token = req.cookies?.auth_token;
+  console.log("tok", token);
+
+  if (!token) {
+    return res.status(401).json({ message: "Unauthorized", success: false });
+  }
+
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET_KEY);
+    console.log("dcd", decoded);
+    const data = {
+      token: token,
+      idGuru: decoded.idGuru,
+      nama: decoded.nama,
+      jabatan: decoded.jabatan,
+      nip: decoded.nip,
+    };
+
+    return res.status(200).json(data); // atau sesuaikan format
+  } catch (err) {
+    return res.status(401).json({ message: "Invalid token", success: false });
+  }
+};
+
 // 🔹 Middleware untuk Guru BK
 export const isGuruBK = (req, res, next) => {
   if (req.user?.jabatan === "Guru BK") {

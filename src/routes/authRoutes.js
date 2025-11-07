@@ -2,17 +2,20 @@ import express from "express";
 import {
   loginAdminController,
   loginController,
+  loginController2,
   ubahPasswordSiswaController,
 } from "../controller/authController.js";
-import { AuthMiddleware } from "../utils/authMiddleware.js";
+import { AuthMiddleware, AuthMiddleware2 } from "../utils/authMiddleware.js";
 const router = express.Router();
 
 router.post("/auth/login", loginController);
+router.post("/auth/login2", loginController2);
+
 router.post("/auth/admin", loginAdminController);
 router.patch(
   "/auth/ubah-password-siswa",
   AuthMiddleware,
   ubahPasswordSiswaController
 );
-
+router.get("/me", AuthMiddleware2);
 export default router;
