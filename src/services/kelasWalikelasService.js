@@ -242,10 +242,10 @@ export const deleteSiswatoKelasWaliKelas = async (id) => {
           idSiswa: removeSiswa.idSiswa,
           idTerkait: removeSiswa.id,
           kategori: "Menghapus Siswa",
-          createdBy: kelas.idGuru,
+          createdBy: "",
           idKelas: id,
           redirectSiswa: "/siswa/kelas",
-          keterangan: `Anda dikeluarkan dari kelas ${kelas.nama}`,
+          keterangan: `Anda dikeluarkan dari kelas`,
         });
       }
     });
