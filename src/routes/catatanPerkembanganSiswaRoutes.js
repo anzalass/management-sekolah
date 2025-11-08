@@ -4,24 +4,24 @@ import { AuthMiddleware, isGuruOnly } from "../utils/authMiddleware.js";
 
 const router = express.Router();
 
-router.post("/catatan-siswa", isGuruOnly, catatanController.createCatatan);
-router.get("/catatan-siswa", isGuruOnly, catatanController.getAllCatatan);
+router.post("/catatan-siswa", catatanController.createCatatan);
+router.get("/catatan-siswa", catatanController.getAllCatatan);
 router.get(
   "/catatan-siswaa",
-  isGuruOnly,
   AuthMiddleware,
+
   catatanController.getAllCatatanByIdSiswaIdKelas
 );
-router.get("/catatan-siswa/:id", isGuruOnly, catatanController.getCatatanById);
+router.get("/catatan-siswa/:id", catatanController.getCatatanById);
 router.get(
   "/catatan-siswa/kelas/:idKelas",
-  isGuruOnly,
+
   catatanController.getCatatanByIdKelas
 );
-router.put("/catatan-siswa/:id", isGuruOnly, catatanController.updateCatatan);
+router.put("/catatan-siswa/:id", catatanController.updateCatatan);
 router.delete(
   "/catatan-siswa/:id",
-  isGuruOnly,
+
   catatanController.deleteCatatan
 );
 
