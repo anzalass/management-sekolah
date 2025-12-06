@@ -7,7 +7,7 @@ export const createPengumuman = async (data) => {
   try {
     await prisma.$transaction(async (tx) => {
       await tx.pengumuman.create({
-        data: { title, time: new Date(`${time}T00:00:00Z`), content },
+        data: { title, time: new Date(`${time}T00:00:00Z`), createdOn: new Date(), modifiedOn: new Date(),content },
       });
     });
   } catch (error) {
@@ -64,6 +64,9 @@ export const getAllPengumuman = async ({
     const take = pageSize;
     let where = {};
 
+    console.log("test skip : " +skip);
+    console.log("test take : " +take);
+
     if (title) {
       where.title = { contains: title, mode: "insensitive" };
     }
@@ -77,6 +80,8 @@ export const getAllPengumuman = async ({
       take,
       where,
     });
+
+    console.log("test take : " +data);
 
     return {
       data,
