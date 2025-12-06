@@ -162,8 +162,9 @@ export const getPerizinanByIdSiswa = async () => {
 
 export const getPengumuman = async (idSiswa) => {
   try {
-    // ambil kelas yang diikuti siswa
+    const now = new Date();
 
+    // Ambil kelas yang diikuti siswa
     const kelassiswa = await prisma.daftarSiswaKelas.findMany({
       where: { idSiswa },
     });
@@ -171,12 +172,15 @@ export const getPengumuman = async (idSiswa) => {
       where: { idSiswa },
     });
 
-    // ambil semua pengumuman kelas berdasarkan daftar kelas siswa
+    // Ambil semua pengumuman kelas berdasarkan daftar kelas siswa (yg belum lewat)
     let pengumumanKelas = [];
 
     for (let i = 0; i < kelassiswa.length; i++) {
       const dataPengumumanKelas = await prisma.pengumumanKelas.findMany({
-        where: { idKelas: kelassiswa[i].idKelas },
+        where: {
+          idKelas: kelassiswa[i].idKelas,
+          time: { gte: now }, // ← hanya yg belum lewat
+        },
         orderBy: { time: "desc" },
       });
       pengumumanKelas = [...pengumumanKelas, ...dataPengumumanKelas];
@@ -184,18 +188,22 @@ export const getPengumuman = async (idSiswa) => {
 
     for (let i = 0; i < kelassiswaMapel.length; i++) {
       const dataPengumumanKelas = await prisma.pengumumanKelas.findMany({
-        where: { idKelas: kelassiswaMapel[i].idKelas },
+        where: {
+          idKelas: kelassiswaMapel[i].idKelas,
+          time: { gte: now }, // ← hanya yg belum lewat
+        },
         orderBy: { time: "desc" },
       });
       pengumumanKelas = [...pengumumanKelas, ...dataPengumumanKelas];
     }
 
-    // ambil pengumuman umum
+    // Ambil pengumuman umum yang belum lewat
     const pengumumanUmum = await prisma.pengumuman.findMany({
+      where: { time: { gte: now } }, // ← hanya yg belum lewat
       orderBy: { time: "desc" },
     });
 
-    // gabung & urutkan berdasarkan time
+    // Gabung & urutkan berdasarkan time (descending)
     const semuaPengumuman = [...pengumumanUmum, ...pengumumanKelas].sort(
       (a, b) => new Date(b.time).getTime() - new Date(a.time).getTime()
     );
@@ -206,7 +214,6 @@ export const getPengumuman = async (idSiswa) => {
     throw new Error(prismaErrorHandler(error));
   }
 };
-
 export const getRapotSiswa = async (idSiswa) => {
   const rapot = await prisma.daftarSiswaKelas.findMany({
     where: { idSiswa },

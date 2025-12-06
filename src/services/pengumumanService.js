@@ -79,6 +79,9 @@ export const getAllPengumuman = async ({
       skip,
       take,
       where,
+      orderBy: {
+        createdOn: "desc",
+      },
     });
 
     console.log("test take : " +data);

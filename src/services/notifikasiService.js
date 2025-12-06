@@ -26,7 +26,6 @@ export const createNotifikasi = async ({
         keterangan,
         createdBy,
         status: "Belum Terbaca",
-        createdAt: new Date(),
       },
     });
   } catch (error) {
@@ -76,7 +75,7 @@ export const updateStatusAndDeleteSiswa = async (idSiswa) => {
       where: {
         idSiswa,
         status: "Terbaca",
-        createdAt: {
+        createdOn: {
           lt: twoWeeksAgo, // lebih kecil dari (lebih lama dari 2 minggu)
         },
       },
@@ -161,7 +160,7 @@ export const getNotifikasiByIDPengguna = async (id) => {
         },
       },
       orderBy: {
-        createdAt: "desc",
+        createdOn: "desc",
       },
     });
 
@@ -227,7 +226,7 @@ export const getNotifikasiByIDPenggunaTotal = async (id) => {
         },
       },
       orderBy: {
-        createdAt: "desc",
+        createdOn: "desc",
       },
     });
 
@@ -240,7 +239,7 @@ export const getNotifikasiByIDPenggunaTotal = async (id) => {
         },
       },
       orderBy: {
-        createdAt: "desc",
+        createdOn: "desc",
       },
     });
 

@@ -59,7 +59,6 @@ export const createJenisNilai = async (data) => {
         idJenisNilai: newJenis.id,
         jenisNilai: data.jenis,
         nilai: 0,
-        createdAt: new Date(),
       }));
 
       // Simpan semua nilai siswa
@@ -165,7 +164,6 @@ export const createNilaiSiswa = async (data) => {
         },
         data: {
           nilai: data.nilai,
-          createdAt: new Date(),
         },
       });
     } else {
@@ -176,7 +174,6 @@ export const createNilaiSiswa = async (data) => {
           idKelasDanMapel: data.idKelasDanMapel,
           idJenisNilai: data.idJenisNilai,
           nilai: data.nilai,
-          createdAt: new Date(),
         },
       });
     }
@@ -212,7 +209,6 @@ export const updateNilaiSiswa = async (id, data) => {
         where: { id },
         data: {
           nilai: data.nilai,
-          createdAt: new Date(),
         },
       });
 

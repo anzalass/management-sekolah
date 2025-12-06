@@ -110,7 +110,7 @@ export const getAllTagihan = async (query) => {
         Siswa: true,
       },
       orderBy: {
-        createdate: "desc",
+        createdOn: "desc",
       },
     });
 
