@@ -27,7 +27,7 @@ model Sekolah {
   logoId String?
   tahunAjaran String
   createdOn DateTime? @default(now())
- modifiedOn DateTime? @updatedAt
+  modifiedOn DateTime? @updatedAt
 }
 
 model Guru {
