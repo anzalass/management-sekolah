@@ -17,7 +17,7 @@ export const getAllPengumumanKelas = async () => {
   try {
     return await prisma.pengumumanKelas.findMany({
       include: { Kelas: true },
-      orderBy: { time: "desc" },
+      orderBy: { createdOn: "desc" },
     });
   } catch (error) {
     console.log(error);

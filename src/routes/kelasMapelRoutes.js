@@ -42,11 +42,6 @@ router.delete(
   removeSiswaFromKelasMapelController
 );
 
-router.get(
-  "/kelas-mapel/:id",
-  AuthMiddleware,
-  isGuruOnly,
-  getDetailKelasMapelController
-);
+router.get("/kelas-mapel/:id", AuthMiddleware, getDetailKelasMapelController);
 
 export default router;

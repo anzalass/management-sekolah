@@ -76,6 +76,9 @@ export const getAllPengumuman = async ({
       skip,
       take,
       where,
+      orderBy: {
+        createdOn: "desc",
+      },
     });
 
     return {

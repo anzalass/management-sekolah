@@ -146,7 +146,6 @@ export const bayarTagihanMidtransController = async (req, res) => {
         idTagihan: idTagihan,
         snap_url: snapResponse.redirect_url,
         snapToken: snapResponse.token,
-        createdAt: new Date(),
       },
     });
     return res.json({ orderId, snap: snapResponse });
