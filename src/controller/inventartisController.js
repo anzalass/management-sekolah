@@ -16,6 +16,7 @@ import {
   getAllPemeliharaanInventaris,
   updateStatusPemeliharaan,
   getAllInventaris2,
+  getAllInventarisDistinct,
 } from "../services/inventarisService.js";
 
 export const createInventarisController = async (req, res) => {
@@ -125,6 +126,24 @@ export const getAllJenisInventarisController = async (req, res) => {
       page: parseInt(req.query.page) || 1,
       pageSize: parseInt(req.query.pageSize) || 10,
       nama: req.query.nama,
+    });
+    return res.status(200).json({
+      message: "Berhasil mendapatkan semua jenis inventaris",
+      data: jenisInventaris,
+    });
+  } catch (error) {
+    return res.status(500).json({ message: error.message, success: false });
+  }
+};
+
+export const getAllInventarisDistinctController = async (req, res) => {
+  try {
+    const jenisInventaris = await getAllInventarisDistinct({
+      page: parseInt(req.query.page) || 1,
+      pageSize: parseInt(req.query.pageSize) || 10,
+      nama: req.query.nama,
+      hargaBeli: req.query.hargaBeli,
+      ruang: req.query.ruang
     });
     return res.status(200).json({
       message: "Berhasil mendapatkan semua jenis inventaris",

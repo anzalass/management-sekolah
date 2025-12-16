@@ -18,6 +18,7 @@ import {
   getPemeliharaanInventarisByIdController,
   getAllPemeliharaanInventarisController,
   updateStatusPemeliharaanController,
+  getAllInventarisDistinctController,
 } from "../controller/inventartisController.js";
 
 const router = express.Router();
@@ -55,6 +56,14 @@ router.get(
 
   hasRole("Kepala Sekolah", "Sarpras"),
   getAllInventarisController
+);
+
+router.get(
+  "/daftar-inventaris",
+  AuthMiddleware,
+
+  hasRole("Kepala Sekolah", "Sarpras"),
+  getAllInventarisDistinctController
 );
 
 router.post(
