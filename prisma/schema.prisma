@@ -340,7 +340,7 @@ model Inventaris {
   id           String @id @default(uuid())
   nama         String
   quantity     Int
-  ruang        String
+  ruang        String?
   hargaBeli    Int
   waktuPengadaan DateTime
   keterangan   String
@@ -360,7 +360,7 @@ model HistoryInventaris {
   tanggal         DateTime
   keterangan      String
   createdOn DateTime? @default(now())
- modifiedOn DateTime? @updatedAt
+  modifiedOn DateTime? @updatedAt
   Inventaris      Inventaris? @relation(fields: [idinventaris], references: [id])
 }
 

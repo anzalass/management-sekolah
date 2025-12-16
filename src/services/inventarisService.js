@@ -13,7 +13,7 @@ export const createInventaris = async (data) => {
           hargaBeli: parseInt(hargaBeli),
           waktuPengadaan: new Date(`${waktuPengadaan}T00:00:00Z`),
           keterangan,
-          ruang,
+          ruang: "Belum Digunakan",
         },
       });
     });
@@ -139,26 +139,28 @@ export const getAllInventarisDistinct = async ({
     }
 
     const inventaris = await prisma.inventaris.groupBy({
-      by: ['nama', 'ruang'],
+      by: ["nama", "ruang"],
       _sum: {
         quantity: true,
         hargaBeli: true,
       },
       where: condition,
       orderBy: {
-        nama: 'asc',
+        nama: "asc",
       },
       skip: skip,
       take: take,
     });
 
-      const formattedData = inventaris.map(item => ({
+    const formattedData = inventaris
+      .map((item) => ({
         nama: item.nama,
         ruang: item.ruang,
-        quantity: item._sum?.quantity? item._sum.quantity : 0,
-        hargaBeli: item._sum?.hargaBeli? item._sum.hargaBeli : 0,
-      })).filter(item => {
-        if (!hargaBeli) return true;     
+        quantity: item._sum?.quantity ? item._sum.quantity : 0,
+        hargaBeli: item._sum?.hargaBeli ? item._sum.hargaBeli : 0,
+      }))
+      .filter((item) => {
+        if (!hargaBeli) return true;
         return item.hargaBeli === parseInt(hargaBeli);
       });
 
@@ -268,7 +270,8 @@ export const getAllJenisInventaris = async ({
 };
 
 export const createPemeliharaanInventaris = async (data) => {
-  const { nama, hargaMaintenance, keterangan, quantity, id, status } = data;
+  const { nama, hargaMaintenance, keterangan, quantity, id, status, ruang } =
+    data;
   console.log("data", data);
 
   console.log("biaya", hargaMaintenance);
@@ -293,7 +296,7 @@ export const createPemeliharaanInventaris = async (data) => {
         nama,
         biaya: status === "Sedang Maintenance" ? parseInt(hargaMaintenance) : 0,
         keterangan,
-        ruang: inventaris.ruang,
+        ruang: ruang,
         quantity: parseInt(quantity),
         status: status,
         idinventaris: id,

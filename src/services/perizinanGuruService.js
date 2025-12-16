@@ -40,37 +40,63 @@ export const createPerizinanGuru = async (data, foto) => {
 
 export const updateStatusPerizinanGuru = async (id, status) => {
   try {
+    // 1. Ambil data perizinan
     const izin = await prisma.perizinanGuru.findUnique({
-      where: {
-        id: id,
-      },
+      where: { id },
+      include: { Guru: true }, // opsional, untuk log/error
     });
 
-    if (status === "disetujui") {
-      await prisma.kehadiranGuru.create({
-        data: {
-          idGuru: izin.idGuru,
-          jamMasuk: new Date(),
-          jamPulang: new Date(),
-          lokasiMasuk: "izin",
-          lokasiPulang: "izin",
-          fotoMasuk: "izin",
-          status: "Izin",
-        },
-      });
+    if (!izin) {
+      throw new Error("Perizinan tidak ditemukan");
     }
 
+    // 2. Jika status "disetujui", cek dan buat kehadiran (jika belum ada hari ini)
+    if (status === "disetujui") {
+      const todayStart = new Date();
+      todayStart.setHours(0, 0, 0, 0);
+
+      const todayEnd = new Date();
+      todayEnd.setHours(23, 59, 59, 999);
+
+      // Cek apakah guru sudah punya kehadiran hari ini
+      const existingKehadiran = await prisma.kehadiranGuru.findFirst({
+        where: {
+          idGuru: izin.idGuru,
+          jamMasuk: {
+            gte: todayStart,
+            lte: todayEnd,
+          },
+        },
+      });
+
+      // Jika belum ada, buat baru
+      if (!existingKehadiran) {
+        await prisma.kehadiranGuru.create({
+          data: {
+            idGuru: izin.idGuru,
+            jamMasuk: new Date(),
+            jamPulang: new Date(), // bisa null jika belum pulang, tapi sesuaikan logika
+            lokasiMasuk: "izin",
+            lokasiPulang: "izin",
+            fotoMasuk: "izin",
+            status: "Izin",
+          },
+        });
+      }
+      // Jika sudah ada, biarkan saja (tidak buat duplikat)
+    }
+
+    // 3. Update status perizinan
     return await prisma.perizinanGuru.update({
       where: { id },
       data: { status },
     });
   } catch (error) {
-    console.log(error);
+    console.error("Error updateStatusPerizinanGuru:", error);
     const errorMessage = prismaErrorHandler(error);
     throw new Error(errorMessage);
   }
 };
-
 export const deletePerizinanGuru = async (id) => {
   try {
     await prisma.$transaction(async () => {

@@ -99,9 +99,11 @@ export const dashboardOverview = async () => {
             foto: true,
           },
         },
+        id: true,
         keterangan: true,
         status: true,
         time: true,
+        bukti: true,
       },
     });
 
@@ -132,6 +134,67 @@ export const dashboardOverview = async () => {
       take: 5,
     });
 
+    const riwayatAnggaranHariIni = await prisma.riwayatAnggaran.findMany({
+      where: {
+        tanggal: {
+          gte: startOfDay(today),
+          lte: endOfDay(today),
+        },
+      },
+    });
+
+    const pendaftarHariIni = await prisma.pendaftaranSiswa.findMany({
+      where: {
+        createdOn: {
+          gte: startOfDay(today),
+          lte: endOfDay(today),
+        },
+      },
+    });
+
+    const totalTagihan = await prisma.tagihan.count({});
+    const totalTagihanBelumBayar = await prisma.tagihan.count({
+      where: {
+        status: "BELUM_BAYAR",
+      },
+    });
+
+    const totalTagihanMenungguKonfirmasi = await prisma.tagihan.count({
+      where: {
+        status: "MENUNGGU_KONFIRMASI",
+      },
+    });
+    const result = await prisma.tagihan.aggregate({
+      where: {
+        status: "BELUM_BAYAR", // ← sesuaikan dengan field & nilai status kamu
+      },
+      _sum: {
+        nominal: true,
+      },
+    });
+
+    const totalNominalBelumBayar = result._sum.nominal || 0;
+    const now = new Date();
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1); // Awal bulan
+    const endOfMonth = new Date(
+      now.getFullYear(),
+      now.getMonth() + 1,
+      0,
+      23,
+      59,
+      59,
+      999
+    ); // Akhir bulan
+
+    const pendaftarBulanIni = await prisma.pendaftaranSiswa.count({
+      where: {
+        createdOn: {
+          gte: startOfMonth, // >= awal bulan
+          lte: endOfMonth, // <= akhir bulan
+        },
+      },
+    });
+
     // === Return Object untuk Frontend ===
     return {
       kasSekolah: anggaranSekolah?.kas || 0,
@@ -145,6 +208,13 @@ export const dashboardOverview = async () => {
       totalInventaris: inventaris,
       izinGuruHariIni: izinHariIni,
       guruMasukPalingPagi: guruMasukTercepat,
+      pendaftarHariIni,
+      riwayatAnggaranHariIni,
+      totalTagihan,
+      totalNominalBelumBayar,
+      pendaftarBulanIni,
+      totalTagihanMenungguKonfirmasi,
+      totalTagihanBelumBayar,
     };
   } catch (error) {
     console.log(error);
