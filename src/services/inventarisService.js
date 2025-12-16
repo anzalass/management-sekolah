@@ -212,8 +212,10 @@ export const getAllJenisInventaris = async ({
 
 export const createPemeliharaanInventaris = async (data) => {
   const { nama, hargaMaintenance, keterangan, quantity, id, status } = data;
+  console.log("data", data);
 
   console.log("biaya", hargaMaintenance);
+  console.log("stts", status);
 
   try {
     const inventaris = await prisma.inventaris.findUnique({
@@ -397,7 +399,7 @@ export const getAllPemeliharaanInventaris = async ({
       data: pemeliharaanInventaris,
       page,
       pageSize,
-      count: await prisma.historyInventaris.count(),
+      totalData: await prisma.historyInventaris.count(),
     };
   } catch (error) {
     console.log(error);
