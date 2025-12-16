@@ -117,6 +117,9 @@ export const dashboardOverview = async () => {
         jamMasuk: {
           not: null,
         },
+        fotoMasuk: {
+          not: "izin",
+        },
       },
       orderBy: {
         jamMasuk: "asc",
