@@ -47,7 +47,12 @@ router.get("/ujian-proxy/:id", proxyUjian);
 router.put("/ujian-iframe/:id", AuthMiddleware, isGuruOnly, updateUjianIframe);
 
 // DELETE
-router.delete("/ujian-iframe/:id", isGuruOnly, deleteUjianIframe);
+router.delete(
+  "/ujian-iframe/:id",
+  AuthMiddleware,
+  isGuruOnly,
+  deleteUjianIframe
+);
 router.post("/ujian-iframe-selesai", selesaiUjianController);
 router.post(
   "/ujian-iframe-berlangsung",

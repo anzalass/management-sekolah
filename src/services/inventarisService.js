@@ -103,6 +103,9 @@ export const getAllInventaris = async ({
       where,
       skip,
       take,
+      orderBy: {
+        nama: "asc",
+      },
     });
 
     return {
@@ -231,7 +234,11 @@ export const getJenisInventarisById = async (id) => {
 };
 
 export const getAllInventaris2 = async () => {
-  const inventaris = await prisma.jenis_Inventaris.findMany();
+  const inventaris = await prisma.jenis_Inventaris.findMany({
+    orderBy: {
+      nama: "asc",
+    },
+  });
   return inventaris;
 };
 
@@ -253,6 +260,9 @@ export const getAllJenisInventaris = async ({
       where,
       skip,
       take,
+      orderBy: {
+        nama: "asc",
+      },
     });
 
     return {
@@ -272,10 +282,6 @@ export const getAllJenisInventaris = async ({
 export const createPemeliharaanInventaris = async (data) => {
   const { nama, hargaMaintenance, keterangan, quantity, id, status, ruang } =
     data;
-  console.log("data", data);
-
-  console.log("biaya", hargaMaintenance);
-  console.log("stts", status);
 
   try {
     const inventaris = await prisma.inventaris.findUnique({
@@ -453,6 +459,9 @@ export const getAllPemeliharaanInventaris = async ({
       where,
       skip,
       take,
+      orderBy: {
+        nama: "asc",
+      },
     });
 
     return {
