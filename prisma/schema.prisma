@@ -75,6 +75,7 @@ model jadwalMengajar {
     kelas String
     idGuru String
     jamMulai String
+    tahunAjaran String?
     jamSelesai String
     namaMapel String
     hari String
@@ -238,11 +239,18 @@ model KehadiranSiswa {
   namaSiswa      String
   nisSiswa       String
   waktu          DateTime
-  keterangan     String
+  keterangan     KeteranganKehadiranSiswa
   createdOn DateTime? @default(now())
- modifiedOn DateTime? @updatedAt
+  modifiedOn DateTime? @updatedAt
   Siswa          Siswa? @relation(fields: [idSiswa], references: [id])
   Kelas          Kelas? @relation(fields: [idKelas], references: [id])
+}
+
+enum KeteranganKehadiranSiswa {
+  Izin
+  Hadir
+  Sakit
+  TanpaKeterangan @map("Tanpa Keterangan")
 }
 
 model Siswa {
