@@ -89,8 +89,20 @@ export const getKehadiranGuruController = async (req, res) => {
   }
 };
 
-export const getKehadiranGuruByIdGuruController = async () => {
+export const getKehadiranGuruByIdGuruController = async (req, res) => {
   try {
-    const data = await getKehadiranGuruByIdGuru(req.params.idGuru);
-  } catch (error) {}
+    const { idGuru, page = 1, pageSize = 10, startDate, endDate } = req.query;
+
+    const result = await getKehadiranGuruByIdGuru({
+      idGuru,
+      page,
+      pageSize,
+      startDate,
+      endDate,
+    });
+
+    return res.status(200).json(result);
+  } catch (error) {
+    return res.status(500).json({ message: error.message, success: false });
+  }
 };

@@ -6,53 +6,166 @@ const prisma = new PrismaClient();
 
 export const dashboardMengajarServicePage = async (idGuru) => {
   try {
-    const hariIni = new Date();
-    hariIni.setHours(0, 0, 0, 0);
+    const todayStart = new Date();
+    todayStart.setHours(0, 0, 0, 0);
 
-    // Ambil data absensi hari ini
+    const todayEnd = new Date();
+    todayEnd.setHours(23, 59, 59, 999);
+
+    // Ambil tahun ajaran aktif
+    const sekolah = await prisma.sekolah.findFirst({
+      select: { tahunAjaran: true },
+    });
+    const tahunAjaranAktif = sekolah?.tahunAjaran || "";
+
+    // 1. Absensi guru hari ini
     const kehadiranHariIni = await prisma.kehadiranGuru.findFirst({
       where: {
         idGuru,
-        tanggal: { gte: hariIni },
+        tanggal: { gte: todayStart },
       },
     });
 
-    // Status absen
+    // 2. Kelas yang diwali
+    const kelasWaliKelas = await prisma.kelas.findMany({
+      where: { idGuru },
+      select: {
+        id: true,
+        nama: true,
+        ruangKelas: true,
+        tahunAjaran: true,
+        banner: true,
+        _count: {
+          select: { DaftarSiswaKelas: true },
+        },
+      },
+    });
+
+    // 3. Kehadiran siswa per kelas hari ini
+    const kehadiranHariIniSiswa = await prisma.kehadiranSiswa.groupBy({
+      by: ["idKelas", "keterangan"],
+      where: {
+        idKelas: { in: kelasWaliKelas.map((k) => k.id) },
+        waktu: { gte: todayStart, lte: todayEnd },
+      },
+      _count: { id: true },
+    });
+
+    // 4. Format kehadiran per kelas
+    const kehadiranByKelas = new Map();
+    kelasWaliKelas.forEach((kelas) => {
+      kehadiranByKelas.set(kelas.id, {
+        Hadir: 0,
+        Izin: 0,
+        Sakit: 0,
+        TanpaKeterangan: 0,
+      });
+    });
+
+    kehadiranHariIniSiswa.forEach((item) => {
+      const current = kehadiranByKelas.get(item.idKelas);
+      if (current) {
+        current[item.keterangan] = item._count.id;
+      }
+    });
+
+    const kelasWaliKelasKehadiran = kelasWaliKelas.map((kelas) => ({
+      ...kelas,
+      kehadiran: kehadiranByKelas.get(kelas.id) || {
+        Hadir: 0,
+        Izin: 0,
+        Sakit: 0,
+        TanpaKeterangan: 0,
+      },
+    }));
+
+    // 5. Kelas & Mapel yang diajar (pastikan model punya idGuru)
+    const kelasMapel = await prisma.kelasDanMapel.findMany({
+      where: { idGuru },
+      select: {
+        id: true,
+        namaMapel: true,
+        kelas: true,
+        banner: true,
+        ruangKelas: true,
+        tahunAjaran: true,
+        _count: {
+          select: {
+            MateriMapel: true,
+            TugasMapel: true,
+            UjianIframe: true,
+            DaftarSiswa: true,
+          },
+        },
+      },
+    });
+
+    // 6. Status absen & izin
     const statusMasuk = !!kehadiranHariIni?.jamMasuk;
     const statusKeluar = !!kehadiranHariIni?.jamPulang;
 
-    // Cek perizinan hari ini
     const izinHariIni = await prisma.perizinanGuru.findFirst({
-      where: {
-        idGuru,
-        time: { gte: hariIni },
-      },
+      where: { idGuru, time: { gte: todayStart } },
     });
-
     const statusIzin = !!izinHariIni;
 
-    // Data lainnya
-    const [kehadiranGuru, jadwalGuru, kelasWaliKelas, kelasMapel, perizinan] =
-      await Promise.all([
-        prisma.kehadiranGuru.findMany({ where: { idGuru } }),
-        prisma.jadwalMengajar.findMany({ where: { idGuru } }),
-        prisma.kelas.findMany({ where: { idGuru } }),
-        prisma.kelasDanMapel.findMany({ where: { idGuru } }),
-        prisma.perizinanGuru.findMany({ where: { idGuru } }),
-      ]);
+    // 7. Data tambahan
+    // Dapatkan rentang bulan ini
+    const now = new Date();
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    const endOfMonth = new Date(
+      now.getFullYear(),
+      now.getMonth() + 1,
+      0,
+      23,
+      59,
+      59,
+      999
+    );
 
+    const [jadwalGuru, perizinan] = await Promise.all([
+      prisma.jadwalMengajar.findMany({
+        where: { idGuru, tahunAjaran: tahunAjaranAktif },
+      }),
+      prisma.perizinanGuru.findMany({
+        where: {
+          idGuru,
+          time: {
+            gte: startOfMonth,
+            lte: endOfMonth,
+          },
+        },
+      }),
+    ]);
+
+    // 8. Hitung total murid dari semua kelas yang diwali
+    const totalMurid = kelasMapel.reduce(
+      (sum, kelas) => sum + (kelas._count.DaftarSiswaKelas || 0),
+      0
+    );
+
+    // 9. Summary Singkat
+    const SummarySingkat = {
+      kelasDiajar: kelasMapel.length,
+      kelasDiwali: kelasWaliKelas.length,
+      totalMurid,
+      totalJadwal: jadwalGuru.length, // atau count by tahun ajaran jika perlu
+      izinBulanIni: perizinan.length, // atau filter by bulan jika perlu
+      janjiTemu: await prisma.janjiTemu.count({ where: { idGuru } }),
+    };
+
+    // ✅ Return lengkap
     return {
       statusMasuk,
       statusKeluar,
       statusIzin,
-      kehadiranGuru,
       jadwalGuru,
-      kelasWaliKelas,
       kelasMapel,
-      perizinan,
+      kelasWaliKelasKehadiran,
+      SummarySingkat,
     };
   } catch (error) {
-    console.log(error);
+    console.error("Error in dashboardMengajarServicePage:", error);
     const errorMessage = prismaErrorHandler(error);
     throw new Error(errorMessage);
   }

@@ -3,6 +3,7 @@ import {
   deletePerizinanGuru,
   getPerizinanGuru,
   getPerizinanGuruById,
+  getPerizinanGuruByIdGuru,
   updateStatusPerizinanGuru,
 } from "../services/perizinanGuruService.js";
 import memoryUpload from "../utils/multer.js";
@@ -108,6 +109,24 @@ export const getPerizinanGuruController = async (req, res) => {
       message: "Data perizinan guru berhasil diambil",
       ...result,
     });
+  } catch (error) {
+    return res.status(500).json({ message: error.message, success: false });
+  }
+};
+
+export const getPerizinanGuruByIdGuruController = async (req, res) => {
+  try {
+    const { idGuru, page = 1, pageSize = 10, startDate, endDate } = req.query;
+
+    const result = await getPerizinanGuruByIdGuru({
+      idGuru,
+      page,
+      pageSize,
+      startDate,
+      endDate,
+    });
+
+    return res.status(200).json(result);
   } catch (error) {
     return res.status(500).json({ message: error.message, success: false });
   }

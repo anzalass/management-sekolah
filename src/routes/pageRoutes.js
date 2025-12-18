@@ -5,6 +5,7 @@ import {
   getDashboardOverview,
   getDashboardWaliKelas,
   getSidebarMengajar,
+  perizinanKehadiranByBuru,
 } from "../controller/pageController.js";
 import {
   AuthMiddleware,
@@ -38,6 +39,13 @@ router.get(
   AuthMiddleware,
   isGuruOnly,
   getDashboardWaliKelas
+);
+
+router.get(
+  "/dashboard/perizinan-kehadiran",
+  AuthMiddleware,
+  isGuruOnly,
+  perizinanKehadiranByBuru
 );
 
 router.get("/sidebar", AuthMiddleware, isGuruOnly, getSidebarMengajar);

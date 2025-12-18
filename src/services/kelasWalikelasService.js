@@ -79,12 +79,8 @@ export const updateKelasWaliKelas = async (id, data, banner) => {
           ruangKelas,
           periode,
           guru,
-          banner: imageUploadResult.secure_url
-            ? imageUploadResult?.secure_url
-            : oldKelas.banner,
-          bannerId: imageUploadResult.public_id
-            ? imageUploadResult.public_id
-            : oldKelas.bannerId,
+          banner: imageUploadResult?.secure_url || oldKelas?.banner || "",
+          bannerId: imageUploadResult?.public_id || oldKelas?.bannerId || "",
         },
       });
     });

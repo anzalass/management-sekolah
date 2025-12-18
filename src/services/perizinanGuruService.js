@@ -197,3 +197,56 @@ export const getPerizinanGuru = async ({
     totalPages: Math.ceil(total / pageSize),
   };
 };
+
+export const getPerizinanGuruByIdGuru = async ({
+  idGuru,
+  page = 1,
+  pageSize = 10,
+  startDate,
+  endDate,
+}) => {
+  try {
+    // Validasi page & pageSize
+    const pageNum = Math.max(1, Number(page) || 1);
+    const size = Math.max(1, Math.min(100, Number(pageSize) || 10)); // max 10,000 if needed
+    const skip = (pageNum - 1) * size;
+
+    // Bangun kondisi where
+    const where = { idGuru };
+
+    if (startDate || endDate) {
+      where.time = {};
+      if (startDate) {
+        where.time.gte = new Date(startDate);
+      }
+      if (endDate) {
+        where.time.lte = new Date(endDate);
+      }
+    }
+
+    // Ambil data & total
+    const [data, total] = await Promise.all([
+      prisma.perizinanGuru.findMany({
+        where,
+        skip,
+        take: size,
+        orderBy: { time: "desc" }, // terbaru dulu
+      }),
+      prisma.perizinanGuru.count({ where }),
+    ]);
+
+    return {
+      data,
+      meta: {
+        total,
+        page: pageNum,
+        pageSize: size,
+        totalPages: Math.ceil(total / size),
+      },
+    };
+  } catch (error) {
+    console.error("Error in getKehadiranGuruByIdGuru:", error);
+    const errorMessage = prismaErrorHandler(error);
+    throw new Error(errorMessage);
+  }
+};

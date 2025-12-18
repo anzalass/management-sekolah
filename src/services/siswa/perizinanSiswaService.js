@@ -239,7 +239,7 @@ export const updateStatusPerizinanSiswa = async (id, status) => {
         idTerkait: izin.id,
         redirectGuru: `/mengajar/walikelas/${izin.idKelas}`,
         redirectSiswa: `/siswa/perizinan`,
-        keterangan: `${nama} mengajukan izin`,
+        keterangan: `${nama.nama} mengajukan izin`,
         createdBy: izin.idSiswa,
       });
     }
