@@ -239,7 +239,7 @@ model KehadiranSiswa {
   namaSiswa      String
   nisSiswa       String
   waktu          DateTime
-  keterangan     KeteranganKehadiranSiswa
+  keterangan     KeteranganKehadiranSiswa?
   createdOn DateTime? @default(now())
   modifiedOn DateTime? @updatedAt
   Siswa          Siswa? @relation(fields: [idSiswa], references: [id])
