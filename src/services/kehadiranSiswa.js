@@ -84,6 +84,13 @@ export const createKehadiranSiswa = async (data) => {
 export const createKehadiranSiswaManual = async (data) => {
   try {
     const { idSiswa, idKelas, waktu, keterangan } = data;
+    let keteranganEnum = "";
+
+    if (keterangan === "Tanpa Keterangan") {
+      keteranganEnum = "TanpaKeterangan";
+    } else {
+      keteranganEnum = keterangan;
+    }
 
     // Pastikan siswa ada
     const siswa = await prisma.siswa.findUnique({
@@ -144,7 +151,7 @@ export const createKehadiranSiswaManual = async (data) => {
         nisSiswa: siswa.nis,
         idKelas,
         waktu: waktuInput,
-        keterangan,
+        keterangan: keteranganEnum,
       },
     });
 
