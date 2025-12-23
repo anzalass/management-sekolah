@@ -146,7 +146,7 @@ export const updateCatatan = async (id, data) => {
         kategori: "Catatan Siswa",
         createdBy: kelas.idGuru,
         idKelas: kelas.id,
-        redirectSiswa: "/siswa/catatan-perkembangan",
+        redirectSiswa: "/siswa/catatan-perkembangan-siswa",
         keterangan: `Catatan baru untukmu`,
       });
     }
