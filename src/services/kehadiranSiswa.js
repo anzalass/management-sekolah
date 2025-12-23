@@ -238,7 +238,13 @@ export const getSiswaByKelasWithKehadiranHariIni = async (idKelas) => {
 
 export const updateKeteranganKehadiran = async (id, keterangan) => {
   try {
-    const allowedValues = ["Hadir", "Sakit", "Izin", "Tanpa Keterangan"];
+    const allowedValues = [
+      "Hadir",
+      "Sakit",
+      "Izin",
+      "Tanpa Keterangan",
+      "TanpaKeterangan",
+    ];
 
     if (!allowedValues.includes(keterangan)) {
       throw new Error("Keterangan hanya boleh: Hadir, Sakit, atau Izin.");
