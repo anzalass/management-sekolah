@@ -59,20 +59,19 @@ const app = express();
 app.use(express.json());
 
 const port = process.env.WEB_PORT || process.env.PORT || 4000; // ⬅️ ini kunci
+const corsOptions = {
+  origin: `${process.env.SERVER_FE}`,
+  credentials: true,
+  methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"],
+};
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 app.use(morgan("dev"));
 app.use(cookieParser()); // ✅ WAJIB!
-app.use(
-  cors({
-    origin: `${process.env.SERVER_FE}`,
-    methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
-    allowedHeaders: ["Content-Type", "Authorization"],
-    credentials: true,
-  })
-);
+app.use(cors(corsOptions));
 
 // server.js
-
+app.options("*", cors(corsOptions));
 app.use(bodyParser.json());
 
 app.get("/", (req, res) => {
@@ -131,7 +130,6 @@ app.get("/api/v1/view-image/:imageName", (req, res) => {
   });
 });
 app.use("/api/v1", pendaftaranRoutes);
-
 app.listen(port, () => {
   console.log(`Server running on http://localhost:${port}`);
 });
