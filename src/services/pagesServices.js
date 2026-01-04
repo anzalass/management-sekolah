@@ -100,6 +100,38 @@ export const dashboardMengajarServicePage = async (idGuru) => {
       },
     });
 
+    const kelasMapelList = await prisma.kelasDanMapel.findMany({
+      where: { idGuru },
+      select: {
+        _count: {
+          select: {
+            DaftarSiswa: true,
+          },
+        },
+      },
+    });
+
+    const totalSiswaMapel = kelasMapelList.reduce(
+      (sum, kelas) => sum + kelas._count.DaftarSiswa,
+      0
+    );
+
+    const kelasList = await prisma.kelas.findMany({
+      where: { idGuru },
+      select: {
+        _count: {
+          select: {
+            DaftarSiswaKelas: true,
+          },
+        },
+      },
+    });
+
+    const totalSiswaKelas = kelasList.reduce(
+      (sum, kelas) => sum + kelas._count.DaftarSiswaKelas,
+      0
+    );
+
     // 6. Status absen & izin
     const statusMasuk = !!kehadiranHariIni?.jamMasuk;
     const statusKeluar = !!kehadiranHariIni?.jamPulang;
@@ -140,7 +172,7 @@ export const dashboardMengajarServicePage = async (idGuru) => {
 
     // 8. Hitung total murid dari semua kelas yang diwali
     const totalMurid = kelasMapel.reduce(
-      (sum, kelas) => sum + (kelas._count.DaftarSiswaKelas || 0),
+      (sum, kelas) => sum + (kelas._count.DaftarSiswa || 0),
       0
     );
 
@@ -148,7 +180,7 @@ export const dashboardMengajarServicePage = async (idGuru) => {
     const SummarySingkat = {
       kelasDiajar: kelasMapel.length,
       kelasDiwali: kelasWaliKelas.length,
-      totalMurid,
+      totalMurid: totalSiswaKelas + totalSiswaMapel,
       totalJadwal: jadwalGuru.length, // atau count by tahun ajaran jika perlu
       izinBulanIni: perizinan.length, // atau filter by bulan jika perlu
       janjiTemu: await prisma.janjiTemu.count({ where: { idGuru } }),
