@@ -179,7 +179,6 @@ export const getPengumuman = async (idSiswa) => {
       const dataPengumumanKelas = await prisma.pengumumanKelas.findMany({
         where: {
           idKelas: kelassiswa[i].idKelas,
-          time: { gte: now }, // ← hanya yg belum lewat
         },
         orderBy: { time: "desc" },
       });
@@ -190,7 +189,6 @@ export const getPengumuman = async (idSiswa) => {
       const dataPengumumanKelas = await prisma.pengumumanKelas.findMany({
         where: {
           idKelas: kelassiswaMapel[i].idKelas,
-          time: { gte: now }, // ← hanya yg belum lewat
         },
         orderBy: { time: "desc" },
       });

@@ -58,6 +58,14 @@ router.get(
   getAllInventarisController
 );
 
+router.get(
+  "/daftar-inventaris",
+  AuthMiddleware,
+
+  hasRole("Kepala Sekolah", "Sarpras"),
+  getAllInventarisDistinctController
+);
+
 router.post(
   "/jenis-inventaris/create",
   AuthMiddleware,

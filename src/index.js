@@ -3,60 +3,59 @@ import morgan from "morgan";
 import cors from "cors";
 import bodyParser from "body-parser";
 import dotenv from "dotenv";
-import sekolaRoutes from "./routes/sekolahRoutes.js";
-import authRoutes from "./routes/authRoutes.js";
-import userRoutes from "./routes/userRoutes.js";
-import ekstraKulikulerRoutes from "./routes/ekstrakulikulerRoutes.js";
-import inventarisRoutes from "./routes/inventarisRoutes.js";
-import kegiatanSekolahRoutes from "./routes/kegiatanSekolahRoutes.js";
-import mataPelajaranRoutes from "./routes/mataPelajaranRoutes.js";
-import perpustakaanRoutes from "./routes/perpustakaanRoutes.js";
-import ruangRoutes from "./routes/ruangRoutes.js";
-import anggaranRoutes from "./routes/anggaranRoutes.js";
-import pengumumanRoutes from "./routes/pengumumanRoutes.js";
-import kehadiranGuruDanStaffRoutes from "./routes/kehadiranGurudanStaffRoutes.js";
-import testimoniRoutes from "./routes/testimoniRoutes.js";
-import newsRoutes from "./routes/newsRoutes.js";
-import galleryRoutes from "./routes/galleryRoutes.js";
-import guruTemplate from "./routes/guruTemplateRoutes.js";
-import raportRoutes from "./routes/raportRoutes.js";
-import perizinanGuruRoutes from "./routes/perizinanGuruRoutes.js";
-import jadwalMengajarRoutes from "./routes/jadwalMengajarRoutes.js";
-import kelasWaliKelasRoutes from "./routes/kelasWaliKelasRoutes.js";
-import kelasMapelRoutes from "./routes/kelasMapelRoutes.js";
-import pageRoutes from "./routes/pageRoutes.js";
-import bkRoutes from "./routes/bkroutes.js";
-import materiRoutes from "./routes/materiTugasSummaryRoutes.js";
-import penilaianRoutes from "./routes/penilaianRoutes.js";
-import arsipRoutes from "./routes/arsipRoutes.js";
-import kehadiranSiswaRoutes from "./routes/kehadiranSiswaRoutes.js";
-import catatahnPerkembanganSiswa from "./routes/catatanPerkembanganSiswaRoutes.js";
-import pengumumanKelasRoutes from "./routes/pengumumanKelasRoutes.js";
-import listKelasRoutes from "./routes/listKelasRoutes.js";
-import catatanAkhirSiswaRoutes from "./routes/catatanAkhirSiswaRoutes.js";
-import siswaRoutes from "./routes/siswa/siswaRoutes.js";
-import perizinanSiswa from "./routes/siswa/perizinanSiswaRoutes.js";
-
-import pembayaranRoutes from "./routes/pembayaranRoutes.js";
-import jadwalRoutes from "./routes/jadwalPelajaranRoutes.js";
-import janjiTemuRoutes from "./routes/siswa/janjiTemuRoutes.js";
-import ujianRoutes from "./routes/ujianIframeRoutes.js";
-import weeklyActivity from "./routes/weeklyActivityRoutes.js";
-import notifikasiRoutes from "./routes/notifikasiRoutes.js";
+import cookieParser from "cookie-parser";
 import { fileURLToPath } from "url";
 import path from "path";
 import fs from "fs";
-import cookieParser from "cookie-parser";
+
+// ROUTES
+import sekolaRoutes from "../src/routes/sekolahRoutes.js";
+import authRoutes from "../src/routes/authRoutes.js";
+import userRoutes from "../src/routes/userRoutes.js";
+import ekstraKulikulerRoutes from "../src/routes/ekstrakulikulerRoutes.js";
+import inventarisRoutes from "../src/routes/inventarisRoutes.js";
+import kegiatanSekolahRoutes from "../src/routes/kegiatanSekolahRoutes.js";
+import mataPelajaranRoutes from "../src/routes/mataPelajaranRoutes.js";
+import perpustakaanRoutes from "../src/routes/perpustakaanRoutes.js";
+import ruangRoutes from "../src/routes/ruangRoutes.js";
+import anggaranRoutes from "../src/routes/anggaranRoutes.js";
+import pengumumanRoutes from "../src/routes/pengumumanRoutes.js";
+import kehadiranGuruDanStaffRoutes from "../src/routes/kehadiranGurudanStaffRoutes.js";
+import testimoniRoutes from "../src/routes/testimoniRoutes.js";
+import newsRoutes from "../src/routes/newsRoutes.js";
+import galleryRoutes from "../src/routes/galleryRoutes.js";
+import guruTemplate from "../src/routes/guruTemplateRoutes.js";
+import raportRoutes from "../src/routes/raportRoutes.js";
+import perizinanGuruRoutes from "../src/routes/perizinanGuruRoutes.js";
+import jadwalMengajarRoutes from "../src/routes/jadwalMengajarRoutes.js";
+import kelasWaliKelasRoutes from "../src/routes/kelasWaliKelasRoutes.js";
+import kelasMapelRoutes from "../src/routes/kelasMapelRoutes.js";
+import pageRoutes from "../src/routes/pageRoutes.js";
+import bkRoutes from "../src/routes/bkroutes.js";
+import materiRoutes from "../src/routes/materiTugasSummaryRoutes.js";
+import penilaianRoutes from "../src/routes/penilaianRoutes.js";
+import arsipRoutes from "../src/routes/arsipRoutes.js";
+import kehadiranSiswaRoutes from "../src/routes/kehadiranSiswaRoutes.js";
+import catatahnPerkembanganSiswa from "../src/routes/catatanPerkembanganSiswaRoutes.js";
+import pengumumanKelasRoutes from "../src/routes/pengumumanKelasRoutes.js";
+import listKelasRoutes from "../src/routes/listKelasRoutes.js";
+import catatanAkhirSiswaRoutes from "../src/routes/catatanAkhirSiswaRoutes.js";
+import siswaRoutes from "../src/routes/siswa/siswaRoutes.js";
+import perizinanSiswa from "../src/routes/siswa/perizinanSiswaRoutes.js";
+import pembayaranRoutes from "../src/routes/pembayaranRoutes.js";
+import jadwalRoutes from "../src/routes/jadwalPelajaranRoutes.js";
+import janjiTemuRoutes from "../src/routes/siswa/janjiTemuRoutes.js";
+import ujianRoutes from "../src/routes/ujianIframeRoutes.js";
+import weeklyActivity from "../src/routes/weeklyActivityRoutes.js";
+import notifikasiRoutes from "../src/routes/notifikasiRoutes.js";
+import pendaftaranRoutes from "../src/routes/pendaftaranRoutes.js";
+
+dotenv.config();
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-import pendaftaranRoutes from "./routes/pendaftaranRoutes.js";
-
-dotenv.config();
-
 const app = express();
-app.use(express.json());
 
 const port = process.env.WEB_PORT || process.env.PORT || 4000; // ⬅️ ini kunci
 const corsOptions = {
@@ -75,7 +74,7 @@ app.options("*", cors(corsOptions));
 app.use(bodyParser.json());
 
 app.get("/", (req, res) => {
-  res.send("Management Sekolah");
+  res.json({ message: "Management Sekolah API running" });
 });
 
 app.use("/api/v1", anggaranRoutes);
@@ -117,19 +116,10 @@ app.use("/api/v1", janjiTemuRoutes);
 app.use("/api/v1", ujianRoutes);
 app.use("/api/v1", weeklyActivity);
 app.use("/api/v1", notifikasiRoutes);
-
-app.get("/api/v1/view-image/:imageName", (req, res) => {
-  const { imageName } = req.params;
-
-  const imagePath = path.join(__dirname, "../uploads", imageName);
-  fs.access(imagePath, fs.constants.F_OK, (err) => {
-    if (err) {
-      return res.status(404).json({ message: "Image not found" });
-    }
-    res.sendFile(imagePath);
-  });
-});
 app.use("/api/v1", pendaftaranRoutes);
 app.listen(port, () => {
   console.log(`Server running on http://localhost:${port}`);
 });
+
+/* ================= EXPORT (WAJIB) ================= */
+export default app;

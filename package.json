@@ -13,6 +13,7 @@
   "description": "",
   "dependencies": {
     "@prisma/client": "^6.3.1",
+    "@vercel/node": "^5.5.16",
     "bcryptjs": "^2.4.3",
     "body-parser": "^1.20.3",
     "cloudinary": "^1.41.3",

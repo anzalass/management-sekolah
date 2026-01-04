@@ -40,37 +40,63 @@ export const createPerizinanGuru = async (data, foto) => {
 
 export const updateStatusPerizinanGuru = async (id, status) => {
   try {
+    // 1. Ambil data perizinan
     const izin = await prisma.perizinanGuru.findUnique({
-      where: {
-        id: id,
-      },
+      where: { id },
+      include: { Guru: true }, // opsional, untuk log/error
     });
 
-    if (status === "disetujui") {
-      await prisma.kehadiranGuru.create({
-        data: {
-          idGuru: izin.idGuru,
-          jamMasuk: new Date(),
-          jamPulang: new Date(),
-          lokasiMasuk: "izin",
-          lokasiPulang: "izin",
-          fotoMasuk: "izin",
-          status: "Izin",
-        },
-      });
+    if (!izin) {
+      throw new Error("Perizinan tidak ditemukan");
     }
 
+    // 2. Jika status "disetujui", cek dan buat kehadiran (jika belum ada hari ini)
+    if (status === "disetujui") {
+      const todayStart = new Date();
+      todayStart.setHours(0, 0, 0, 0);
+
+      const todayEnd = new Date();
+      todayEnd.setHours(23, 59, 59, 999);
+
+      // Cek apakah guru sudah punya kehadiran hari ini
+      const existingKehadiran = await prisma.kehadiranGuru.findFirst({
+        where: {
+          idGuru: izin.idGuru,
+          jamMasuk: {
+            gte: todayStart,
+            lte: todayEnd,
+          },
+        },
+      });
+
+      // Jika belum ada, buat baru
+      if (!existingKehadiran) {
+        await prisma.kehadiranGuru.create({
+          data: {
+            idGuru: izin.idGuru,
+            jamMasuk: new Date(),
+            jamPulang: new Date(), // bisa null jika belum pulang, tapi sesuaikan logika
+            lokasiMasuk: "izin",
+            lokasiPulang: "izin",
+            fotoMasuk: "izin",
+            status: "Izin",
+          },
+        });
+      }
+      // Jika sudah ada, biarkan saja (tidak buat duplikat)
+    }
+
+    // 3. Update status perizinan
     return await prisma.perizinanGuru.update({
       where: { id },
       data: { status },
     });
   } catch (error) {
-    console.log(error);
+    console.error("Error updateStatusPerizinanGuru:", error);
     const errorMessage = prismaErrorHandler(error);
     throw new Error(errorMessage);
   }
 };
-
 export const deletePerizinanGuru = async (id) => {
   try {
     await prisma.$transaction(async () => {
@@ -170,4 +196,57 @@ export const getPerizinanGuru = async ({
     pageSize,
     totalPages: Math.ceil(total / pageSize),
   };
+};
+
+export const getPerizinanGuruByIdGuru = async ({
+  idGuru,
+  page = 1,
+  pageSize = 10,
+  startDate,
+  endDate,
+}) => {
+  try {
+    // Validasi page & pageSize
+    const pageNum = Math.max(1, Number(page) || 1);
+    const size = Math.max(1, Math.min(100, Number(pageSize) || 10)); // max 10,000 if needed
+    const skip = (pageNum - 1) * size;
+
+    // Bangun kondisi where
+    const where = { idGuru };
+
+    if (startDate || endDate) {
+      where.time = {};
+      if (startDate) {
+        where.time.gte = new Date(startDate);
+      }
+      if (endDate) {
+        where.time.lte = new Date(endDate);
+      }
+    }
+
+    // Ambil data & total
+    const [data, total] = await Promise.all([
+      prisma.perizinanGuru.findMany({
+        where,
+        skip,
+        take: size,
+        orderBy: { time: "desc" }, // terbaru dulu
+      }),
+      prisma.perizinanGuru.count({ where }),
+    ]);
+
+    return {
+      data,
+      meta: {
+        total,
+        page: pageNum,
+        pageSize: size,
+        totalPages: Math.ceil(total / size),
+      },
+    };
+  } catch (error) {
+    console.error("Error in getKehadiranGuruByIdGuru:", error);
+    const errorMessage = prismaErrorHandler(error);
+    throw new Error(errorMessage);
+  }
 };

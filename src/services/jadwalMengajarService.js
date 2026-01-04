@@ -9,6 +9,12 @@ export const createJadwalMengajar = async (data, idGuru) => {
         where: { id: idGuru },
       });
 
+      const tahunAjaran = await prisma.sekolah.findFirst({
+        select: {
+          tahunAjaran: true,
+        },
+      });
+
       if (!guru) {
         throw new Error(`Guru dengan Id ${data.idGuru} tidak ditemukan`);
       }
@@ -22,6 +28,7 @@ export const createJadwalMengajar = async (data, idGuru) => {
           hari: data.hari,
           ruang: data.ruang,
           kelas: data.kelas,
+          tahunAjaran: tahunAjaran.tahunAjaran,
         },
       });
 

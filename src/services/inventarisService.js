@@ -13,7 +13,7 @@ export const createInventaris = async (data) => {
           hargaBeli: parseInt(hargaBeli),
           waktuPengadaan: new Date(`${waktuPengadaan}T00:00:00Z`),
           keterangan,
-          ruang,
+          ruang: "Belum Digunakan",
         },
       });
     });
@@ -103,10 +103,72 @@ export const getAllInventaris = async ({
       where,
       skip,
       take,
+      orderBy: {
+        nama: "asc",
+      },
     });
 
     return {
       data: inventaris,
+      page,
+      pageSize,
+      count: await prisma.inventaris.count(),
+    };
+  } catch (error) {
+    console.log(error);
+    const errorMessage = prismaErrorHandler(error);
+    throw new Error(errorMessage);
+  }
+};
+
+export const getAllInventarisDistinct = async ({
+  page = 1,
+  pageSize = 10,
+  nama = "",
+  ruang = "",
+  hargaBeli,
+}) => {
+  try {
+    const skip = (page - 1) * pageSize;
+    const take = pageSize;
+    let condition = {};
+
+    if (nama) {
+      condition.nama = { contains: nama, mode: "insensitive" };
+    }
+
+    if (ruang) {
+      condition.ruang = { contains: ruang, mode: "insensitive" };
+    }
+
+    const inventaris = await prisma.inventaris.groupBy({
+      by: ["nama", "ruang"],
+      _sum: {
+        quantity: true,
+        hargaBeli: true,
+      },
+      where: condition,
+      orderBy: {
+        nama: "asc",
+      },
+      skip: skip,
+      take: take,
+    });
+
+    const formattedData = inventaris
+      .map((item) => ({
+        nama: item.nama,
+        ruang: item.ruang,
+        quantity: item._sum?.quantity ? item._sum.quantity : 0,
+        hargaBeli: item._sum?.hargaBeli ? item._sum.hargaBeli : 0,
+      }))
+      .filter((item) => {
+        if (!hargaBeli) return true;
+        return item.hargaBeli === parseInt(hargaBeli);
+      });
+
+    return {
+      data: formattedData,
       page,
       pageSize,
       count: await prisma.inventaris.count(),
@@ -172,65 +234,69 @@ export const getJenisInventarisById = async (id) => {
 };
 
 export const getAllInventaris2 = async () => {
-  const inventaris = await prisma.jenis_Inventaris.findMany();
+  const inventaris = await prisma.jenis_Inventaris.findMany({
+    orderBy: {
+      nama: "asc",
+    },
+  });
   return inventaris;
 };
 
-export const getAllInventarisDistinct = async ({
-  page = 1,
-  pageSize = 10,
-  nama = "",
-  ruang = "",
-  hargaBeli,
-}) => {
-  try{
-    const skip = (page - 1) * pageSize;
-    const take = pageSize;
-    let condition = {};
+// export const getAllInventarisDistinct = async ({
+//   page = 1,
+//   pageSize = 10,
+//   nama = "",
+//   ruang = "",
+//   hargaBeli,
+// }) => {
+//   try{
+//     const skip = (page - 1) * pageSize;
+//     const take = pageSize;
+//     let condition = {};
 
-    if (nama) {
-      condition.nama = { contains: nama, mode: "insensitive" };
-    }
+//     if (nama) {
+//       condition.nama = { contains: nama, mode: "insensitive" };
+//     }
 
-    if (ruang) {
-      condition.ruang = { contains: ruang, mode: "insensitive" };
-    }
-    if (hargaBeli) {
-      condition.hargaBeli = parseInt(hargaBeli);
-    }
+//     if (ruang) {
+//       condition.ruang = { contains: ruang, mode: "insensitive" };
+//     }
+//     if (hargaBeli) {
+//       condition.hargaBeli = parseInt(hargaBeli);
+//     }
 
-    const inventaris = await prisma.inventaris.groupBy({
-    by: ['nama', 'ruang'],
-    _sum: {
-      quantity: true,
-      hargaBeli: true,
-    },
-    where:condition,
-    orderBy: {
-      nama: 'asc',
-    },
-    skip:skip,
-    take:take
-  });
- 
-    // Format hasil untuk menghindari NaN
-    const formattedData = inventaris.map(item => ({
-      nama: item.nama,
-      quantity: item._sum?.quantity || 0,
-      hargaBeli: item._sum?.hargaBeli ? item._sum.hargaBeli:0,
-      ruang: item.ruang
-    }));
+//     const inventaris = await prisma.inventaris.groupBy({
+//     by: ['nama', 'ruang'],
+//     _sum: {
+//       quantity: true,
+//       hargaBeli: true,
+//     },
+//     where:condition,
+//     orderBy: {
+//       nama: 'asc',
+//     },
+//     skip:skip,
+//     take:take
+//   });
 
-    return {
-      data: formattedData
-    };
-  }catch(error){
-    console.log(error);
+//     // Format hasil untuk menghindari NaN
+//     const formattedData = inventaris.map(item => ({
+//       nama: item.nama,
+//       quantity: item._sum?.quantity || 0,
+//       hargaBeli: item._sum?.hargaBeli ? item._sum.hargaBeli:0,
+//       ruang: item.ruang
+//     }));
 
-    const errorMessage = prismaErrorHandler(error);
-    throw new Error(errorMessage);
-  }
-};
+//     return {
+//       data: formattedData
+//     };
+//   }catch(error){
+//     console.log(error);
+
+//     const errorMessage = prismaErrorHandler(error);
+//     throw new Error(errorMessage);
+//   }
+// };
 
 // export const getAllInventarisDistinct = async () => {
 //   try {
@@ -265,6 +331,9 @@ export const getAllJenisInventaris = async ({
       where,
       skip,
       take,
+      orderBy: {
+        nama: "asc",
+      },
     });
 
     return {
@@ -282,9 +351,8 @@ export const getAllJenisInventaris = async ({
 };
 
 export const createPemeliharaanInventaris = async (data) => {
-  const { nama, hargaMaintenance, keterangan, quantity, id, status } = data;
-
-  console.log("biaya", hargaMaintenance);
+  const { nama, hargaMaintenance, keterangan, quantity, id, status, ruang } =
+    data;
 
   try {
     const inventaris = await prisma.inventaris.findUnique({
@@ -305,7 +373,7 @@ export const createPemeliharaanInventaris = async (data) => {
         nama,
         biaya: status === "Sedang Maintenance" ? parseInt(hargaMaintenance) : 0,
         keterangan,
-        ruang: inventaris.ruang,
+        ruang: ruang,
         quantity: parseInt(quantity),
         status: status,
         idinventaris: id,
@@ -462,13 +530,16 @@ export const getAllPemeliharaanInventaris = async ({
       where,
       skip,
       take,
+      orderBy: {
+        nama: "asc",
+      },
     });
 
     return {
       data: pemeliharaanInventaris,
       page,
       pageSize,
-      count: await prisma.historyInventaris.count(),
+      totalData: await prisma.historyInventaris.count(),
     };
   } catch (error) {
     console.log(error);
