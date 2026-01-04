@@ -673,6 +673,7 @@ model PendaftaranSiswa{
     id          String @id @default(uuid())
     kategori String
     studentName     String
+    birthDay DateTime?
     parentName  String
     yourLocation String
     phoneNumber  String
