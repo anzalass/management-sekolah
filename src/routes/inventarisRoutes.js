@@ -108,6 +108,13 @@ router.get(
   getAllJenisInventarisController2
 );
 
+router.get(
+  "/daftar-inventaris",
+  AuthMiddleware,
+  
+  getAllInventarisDistinctController
+);
+
 router.post(
   "/pemeliharaan-inventaris/create",
   AuthMiddleware,

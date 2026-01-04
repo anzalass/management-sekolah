@@ -57,23 +57,21 @@ const __dirname = path.dirname(__filename);
 
 const app = express();
 
-/* ================= MIDDLEWARE ================= */
-app.use(express.json());
-app.use(bodyParser.json());
+const port = process.env.WEB_PORT || process.env.PORT || 4000; // ⬅️ ini kunci
+const corsOptions = {
+  origin: `${process.env.SERVER_FE}`,
+  credentials: true,
+  methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"],
+};
+app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 app.use(morgan("dev"));
-app.use(cookieParser());
+app.use(cookieParser()); // ✅ WAJIB!
+app.use(cors(corsOptions));
 
-app.use(
-  cors({
-    origin: process.env.SERVER_FE,
-    credentials: true,
-  })
-);
-
-/* ⚠️ Static uploads (READ ONLY) */
-app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
-
-/* ================= ROUTES ================= */
+// server.js
+app.options("*", cors(corsOptions));
+app.use(bodyParser.json());
 
 app.get("/", (req, res) => {
   res.json({ message: "Management Sekolah API running" });
@@ -119,16 +117,8 @@ app.use("/api/v1", ujianRoutes);
 app.use("/api/v1", weeklyActivity);
 app.use("/api/v1", notifikasiRoutes);
 app.use("/api/v1", pendaftaranRoutes);
-
-/* ================= IMAGE VIEW ================= */
-app.get("/api/v1/view-image/:imageName", (req, res) => {
-  const imagePath = path.join(process.cwd(), "uploads", req.params.imageName);
-
-  if (!fs.existsSync(imagePath)) {
-    return res.status(404).json({ message: "Image not found" });
-  }
-
-  res.sendFile(imagePath);
+app.listen(port, () => {
+  console.log(`Server running on http://localhost:${port}`);
 });
 
 /* ================= EXPORT (WAJIB) ================= */
