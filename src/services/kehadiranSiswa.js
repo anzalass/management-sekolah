@@ -24,41 +24,46 @@ export const createKehadiranSiswa = async (data) => {
     const tanggalAkhir = new Date(waktuWIB);
     tanggalAkhir.setHours(23, 59, 59, 999);
 
-    // Cek apakah sudah absen hari ini
-    const sudahAbsen = await prisma.kehadiranSiswa.findFirst({
-      where: {
-        idSiswa,
-        idKelas,
-        waktu: {
-          gte: tanggalAwal,
-          lte: tanggalAkhir,
+    let kehadiran = null;
+    let kelas = null;
+
+    await prisma.$transaction(async (tx) => {
+      // Cek apakah sudah absen hari ini
+      const sudahAbsen = await tx.kehadiranSiswa.findFirst({
+        where: {
+          idSiswa,
+          idKelas,
+          waktu: {
+            gte: tanggalAwal,
+            lte: tanggalAkhir,
+          },
         },
-      },
-    });
+      });
 
-    if (sudahAbsen) {
-      throw new Error("Siswa sudah melakukan absensi hari ini.");
-    }
+      if (sudahAbsen) {
+        throw new Error("Siswa sudah melakukan absensi hari ini.");
+      }
 
-    // Buat kehadiran baru
-    const kehadiran = await prisma.kehadiranSiswa.create({
-      data: {
-        idSiswa,
-        namaSiswa,
-        nisSiswa,
-        idKelas,
-        waktu: new Date(),
-        keterangan,
-      },
-    });
+      // Buat kehadiran baru
+      kehadiran = await tx.kehadiranSiswa.create({
+        data: {
+          idSiswa,
+          namaSiswa,
+          nisSiswa,
+          idKelas,
+          waktu: new Date(),
+          keterangan,
+        },
+      });
 
-    const kelas = await prisma.kelas.findUnique({
-      where: {
-        id: idKelas,
-      },
-      select: {
-        idGuru: true,
-      },
+      kelas = await tx.kelas.findUnique({
+        where: {
+          id: idKelas,
+        },
+        select: {
+          idGuru: true,
+        },
+      });
     });
 
     if (kehadiran) {

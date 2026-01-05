@@ -32,7 +32,6 @@ router.delete(
 router.get(
   "/kelas-walikelas/get/:id",
   AuthMiddleware,
-  isGuruOnly,
   getKelasWaliKelasByIdController
 );
 router.post(

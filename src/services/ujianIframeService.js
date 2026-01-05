@@ -209,7 +209,7 @@ export const SedangBerlangsungUjianService = async (data) => {
           idKelasMapel: data.idKelasMapel,
           idUjianIframe: data.idUjianIframe,
           status: "Sedang Berlangsung",
-          createdAt: new Date(),
+          createdOn: new Date(),
         },
       });
     }
