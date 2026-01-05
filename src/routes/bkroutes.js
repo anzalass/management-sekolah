@@ -50,7 +50,7 @@ router.delete(
 router.get(
   "/konseling-siswa",
   AuthMiddleware,
-  hasRole("Kepala Sekolah", "Guru BK"),
+  hasRole("Kepala Sekolah", "Guru BK", "Siswa"),
   AuthMiddleware,
   getKonselingBySiswaController
 );

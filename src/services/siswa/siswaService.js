@@ -283,6 +283,7 @@ export const getNilaiSiswaByTahun = async (idSiswa) => {
             namaGuru: true,
             kelas: true,
             tahunAjaran: true,
+            createdOn: true,
           },
         },
       },
@@ -304,7 +305,7 @@ export const getNilaiSiswaByTahun = async (idSiswa) => {
       guru: n.KelasDanMapel.namaGuru,
       kelas: n.KelasDanMapel.kelas,
       tahunAjaran: n.KelasDanMapel.tahunAjaran,
-      createdAt: n.createdAt,
+      createdOn: n.createdOn,
     }));
   } catch (error) {
     console.error(error);
