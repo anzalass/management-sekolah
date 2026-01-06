@@ -19,6 +19,7 @@ export const updateSekolahController = async (req, res) => {
   memoryUpload.single("foto")(req, res, async (err) => {
     try {
       console.log(req.file);
+      console.log(req.body);
 
       await updateSekolah(req.body, req.file);
       return res

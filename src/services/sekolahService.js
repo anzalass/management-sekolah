@@ -56,6 +56,7 @@ export const updateSekolah = async (data, foto) => {
     email,
     website,
     namaKepsek,
+    tahunAjaran,
   } = data;
 
   try {
@@ -87,6 +88,7 @@ export const updateSekolah = async (data, foto) => {
         telephone,
         email,
         website,
+        tahunAjaran,
         namaKepsek,
         logo: imageUploadResult?.secure_url,
         logoId: imageUploadResult?.public_id,
