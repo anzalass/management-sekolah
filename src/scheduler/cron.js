@@ -6,7 +6,7 @@ const prisma = new PrismaClient();
 
 export const DendaTelatBayar = () => {
   cron.schedule(
-    "02 * * * *",
+    "0 0 * * *",
     async () => {
       try {
         const today = new Date();
