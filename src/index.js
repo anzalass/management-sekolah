@@ -6,6 +6,7 @@ import dotenv from "dotenv";
 import cookieParser from "cookie-parser";
 import { fileURLToPath } from "url";
 import path from "path";
+import { DendaTelatBayar } from "./scheduler/cron.js";
 import fs from "fs";
 
 // ROUTES
@@ -117,6 +118,9 @@ app.use("/api/v1", ujianRoutes);
 app.use("/api/v1", weeklyActivity);
 app.use("/api/v1", notifikasiRoutes);
 app.use("/api/v1", pendaftaranRoutes);
+
+DendaTelatBayar();
+
 app.listen(port, () => {
   console.log(`Server running on http://localhost:${port}`);
 });

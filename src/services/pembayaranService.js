@@ -4,6 +4,8 @@ import {
   deleteFromCloudinary,
   uploadToCloudinary,
 } from "../utils/ImageHandler.js";
+import { StatusPembayaran } from "@prisma/client";
+
 import { createNotifikasi } from "./notifikasiService.js";
 const prisma = new PrismaClient();
 
@@ -60,6 +62,53 @@ export const createTagihan = async (data) => {
     });
   } catch (error) {
     console.error(error);
+    const errorMessage = prismaErrorHandler(error);
+    throw new Error(errorMessage);
+  }
+};
+
+export const getAllTagihanForDenda = async () => {
+  try {
+    const whereClause = {
+      status: StatusPembayaran.BELUM_BAYAR,
+        OR: [
+          { denda: null },
+          { denda: 0 },
+        ],
+    };
+
+    const data = await prisma.tagihan.findMany({
+      where: whereClause,
+      // include: {
+      //   Siswa: true,
+      // },
+      orderBy: {
+        createdOn: "desc",
+      },
+    });
+
+    return {
+      data,
+    };
+  } catch (error) {
+    console.log(error);
+    const errorMessage = prismaErrorHandler(error);
+    throw new Error(errorMessage);
+  }
+};
+
+export const updateTagihanForDenda = async (id, denda) => {
+  try {
+    return await prisma.$transaction(async (tx) => {
+      return await tx.tagihan.update({
+        where: { id },
+        data: {
+          denda: parseInt(denda),
+        },
+      });
+    });
+  } catch (error) {
+    console.log(error);
     const errorMessage = prismaErrorHandler(error);
     throw new Error(errorMessage);
   }
