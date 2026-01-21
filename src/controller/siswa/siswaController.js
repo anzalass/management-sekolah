@@ -7,6 +7,8 @@ export const getPembayaranRiwayatPembayaran = async (req, res) => {
     const data = await siswaService.getPembayaranRiwayatPembayaranByIdSiswa(
       idGuru
     );
+    console.log("data tagihan : ", data.tagihan);
+    console.log("data riwayat : ", data.riwayatPembayaran);
     return res.json({ success: true, data });
   } catch (error) {
     return res.status(500).json({ success: false, message: error.message });

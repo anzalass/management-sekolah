@@ -573,6 +573,7 @@ model Tagihan {
   status      StatusPembayaran
   keterangan  String
   nominal     Int
+  denda       Int?
   createdOn DateTime? @default(now())
   modifiedOn DateTime? @updatedAt
   RiwayatPembayaran RiwayatPembayaran[]
