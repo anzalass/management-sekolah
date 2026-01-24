@@ -1,5 +1,6 @@
 import { PrismaClient } from "@prisma/client";
 import { prismaErrorHandler } from "../utils/errorHandlerPrisma.js";
+import webpush from "web-push";
 const prisma = new PrismaClient();
 
 export const createNotifikasi = async ({
@@ -261,4 +262,90 @@ export const getNotifikasiByIDPenggunaTotal = async (id) => {
     console.error(error);
     throw new Error("Gagal mengambil data notifikasi");
   }
+};
+
+export const createSubscribe = async (userId, data) => {
+  try {
+    console.log(data);
+
+    await prisma.pushSubscription.upsert({
+      where: {
+        endpoint: data.endpoint, // ✅ FIX
+      },
+      update: {
+        userAgent: data.userAgent,
+        p256dh: data.p256dh,
+        auth: data.auth,
+      },
+      create: {
+        userId,
+        endpoint: data.endpoint,
+        p256dh: data.p256dh,
+        auth: data.auth,
+        userAgent: data.userAgent,
+      },
+    });
+  } catch (error) {
+    console.error(error);
+    throw new Error("Gagal menyimpan data notifikasi");
+  }
+};
+
+export const sendNotificationToUser = async (userId, payload) => {
+  const subs = await prisma.pushSubscription.findMany({
+    where: { userId },
+  });
+
+  for (const sub of subs) {
+    try {
+      await webpush.sendNotification(
+        {
+          endpoint: sub.endpoint,
+          keys: {
+            p256dh: sub.p256dh,
+            auth: sub.auth,
+          },
+        },
+        JSON.stringify(payload)
+      );
+    } catch (err) {
+      // subscription mati → hapus
+      if (err.statusCode === 410) {
+        await prisma.pushSubscription.delete({
+          where: { endpoint: sub.endpoint },
+        });
+      }
+    }
+  }
+};
+
+export const sendNotificationToUsers = async (userIds, payload) => {
+  const subs = await prisma.pushSubscription.findMany({
+    where: {
+      userId: { in: userIds },
+    },
+  });
+
+  await Promise.allSettled(
+    subs.map(async (sub) => {
+      try {
+        await webpush.sendNotification(
+          {
+            endpoint: sub.endpoint,
+            keys: {
+              p256dh: sub.p256dh,
+              auth: sub.auth,
+            },
+          },
+          JSON.stringify(payload)
+        );
+      } catch (err) {
+        if (err.statusCode === 410 || err.statusCode === 404) {
+          await prisma.pushSubscription.delete({
+            where: { endpoint: sub.endpoint },
+          });
+        }
+      }
+    })
+  );
 };

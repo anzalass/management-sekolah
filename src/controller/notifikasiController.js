@@ -3,6 +3,7 @@ import {
   updateStatusAndDeleteSiswa,
   updateStatusAndDeleteGuru,
   getNotifikasiByIDPenggunaTotal,
+  createSubscribe,
 } from "../services/notifikasiService.js"; // sesuaikan path service kamu
 
 // ✅ Ambil notifikasi berdasarkan ID pengguna
@@ -89,6 +90,24 @@ export const updateStatusGuruController = async (req, res) => {
     return res.status(500).json({
       success: false,
       message: error.message || "Gagal update notifikasi guru",
+    });
+  }
+};
+
+export const createSubscribeController = async (req, res) => {
+  try {
+    const { idGuru } = req.user;
+    if (!idGuru) {
+      return res.status(400).json({ message: "ID guru wajib diisi" });
+    }
+
+    await createSubscribe(idGuru, req.body);
+    return res.status(200).json({
+      success: true,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
     });
   }
 };

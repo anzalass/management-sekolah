@@ -6,64 +6,83 @@ import {
 } from "../utils/ImageHandler.js";
 import { StatusPembayaran } from "@prisma/client";
 
-import { createNotifikasi } from "./notifikasiService.js";
+import {
+  createNotifikasi,
+  sendNotificationToUsers,
+} from "./notifikasiService.js";
 const prisma = new PrismaClient();
 
 export const createTagihan = async (data) => {
   try {
     const { opsi, siswaList = [], ...tagihanData } = data;
-    console.log("opsi", opsi);
-    console.log("kelas", tagihanData.kelas);
 
-    return await prisma.$transaction(async (tx) => {
+    // 1️⃣ TRANSACTION (DB ONLY)
+    const siswaTarget = await prisma.$transaction(async (tx) => {
       let siswaTarget = [];
 
       if (opsi === "semua") {
         siswaTarget = await tx.siswa.findMany({
           where: {
-            OR: [
-              { tahunLulus: "" }, // kosong string
-              { tahunLulus: null }, // null
-            ],
+            OR: [{ tahunLulus: "" }, { tahunLulus: null }],
           },
+          select: { id: true, nis: true, nama: true },
         });
       } else if (opsi === "kelas") {
         siswaTarget = await tx.siswa.findMany({
           where: {
             kelas: { contains: tagihanData.kelas || "", mode: "insensitive" },
-            tahunLulus: "",
+            OR: [{ tahunLulus: "" }, { tahunLulus: null }],
           },
+          select: { id: true, nis: true, nama: true },
         });
       } else if (opsi === "individu") {
         if (!siswaList.length) {
           throw new Error("Daftar siswa individu kosong");
         }
-        siswaTarget = siswaList; // langsung pakai data dari client
+        siswaTarget = siswaList;
       }
 
       if (!siswaTarget.length) {
         throw new Error("Tidak ada siswa ditemukan");
       }
 
-      // mapping jadi array tagihan
       const tagihanArray = siswaTarget.map((siswa) => ({
         nama: tagihanData.nama,
         keterangan: tagihanData.keterangan,
-        status: "BELUM_BAYAR" || "BELUM BAYAR",
+        status: "BELUM_BAYAR",
         waktu: new Date(`${tagihanData.waktu}T00:00:00Z`),
         jatuhTempo: new Date(`${tagihanData.jatuhTempo}T00:00:00Z`),
-        nominal: parseInt(tagihanData.nominal),
+        nominal: Number(tagihanData.nominal),
         nisSiswa: siswa.nis,
         namaSiswa: siswa.nama,
         idSiswa: siswa.id,
       }));
 
-      return await tx.tagihan.createMany({ data: tagihanArray });
+      await tx.tagihan.createMany({ data: tagihanArray });
+
+      return siswaTarget; // ⬅️ penting, dipakai buat notif
     });
+
+    // 2️⃣ PUSH NOTIFICATION (SETELAH TRANSACTION)
+    const userIds = siswaTarget.map((s) => s.id);
+
+    const payload = {
+      title: "💰 Tagihan Baru",
+      body: `${tagihanData.nama} - Rp ${Number(
+        tagihanData.nominal
+      ).toLocaleString("id-ID")}`,
+      icon: "/icons/icon-192.png",
+      data: {
+        url: "/tagihan",
+      },
+    };
+
+    await sendNotificationToUsers(userIds, payload);
+
+    return { success: true, total: siswaTarget.length };
   } catch (error) {
     console.error(error);
-    const errorMessage = prismaErrorHandler(error);
-    throw new Error(errorMessage);
+    throw new Error(prismaErrorHandler(error));
   }
 };
 
@@ -71,10 +90,7 @@ export const getAllTagihanForDenda = async () => {
   try {
     const whereClause = {
       status: StatusPembayaran.BELUM_BAYAR,
-        OR: [
-          { denda: null },
-          { denda: 0 },
-        ],
+      OR: [{ denda: null }, { denda: 0 }],
     };
 
     const data = await prisma.tagihan.findMany({
