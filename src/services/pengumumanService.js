@@ -1,19 +1,41 @@
 import { PrismaClient } from "@prisma/client";
 import { prismaErrorHandler } from "../utils/errorHandlerPrisma.js";
+import { sendNotificationToUsers } from "./notifikasiService.js";
 const prisma = new PrismaClient();
 
 export const createPengumuman = async (data) => {
   const { title, time, content } = data;
+
   try {
-    await prisma.$transaction(async (tx) => {
-      await tx.pengumuman.create({
-        data: { title, time: new Date(`${time}T00:00:00Z`), createdOn: new Date(), modifiedOn: new Date(),content },
-      });
+    const pengumuman = await prisma.pengumuman.create({
+      data: {
+        title,
+        time: new Date(`${time}T00:00:00Z`),
+        content,
+      },
     });
+
+    const siswa = await prisma.siswa.findMany({
+      select: { id: true },
+    });
+
+    const userIds = siswa.map((s) => s.id);
+
+    const payload = {
+      title: "📢 " + pengumuman.title,
+      body: pengumuman.content.slice(0, 100),
+      icon: "/icons/icon-192.png",
+      data: {
+        url: `/pengumuman/${pengumuman.id}`,
+      },
+    };
+
+    await sendNotificationToUsers(userIds, payload);
+
+    return pengumuman;
   } catch (error) {
-    console.log(error);
-    const errorMessage = prismaErrorHandler(error);
-    throw new Error(errorMessage);
+    console.error(error);
+    throw new Error(prismaErrorHandler(error));
   }
 };
 
@@ -64,8 +86,8 @@ export const getAllPengumuman = async ({
     const take = pageSize;
     let where = {};
 
-    console.log("test skip : " +skip);
-    console.log("test take : " +take);
+    console.log("test skip : " + skip);
+    console.log("test take : " + take);
 
     if (title) {
       where.title = { contains: title, mode: "insensitive" };
@@ -84,7 +106,7 @@ export const getAllPengumuman = async ({
       },
     });
 
-    console.log("test take : " +data);
+    console.log("test take : " + data);
 
     return {
       data,

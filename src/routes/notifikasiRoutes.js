@@ -4,6 +4,7 @@ import {
   updateStatusSiswaController,
   updateStatusGuruController,
   getNotifikasiControllerTotal,
+  createSubscribeController,
 } from "../controller/notifikasiController.js";
 import {
   AuthMiddleware,
@@ -32,5 +33,7 @@ router.put(
   isGuruOnly,
   updateStatusGuruController
 );
+
+router.post("/notifikasi/subscribe", AuthMiddleware, createSubscribeController);
 
 export default router;

@@ -199,7 +199,6 @@ export const getPengumuman = async (idSiswa) => {
 
     // Ambil pengumuman umum yang belum lewat
     const pengumumanUmum = await prisma.pengumuman.findMany({
-      where: { time: { gte: now } }, // ← hanya yg belum lewat
       orderBy: { time: "desc" },
     });
 
