@@ -3,6 +3,10 @@ import {
   deleteFromCloudinary,
   uploadToCloudinary,
 } from "../utils/ImageHandler.js";
+import {
+  createNotifikasi,
+  sendNotificationToUsers,
+} from "./notifikasiService.js";
 const prisma = new PrismaClient();
 
 /**
@@ -16,44 +20,81 @@ export const createWeeklyActivity = async (
   files
 ) => {
   try {
-    // 1. Simpan WeeklyActivity dulu
-    const weeklyActivity = await prisma.weeklyActivity.create({
-      data: {
-        judul,
-        idKelas,
-        content,
-        waktu: new Date(waktu),
-      },
-    });
-
-    // 2. Upload semua foto
-    if (files && files.length > 0) {
-      const fotoPromises = files.map(async (file, index) => {
-        const uploaded = await uploadToCloudinary(
-          file.buffer,
-          "weekly_activity",
-          `weekly_${index}`
-        );
-        return prisma.fotoWeeklyActivity.create({
-          data: {
-            idWeeklyActivity: weeklyActivity.id,
-            fotoUrl: uploaded.secure_url,
-            fotoId: uploaded.public_id,
-          },
-        });
+    const result = await prisma.$transaction(async (tx) => {
+      // 1️⃣ Simpan Weekly Activity
+      const weeklyActivity = await tx.weeklyActivity.create({
+        data: {
+          judul,
+          idKelas,
+          content,
+          waktu: new Date(waktu),
+        },
       });
 
-      await Promise.all(fotoPromises);
-    }
+      // 2️⃣ Upload foto (jika ada)
+      if (files && files.length > 0) {
+        const fotoPromises = files.map(async (file, index) => {
+          const uploaded = await uploadToCloudinary(
+            file.buffer,
+            "weekly_activity",
+            `weekly_${index}`
+          );
 
-    // 3. Return WeeklyActivity lengkap dengan foto
+          return tx.fotoWeeklyActivity.create({
+            data: {
+              idWeeklyActivity: weeklyActivity.id,
+              fotoUrl: uploaded.secure_url,
+              fotoId: uploaded.public_id,
+            },
+          });
+        });
+
+        await Promise.all(fotoPromises);
+      }
+
+      // 3️⃣ Ambil daftar siswa di kelas
+      const daftarSiswa = await tx.daftarSiswaKelas.findMany({
+        where: { idKelas },
+        select: { idSiswa: true },
+      });
+
+      const userIds = daftarSiswa.map((s) => s.idSiswa);
+
+      // 4️⃣ Push notification (ke semua siswa kelas)
+      if (userIds.length > 0) {
+        await sendNotificationToUsers(userIds, {
+          title: "📸 Weekly Activity Baru",
+          body: judul,
+          icon: "/icons/icon-192.png",
+          data: {
+            url: "/siswa/weekly-activity",
+          },
+        });
+      }
+
+      // 5️⃣ DB Notification (SATU AJA – berbasis kelas)
+      await createNotifikasi({
+        createdBy: "", // isi idGuru kalau ada
+        idGuru: "",
+        idKelas: idKelas, // 🔥 kunci utama
+        idSiswa: "", // kosong → notif kelas
+        idTerkait: weeklyActivity.id,
+        kategori: "Weekly Activity",
+        keterangan: judul,
+        redirectSiswa: "/siswa/weekly-activity",
+      });
+
+      return weeklyActivity;
+    });
+
+    // 6️⃣ Return lengkap
     return await prisma.weeklyActivity.findUnique({
-      where: { id: weeklyActivity.id },
+      where: { id: result.id },
       include: { FotoWeeklyActivity: true },
     });
   } catch (error) {
     console.error("Error createWeeklyActivity:", error);
-    throw error;
+    throw new Error(prismaErrorHandler(error));
   }
 };
 

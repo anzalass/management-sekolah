@@ -7,6 +7,7 @@ import { addHours } from "date-fns";
 import {
   createNotifikasi,
   deleteNotifikasiByIdTerkait,
+  sendNotificationToUsers,
 } from "./notifikasiService.js";
 
 export const createKehadiranSiswa = async (data) => {
@@ -15,20 +16,19 @@ export const createKehadiranSiswa = async (data) => {
 
     // Ambil waktu lokal Indonesia (WIB)
     const now = new Date();
-    const waktuWIB = addHours(now, 7); // offset server UTC → WIB
+    const waktuWIB = addHours(now, 7);
 
-    // Batas awal dan akhir hari (WIB)
     const tanggalAwal = new Date(waktuWIB);
     tanggalAwal.setHours(0, 0, 0, 0);
 
     const tanggalAkhir = new Date(waktuWIB);
     tanggalAkhir.setHours(23, 59, 59, 999);
 
-    let kehadiran = null;
-    let kelas = null;
+    let kehadiran;
+    let kelas;
 
+    // 1️⃣ TRANSACTION (DB ONLY)
     await prisma.$transaction(async (tx) => {
-      // Cek apakah sudah absen hari ini
       const sudahAbsen = await tx.kehadiranSiswa.findFirst({
         where: {
           idSiswa,
@@ -44,7 +44,6 @@ export const createKehadiranSiswa = async (data) => {
         throw new Error("Siswa sudah melakukan absensi hari ini.");
       }
 
-      // Buat kehadiran baru
       kehadiran = await tx.kehadiranSiswa.create({
         data: {
           idSiswa,
@@ -57,32 +56,38 @@ export const createKehadiranSiswa = async (data) => {
       });
 
       kelas = await tx.kelas.findUnique({
-        where: {
-          id: idKelas,
-        },
-        select: {
-          idGuru: true,
-        },
+        where: { id: idKelas },
+        select: { idGuru: true },
       });
     });
 
-    if (kehadiran) {
-      await createNotifikasi({
-        idSiswa: kehadiran.idSiswa,
-        idTerkait: kehadiran.id,
-        kategori: "Kehadiran Siswa",
-        idKelas: idKelas,
-        createdBy: kelas.idGuru,
-        redirectSiswa: "/siswa/log-presensi",
-        keterangan: `Detail kehadiran ${kehadiran.waktu.toLocaleDateString()}`,
-      });
-    }
+    // 2️⃣ PUSH NOTIFICATION (SETELAH TRANSACTION)
+    await sendNotificationToUsers([idSiswa], {
+      title: "📍 Presensi Berhasil",
+      body: `Presensi kamu tercatat hari ini`,
+      icon: "/icons/icon-192.png",
+      data: {
+        url: "/siswa/log-presensi",
+      },
+    });
+
+    // 3️⃣ NOTIFIKASI DB (SATU RECORD)
+    await createNotifikasi({
+      idSiswa: kehadiran.idSiswa,
+      idTerkait: kehadiran.id,
+      kategori: "Kehadiran Siswa",
+      idKelas,
+      createdBy: kelas?.idGuru || "",
+      redirectSiswa: "/siswa/log-presensi",
+      keterangan: `Presensi tanggal ${kehadiran.waktu.toLocaleDateString(
+        "id-ID"
+      )}`,
+    });
 
     return kehadiran;
   } catch (error) {
     console.error(error);
-    const errorMessage = prismaErrorHandler(error);
-    throw new Error(errorMessage);
+    throw new Error(prismaErrorHandler(error));
   }
 };
 

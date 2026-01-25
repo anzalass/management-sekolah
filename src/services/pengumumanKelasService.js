@@ -1,15 +1,67 @@
 import { PrismaClient } from "@prisma/client";
 import { prismaErrorHandler } from "../utils/errorHandlerPrisma.js";
+import {
+  createNotifikasi,
+  sendNotificationToUsers,
+} from "./notifikasiService.js";
 
 const prisma = new PrismaClient();
 
 export const createPengumumanKelas = async (data) => {
   try {
-    return await prisma.pengumumanKelas.create({ data });
+    // 1️⃣ Create pengumuman
+    const pengumuman = await prisma.pengumumanKelas.create({ data });
+
+    // 2️⃣ Ambil siswa dari KELAS
+    const siswaKelas = await prisma.daftarSiswaKelas.findMany({
+      where: { idKelas: pengumuman.idKelas },
+      select: { idSiswa: true },
+    });
+
+    // 3️⃣ Ambil siswa dari MAPEL
+    const siswaMapel = await prisma.daftarSiswaMapel.findMany({
+      where: { idKelas: pengumuman.idKelas },
+      select: { idSiswa: true },
+    });
+
+    // 4️⃣ Gabung + hapus duplikat
+    const userIds = [
+      ...new Set([
+        ...siswaKelas.map((s) => s.idSiswa),
+        ...siswaMapel.map((s) => s.idSiswa),
+      ]),
+    ];
+
+    // 5️⃣ CREATE NOTIFIKASI DB (SATU KALI SAJA)
+    await createNotifikasi({
+      createdBy: data.createdBy || "",
+      idGuru: data.idGuru || "",
+      idKelas: pengumuman.idKelas, // 🔥 kunci utama
+      idSiswa: "", // kosong → notif berbasis kelas
+      idTerkait: pengumuman.id,
+      kategori: "Pengumuman",
+      keterangan: pengumuman.title,
+      redirectSiswa: "/siswa/pengumuman",
+    });
+
+    // 6️⃣ PUSH NOTIFICATION (KE SEMUA SISWA)
+    if (userIds.length) {
+      const payload = {
+        title: "📢 Pengumuman Baru",
+        body: pengumuman.title,
+        icon: "/icons/icon-192.png",
+        data: {
+          url: "/siswa/pengumuman",
+        },
+      };
+
+      await sendNotificationToUsers(userIds, payload);
+    }
+
+    return pengumuman;
   } catch (error) {
     console.log(error);
-    const errorMessage = prismaErrorHandler(error);
-    throw new Error(errorMessage);
+    throw new Error(prismaErrorHandler(error));
   }
 };
 
