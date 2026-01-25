@@ -400,6 +400,9 @@ enum StatusIzin {
   menunggu
   disetujui
   ditolak
+  waiting
+  approved
+  rejected
 }
 model PerizinanGuru {
   id         String   @id @default(uuid())

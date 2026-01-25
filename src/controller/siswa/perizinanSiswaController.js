@@ -19,14 +19,17 @@ export const createPerizinanSiswaController = async (req, res) => {
         idSiswa: req.user.idGuru,
         idKelas: req.user.idKelas,
         time: req.body.time,
+        enddate: req.body.enddate,
         keterangan: req.body.keterangan,
         bukti: req.file,
       };
       const newIzin = await createPerizinanSiswa(data);
+      console.log("new izin : ",newIzin);
       res
         .status(201)
         .json({ message: "Perizinan berhasil diajukan", data: newIzin });
     } catch (error) {
+      console.log(error.message);
       return res.status(400).json({ message: error.message });
     }
   });
