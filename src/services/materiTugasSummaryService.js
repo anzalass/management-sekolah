@@ -7,8 +7,9 @@ import {
 import {
   createNotifikasi,
   deleteNotifikasiByIdTerkait,
+  sendNotificationToUsers,
 } from "./notifikasiService.js";
-import { getDetailKelasMapel, getKelasMapelById } from "./kelasMapelService.js";
+import { getKelasMapelById } from "./kelasMapelService.js";
 import { getNamaSiswa } from "./userService.js";
 
 const prisma = new PrismaClient();
@@ -18,10 +19,6 @@ export const createMateriMapel = async (data, file) => {
     let UploadResult = null;
 
     if (file && file.buffer) {
-      if (!file.buffer || file.buffer.length === 0) {
-        throw new Error("File kosong saat dibaca dari buffer");
-      }
-
       UploadResult = await uploadToCloudinary(
         file.buffer,
         "materi",
@@ -29,9 +26,19 @@ export const createMateriMapel = async (data, file) => {
       );
     }
 
-    console.log("pdf", file);
-    console.log("res pdf", UploadResult);
+    // 1️⃣ Ambil siswa
+    const daftarSiswaKelasMapel = await prisma.daftarSiswaMapel.findMany({
+      where: {
+        idKelas: data.idKelasMapel,
+      },
+      select: {
+        idSiswa: true,
+      },
+    });
 
+    const siswaIds = daftarSiswaKelasMapel.map((s) => s.idSiswa);
+
+    // 2️⃣ Create materi
     const mapel = await prisma.materiMapel.create({
       data: {
         judul: data.judul,
@@ -46,6 +53,8 @@ export const createMateriMapel = async (data, file) => {
     });
 
     const kelas = await getKelasMapelById(mapel.idKelasMapel);
+
+    // 3️⃣ Notifikasi DB (SATU)
     await createNotifikasi({
       idTerkait: mapel.id,
       createdBy: kelas.idGuru,
@@ -57,6 +66,15 @@ export const createMateriMapel = async (data, file) => {
       redirectGuru: "",
       redirectSiswa: `/siswa/kelas/${kelas.id}/materi/${mapel.id}`,
     });
+
+    // 4️⃣ Push ke semua siswa
+    if (siswaIds.length > 0) {
+      await sendNotificationToUsers(siswaIds, {
+        title: "Materi Baru 📚",
+        body: `Materi ${data.judul} telah ditambahkan`,
+        url: `/siswa/kelas/${kelas.id}/materi/${mapel.id}`,
+      });
+    }
   } catch (error) {
     console.log(error);
     const errorMessage = prismaErrorHandler(error);
@@ -293,6 +311,18 @@ export const createTugasMapel = async (data, file) => {
         pdfUrlId: UploadResult?.public_id || null,
       },
     });
+
+    // 1️⃣ Ambil siswa
+    const daftarSiswaKelasMapel = await prisma.daftarSiswaMapel.findMany({
+      where: {
+        idKelas: data.idKelasMapel,
+      },
+      select: {
+        idSiswa: true,
+      },
+    });
+
+    const siswaIds = daftarSiswaKelasMapel.map((s) => s.idSiswa);
     const kelas = await getKelasMapelById(tugas.idKelasMapel);
     await createNotifikasi({
       idTerkait: tugas.id,
@@ -305,6 +335,14 @@ export const createTugasMapel = async (data, file) => {
       redirectGuru: "",
       redirectSiswa: `/siswa/kelas/${kelas.id}/tugas/${tugas.id}`,
     });
+
+    if (siswaIds.length > 0) {
+      await sendNotificationToUsers(siswaIds, {
+        title: "Tugas Baru 📚",
+        body: `Tugas ${tugas.judul} telah ditambahkan`,
+        url: `/siswa/kelas/${kelas.id}/tugas/${tugas.id}`,
+      });
+    }
   } catch (error) {
     console.log(error);
     const errorMessage = prismaErrorHandler(error);

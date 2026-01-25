@@ -5,7 +5,10 @@ import {
   uploadToCloudinary,
 } from "../utils/ImageHandler.js";
 import { deleteWeeklyActivityIdKelas } from "./weeklyActivityService.js";
-import { createNotifikasi } from "./notifikasiService.js";
+import {
+  createNotifikasi,
+  sendNotificationToUsers,
+} from "./notifikasiService.js";
 const prisma = new PrismaClient();
 
 export const createKelasWaliKelas = async (data, banner) => {
@@ -341,17 +344,49 @@ export const rekapNilaiAbsensiSiswa = async (idSiswa, idKelas) => {
 
 export const terbitkanRapot = async (id, value) => {
   try {
-    await prisma.daftarSiswaKelas.update({
-      where: {
-        id,
-      },
-      data: {
-        rapotSiswa: value,
-      },
+    const result = await prisma.$transaction(async (tx) => {
+      const updated = await tx.daftarSiswaKelas.update({
+        where: { id },
+        data: {
+          rapotSiswa: value,
+        },
+        select: {
+          idSiswa: true,
+          idKelas: true,
+        },
+      });
+
+      if (!updated) return updated;
+
+      const statusText = value ? "telah diterbitkan" : "dibatalkan";
+
+      // 🔔 PUSH NOTIF (personal)
+      await sendNotificationToUsers([updated.idSiswa], {
+        title: "📘 Rapot",
+        body: `Rapot kamu ${statusText}`,
+        icon: "/icons/icon-192.png",
+        data: {
+          url: "/siswa/rapot",
+        },
+      });
+
+      // 🗂️ DB NOTIF (1 record)
+      await createNotifikasi({
+        createdBy: "", // sistem / wali kelas kalau ada
+        idSiswa: updated.idSiswa,
+        idKelas: updated.idKelas,
+        idTerkait: id,
+        kategori: "Rapot",
+        redirectSiswa: "/siswa/rapot",
+        keterangan: `Rapot kamu ${statusText}`,
+      });
+
+      return updated;
     });
+
+    return result;
   } catch (error) {
     console.log(error);
-    const errorMessage = prismaErrorHandler(error);
-    throw new Error(errorMessage);
+    throw new Error(prismaErrorHandler(error));
   }
 };

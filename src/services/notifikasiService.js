@@ -155,9 +155,16 @@ export const getNotifikasiByIDPengguna = async (id) => {
           { idSiswa: id },
           { idGuru: id },
           { idKelas: { in: uniqueIdKelas } },
+
+          // 🌍 NOTIF GLOBAL
+          {
+            idSiswa: "",
+            idGuru: "",
+            idKelas: "",
+          },
         ],
         NOT: {
-          createdBy: id, // 🚀 filter supaya ga ambil notif yang dibuat user sendiri
+          createdBy: id, // ⛔ jangan ambil notif buatan diri sendiri
         },
       },
       orderBy: {
@@ -320,32 +327,47 @@ export const sendNotificationToUser = async (userId, payload) => {
 };
 
 export const sendNotificationToUsers = async (userIds, payload) => {
-  const subs = await prisma.pushSubscription.findMany({
-    where: {
-      userId: { in: userIds },
-    },
-  });
+  try {
+    const subs = await prisma.pushSubscription.findMany({
+      where: {
+        userId: { in: userIds },
+      },
+    });
 
-  await Promise.allSettled(
-    subs.map(async (sub) => {
-      try {
-        await webpush.sendNotification(
-          {
-            endpoint: sub.endpoint,
-            keys: {
-              p256dh: sub.p256dh,
-              auth: sub.auth,
+    console.log("📨 Total subscription:", subs.length);
+
+    await Promise.allSettled(
+      subs.map(async (sub) => {
+        try {
+          await webpush.sendNotification(
+            {
+              endpoint: sub.endpoint,
+              keys: {
+                p256dh: sub.p256dh,
+                auth: sub.auth,
+              },
             },
-          },
-          JSON.stringify(payload)
-        );
-      } catch (err) {
-        if (err.statusCode === 410 || err.statusCode === 404) {
-          await prisma.pushSubscription.delete({
-            where: { endpoint: sub.endpoint },
-          });
+            JSON.stringify(payload)
+          );
+
+          // ✅ LOG BERHASIL
+          console.log("✅ Push sent:", sub.endpoint);
+        } catch (err) {
+          console.error("❌ Push failed:", sub.endpoint, err.statusCode);
+
+          // expired / unsubscribed
+          if (err.statusCode === 410 || err.statusCode === 404) {
+            await prisma.pushSubscription.delete({
+              where: { endpoint: sub.endpoint },
+            });
+            console.log("🗑️ Subscription deleted:", sub.endpoint);
+          }
         }
-      }
-    })
-  );
+      })
+    );
+
+    console.log("🎯 Push process finished");
+  } catch (error) {
+    console.error("🔥 sendNotificationToUsers error:", error);
+  }
 };
