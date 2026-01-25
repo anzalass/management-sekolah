@@ -4,6 +4,7 @@ import { prismaErrorHandler } from "../utils/errorHandlerPrisma.js";
 import {
   createNotifikasi,
   deleteNotifikasiByIdTerkait,
+  sendNotificationToUsers,
 } from "./notifikasiService.js";
 
 export const createJenisNilai = async (data) => {
@@ -162,9 +163,7 @@ export const createNilaiSiswa = async (data) => {
             idJenisNilai: data.idJenisNilai,
           },
         },
-        data: {
-          nilai: data.nilai,
-        },
+        data: { nilai: data.nilai },
       });
     } else {
       result = await prisma.nilaiSiswa.create({
@@ -178,27 +177,38 @@ export const createNilaiSiswa = async (data) => {
       });
     }
 
-    // Buat notifikasi setelah berhasil
     const kelas = await prisma.kelasDanMapel.findUnique({
       where: { id: result.idKelasDanMapel },
-      select: { namaMapel: true, idGuru: true, id: true },
+      select: {
+        namaMapel: true,
+        idGuru: true,
+        id: true,
+      },
     });
 
+    // 🔔 PUSH NOTIF (1 siswa)
+    await sendNotificationToUsers([result.idSiswa], {
+      title: "📊 Nilai Baru",
+      body: `Nilai ${kelas.namaMapel}: ${result.nilai}`,
+      icon: "/icons/icon-192.png",
+      data: { url: "/siswa/nilai" },
+    });
+
+    // 🗂️ DB NOTIF (1 record)
     await createNotifikasi({
+      createdBy: kelas.idGuru,
       idSiswa: result.idSiswa,
+      idKelas: kelas.id,
       idTerkait: result.id,
       kategori: "Nilai",
-      createdBy: kelas.idGuru,
-      idKelas: kelas.id,
+      keterangan: `Kamu mendapatkan nilai ${result.nilai} pada mata pelajaran ${kelas.namaMapel} (${result.jenisNilai})`,
       redirectSiswa: "/siswa/nilai",
-      keterangan: `Kamu mendapatkan nilai : ${result.nilai} dari mata pelajaran : ${kelas.namaMapel} dari penilaian : ${result.jenisNilai}`,
     });
 
     return result;
   } catch (error) {
     console.error(error);
-    const errorMessage = prismaErrorHandler(error);
-    throw new Error(errorMessage);
+    throw new Error(prismaErrorHandler(error));
   }
 };
 
@@ -212,7 +222,7 @@ export const updateNilaiSiswa = async (id, data) => {
         },
       });
 
-      const kelas = await prisma.kelasDanMapel.findUnique({
+      const kelas = await tx.kelasDanMapel.findUnique({
         where: {
           id: updated.idKelasDanMapel,
         },
@@ -223,24 +233,45 @@ export const updateNilaiSiswa = async (id, data) => {
         },
       });
 
-      if (updated) {
-        await createNotifikasi({
-          idSiswa: updated.idSiswa,
+      if (!kelas) return updated;
+
+      // 🔥 OPTIONAL: hapus notif nilai lama biar ga numpuk
+      await tx.notifikasi.deleteMany({
+        where: {
           idTerkait: updated.id,
           kategori: "Nilai",
-          createdBy: kelas.idGuru,
-          idKelas: kelas.id,
-          redirectSiswa: "/siswa/nilai",
-          keterangan: `Kamu mendapatkan nilai : ${updated.nilai} dari mata pelajaran : ${kelas.namaMapel} dari penilaian : ${updated.jenisNilai}`,
-        });
-      }
+          idSiswa: updated.idSiswa,
+        },
+      });
+
+      // 🔔 PUSH NOTIF (personal)
+      await sendNotificationToUsers([updated.idSiswa], {
+        title: "✏️ Perubahan Nilai",
+        body: `Nilai ${kelas.namaMapel} diperbarui menjadi ${updated.nilai}`,
+        icon: "/icons/icon-192.png",
+        data: {
+          url: "/siswa/nilai",
+        },
+      });
+
+      // 🗂️ DB NOTIF (1 record)
+      await createNotifikasi({
+        createdBy: kelas.idGuru,
+        idSiswa: updated.idSiswa,
+        idKelas: kelas.id,
+        idTerkait: updated.id,
+        kategori: "Nilai",
+        redirectSiswa: "/siswa/nilai",
+        keterangan: `Nilai kamu pada mata pelajaran ${kelas.namaMapel} telah diperbarui menjadi ${updated.nilai} (${updated.jenisNilai})`,
+      });
+
       return updated;
     });
+
     return result;
   } catch (error) {
     console.log(error);
-    const errorMessage = prismaErrorHandler(error);
-    throw new Error(errorMessage);
+    throw new Error(prismaErrorHandler(error));
   }
 };
 

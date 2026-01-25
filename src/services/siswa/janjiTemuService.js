@@ -4,6 +4,7 @@ import { prismaErrorHandler } from "../../utils/errorHandlerPrisma.js";
 import {
   createNotifikasi,
   deleteNotifikasiByIdTerkait,
+  sendNotificationToUsers,
 } from "../notifikasiService.js";
 
 const prisma = new PrismaClient();
@@ -190,35 +191,66 @@ export const deleteJanjiTemu = async (id) => {
 
 export const updateStatusJanjiTemu = async (id, status) => {
   try {
+    // 1️⃣ Hapus notif lama berbasis idTerkait
     await deleteNotifikasiByIdTerkait(id);
+
+    // 2️⃣ Update status janji temu
     const janjiTemu = await prisma.janjiTemu.update({
       where: { id },
-      data: {
-        status: status,
-      },
+      data: { status },
     });
 
+    // 3️⃣ Ambil data siswa
     const siswa = await prisma.siswa.findUnique({
-      where: {
-        id: janjiTemu.idSiswa,
-      },
-      select: {
-        nama: true,
+      where: { id: janjiTemu.idSiswa },
+      select: { nama: true },
+    });
+
+    // 4️⃣ Tentukan pesan berdasarkan status
+    let pesan = "";
+    let pushTitle = "📅 Janji Temu";
+    let pushBody = "";
+
+    switch (status) {
+      case "setujui":
+        pesan = `Janji temu kamu disetujui`;
+        pushBody = "Janji temu kamu telah disetujui";
+        break;
+      case "tolak":
+        pesan = `Janji temu kamu ditolak`;
+        pushBody = "Janji temu kamu ditolak";
+        break;
+      default:
+        pesan = `${siswa.nama} mengajukan janji temu`;
+        pushBody = "Pengajuan janji temu baru";
+    }
+
+    // 5️⃣ Push Notification (ke siswa)
+    await sendNotificationToUsers([janjiTemu.idSiswa], {
+      title: pushTitle,
+      body: pushBody,
+      icon: "/icons/icon-192.png",
+      data: {
+        url: "/siswa/janji-temu",
       },
     });
 
+    // 6️⃣ DB Notification (SATU AJA)
     await createNotifikasi({
-      idSiswa: janjiTemu.idSiswa,
-      kategori: "Janji Temu Siswa",
-      idTerkait: janjiTemu.id,
-      redirectGuru: `/mengajar/janji-temu`,
-      redirectSiswa: `/siswa/janji-temu`,
-      keterangan: `${siswa.nama} mengajukan janji temu`,
       createdBy: janjiTemu.idGuru,
+      idGuru: janjiTemu.idGuru,
+      idKelas: "",
+      idSiswa: janjiTemu.idSiswa,
+      idTerkait: janjiTemu.id,
+      kategori: "Janji Temu",
+      keterangan: pesan,
+      redirectGuru: "/mengajar/janji-temu",
+      redirectSiswa: "/siswa/janji-temu",
     });
+
+    return janjiTemu;
   } catch (error) {
     console.log(error);
-    const errorMessage = prismaErrorHandler(error);
-    throw new Error(errorMessage);
+    throw new Error(prismaErrorHandler(error));
   }
 };

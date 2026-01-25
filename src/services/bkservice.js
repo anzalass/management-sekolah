@@ -1,5 +1,9 @@
 import { PrismaClient } from "@prisma/client";
 import { prismaErrorHandler } from "../utils/errorHandlerPrisma.js";
+import {
+  createNotifikasi,
+  sendNotificationToUsers,
+} from "./notifikasiService.js";
 const prisma = new PrismaClient();
 
 const computeEffect = (jenis, poin) => {
@@ -11,17 +15,21 @@ export const createPelanggaranPrestasi = async ({
   idSiswa,
   waktu = new Date(),
   poin,
-  jenis,
+  jenis, // "PELANGGARAN" | "PRESTASI"
   keterangan,
+  createdBy = "",
 }) => {
   try {
     return await prisma.$transaction(async (tx) => {
+      // 1️⃣ Ambil siswa
       const siswa = await tx.siswa.findUnique({
         where: { id: idSiswa },
         select: { poin: true, nis: true },
       });
+
       if (!siswa) throw new Error("Siswa tidak ditemukan");
 
+      // 2️⃣ Simpan pelanggaran / prestasi
       const record = await tx.pelanggaran_Dan_Prestasi_Siswa.create({
         data: {
           idSiswa,
@@ -33,6 +41,7 @@ export const createPelanggaranPrestasi = async ({
         },
       });
 
+      // 3️⃣ Hitung efek poin
       const effect = computeEffect(jenis, poin);
       const currentPoin = typeof siswa.poin === "number" ? siswa.poin : 0;
 
@@ -41,12 +50,40 @@ export const createPelanggaranPrestasi = async ({
         data: { poin: currentPoin + effect },
       });
 
+      // 4️⃣ Siapkan pesan
+      const isPrestasi = jenis === "Prestasi";
+
+      const notifText = isPrestasi
+        ? `Prestasi baru: +${poin} poin`
+        : `Pelanggaran: -${poin} poin`;
+
+      // 5️⃣ PUSH NOTIFICATION (ke siswa)
+      await sendNotificationToUsers([idSiswa], {
+        title: isPrestasi ? "🏆 Prestasi Baru" : "⚠️ Pelanggaran",
+        body: notifText,
+        icon: "/icons/icon-192.png",
+        data: {
+          url: isPrestasi ? "/siswa/prestasi" : "/siswa/pelanggaran",
+        },
+      });
+
+      // 6️⃣ DB NOTIFICATION (SATU AJA)
+      await createNotifikasi({
+        createdBy,
+        idGuru: createdBy,
+        idKelas: "",
+        idSiswa,
+        idTerkait: record.id,
+        kategori: "Pelanggaran & Prestasi",
+        keterangan: notifText,
+        redirectSiswa: "/siswa/pelanggaran-prestasi",
+      });
+
       return record;
     });
   } catch (err) {
     console.log(err);
-    const errorMessage = prismaErrorHandler(err);
-    throw new Error(errorMessage);
+    throw new Error(prismaErrorHandler(err));
   }
 };
 
@@ -213,12 +250,15 @@ export const deletePelanggaranPrestasi = async (id) => {
 // Create Konseling
 export const createKonseling = async (data) => {
   try {
+    // 1️⃣ Ambil siswa
     const siswa = await prisma.siswa.findUnique({
-      where: {
-        id: data.idSiswa,
-      },
+      where: { id: data.idSiswa },
+      select: { nis: true },
     });
 
+    if (!siswa) throw new Error("Siswa tidak ditemukan");
+
+    // 2️⃣ Create konseling
     const konseling = await prisma.konseling.create({
       data: {
         namaSiswa: data.namaSiswa,
@@ -229,11 +269,33 @@ export const createKonseling = async (data) => {
         tanggal: new Date(`${data.tanggal}T00:00:00Z`),
       },
     });
+
+    // 3️⃣ PUSH NOTIFICATION (ke siswa)
+    await sendNotificationToUsers([data.idSiswa], {
+      title: "🧠 Konseling Baru",
+      body: `Ada catatan konseling baru untukmu`,
+      icon: "/icons/icon-192.png",
+      data: {
+        url: "/siswa/konseling",
+      },
+    });
+
+    // 4️⃣ NOTIFIKASI DB (SATU AJA)
+    await createNotifikasi({
+      createdBy: data.createdBy || "",
+      idGuru: data.createdBy || "",
+      idKelas: "",
+      idSiswa: data.idSiswa,
+      idTerkait: konseling.id,
+      kategori: "Konseling",
+      keterangan: "Ada catatan konseling baru untukmu",
+      redirectSiswa: "/siswa/konseling",
+    });
+
     return konseling;
   } catch (error) {
     console.log(error);
-    const errorMessage = prismaErrorHandler(error);
-    throw new Error(errorMessage);
+    throw new Error(prismaErrorHandler(error));
   }
 };
 
