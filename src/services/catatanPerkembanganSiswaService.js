@@ -3,35 +3,47 @@ import { prismaErrorHandler } from "../utils/errorHandlerPrisma.js";
 import {
   createNotifikasi,
   deleteNotifikasiByIdTerkait,
+  sendNotificationToUsers,
 } from "./notifikasiService.js";
 
 const prisma = new PrismaClient();
 
 export const createCatatan = async (data, nama) => {
   try {
-    const cttn = await prisma.catatanPerkembanganSiswa.create({
-      data: {
-        idKelas: data.idKelas,
-        idSiswa: data.idSiswa,
-        content: data.content,
-        kategori: data.kategori,
-        namaGuru: nama,
-        time: new Date(),
-      },
-    });
+    const result = await prisma.$transaction(async (tx) => {
+      const cttn = await tx.catatanPerkembanganSiswa.create({
+        data: {
+          idKelas: data.idKelas,
+          idSiswa: data.idSiswa,
+          content: data.content,
+          kategori: data.kategori,
+          namaGuru: nama,
+          time: new Date(),
+        },
+      });
 
-    const kelas = await prisma.kelas.findUnique({
-      where: {
-        id: data.idKelas,
-      },
-      select: {
-        nama: true,
-        idGuru: true,
-        id: true,
-      },
-    });
+      const kelas = await tx.kelas.findUnique({
+        where: { id: data.idKelas },
+        select: {
+          idGuru: true,
+          id: true,
+          nama: true,
+        },
+      });
 
-    if (cttn) {
+      if (!cttn || !kelas) return cttn;
+
+      // 🔔 PUSH NOTIFICATION (personal)
+      await sendNotificationToUsers([cttn.idSiswa], {
+        title: "📝 Catatan Perkembangan",
+        body: `Ada catatan baru dari ${nama}`,
+        icon: "/icons/icon-192.png",
+        data: {
+          url: "/siswa/catatan-perkembangan",
+        },
+      });
+
+      // 🗂️ DB NOTIFICATION (1 record)
       await createNotifikasi({
         idSiswa: cttn.idSiswa,
         idTerkait: cttn.id,
@@ -39,13 +51,16 @@ export const createCatatan = async (data, nama) => {
         createdBy: kelas.idGuru,
         idKelas: kelas.id,
         redirectSiswa: "/siswa/catatan-perkembangan",
-        keterangan: `Catatan baru untukmu `,
+        keterangan: `Catatan baru dari ${nama}`,
       });
-    }
+
+      return cttn;
+    });
+
+    return result;
   } catch (error) {
     console.log(error);
-    const errorMessage = prismaErrorHandler(error);
-    throw new Error(errorMessage);
+    throw new Error(prismaErrorHandler(error));
   }
 };
 

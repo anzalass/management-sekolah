@@ -16,7 +16,7 @@ export const createTagihan = async (data) => {
   try {
     const { opsi, siswaList = [], ...tagihanData } = data;
 
-    // 1️⃣ TRANSACTION (DB ONLY)
+    // 1️⃣ TRANSACTION (DB TAGIHAN ONLY)
     const siswaTarget = await prisma.$transaction(async (tx) => {
       let siswaTarget = [];
 
@@ -60,10 +60,28 @@ export const createTagihan = async (data) => {
 
       await tx.tagihan.createMany({ data: tagihanArray });
 
-      return siswaTarget; // ⬅️ penting, dipakai buat notif
+      return siswaTarget;
     });
 
-    // 2️⃣ PUSH NOTIFICATION (SETELAH TRANSACTION)
+    // 2️⃣ NOTIFIKASI DB (PER SISWA, AMAN)
+    const notifikasiData = siswaTarget.map((siswa) => ({
+      createdBy: "",
+      idGuru: "",
+      idKelas: "",
+      idSiswa: siswa.id,
+      idTerkait: null,
+      kategori: "Pembayaran",
+      keterangan: `Tagihan baru "${tagihanData.nama}" sebesar Rp ${Number(
+        tagihanData.nominal
+      ).toLocaleString("id-ID")}`,
+      redirectSiswa: "/siswa/pembayaran",
+    }));
+
+    await prisma.notifikasi.createMany({
+      data: notifikasiData,
+    });
+
+    // 3️⃣ PUSH NOTIFICATION (PER SISWA)
     const userIds = siswaTarget.map((s) => s.id);
 
     const payload = {
@@ -73,13 +91,16 @@ export const createTagihan = async (data) => {
       ).toLocaleString("id-ID")}`,
       icon: "/icons/icon-192.png",
       data: {
-        url: "/tagihan",
+        url: "/siswa/pembayaran",
       },
     };
 
     await sendNotificationToUsers(userIds, payload);
 
-    return { success: true, total: siswaTarget.length };
+    return {
+      success: true,
+      total: siswaTarget.length,
+    };
   } catch (error) {
     console.error(error);
     throw new Error(prismaErrorHandler(error));
@@ -229,17 +250,16 @@ export const updateTagihan = async (id, data) => {
 
 export const bayarTagihan = async (idTagihan, metodeBayar) => {
   try {
-    return await prisma.$transaction(async (tx) => {
+    // 1️⃣ TRANSACTION (DB ONLY)
+    const result = await prisma.$transaction(async (tx) => {
       const riwayatPembayaran = await tx.riwayatPembayaran.findFirst({
-        where: {
-          idTagihan: idTagihan,
-        },
+        where: { idTagihan },
       });
 
       if (riwayatPembayaran) {
         throw new Error("Tagihan sudah dibayarkan");
       }
-      // 1. Ambil data tagihan
+
       const tagihan = await tx.tagihan.findUnique({
         where: { id: idTagihan },
       });
@@ -252,17 +272,15 @@ export const bayarTagihan = async (idTagihan, metodeBayar) => {
         throw new Error("Tagihan sudah dibayar");
       }
 
-      // 2. Update status tagihan menjadi Dibayar
       const updatedTagihan = await tx.tagihan.update({
         where: { id: idTagihan },
         data: { status: "LUNAS" },
       });
 
-      // 3. Tambahkan riwayat pembayaran
       const riwayat = await tx.riwayatPembayaran.create({
         data: {
           idTagihan: tagihan.id,
-          idSiswa: tagihan.idSiswa || null,
+          idSiswa: tagihan.idSiswa,
           namaSiswa: tagihan.namaSiswa,
           nisSiswa: tagihan.nisSiswa,
           waktuBayar: new Date(),
@@ -271,6 +289,7 @@ export const bayarTagihan = async (idTagihan, metodeBayar) => {
         },
       });
 
+      // 🗂️ NOTIF DB (boleh di transaction)
       await createNotifikasi({
         createdBy: "",
         idGuru: "",
@@ -282,12 +301,31 @@ export const bayarTagihan = async (idTagihan, metodeBayar) => {
         redirectSiswa: "/siswa/pembayaran",
       });
 
-      return { updatedTagihan, riwayat };
+      return {
+        idSiswa: updatedTagihan.idSiswa,
+        namaTagihan: updatedTagihan.nama,
+        nominal: updatedTagihan.nominal,
+      };
     });
+
+    // 2️⃣ PUSH NOTIFICATION (SETELAH TRANSACTION)
+    const payload = {
+      title: "✅ Pembayaran Berhasil",
+      body: `${result.namaTagihan} sebesar Rp ${Number(
+        result.nominal
+      ).toLocaleString("id-ID")} telah dibayar`,
+      icon: "/icons/icon-192.png",
+      data: {
+        url: "/siswa/pembayaran",
+      },
+    };
+
+    await sendNotificationToUsers([result.idSiswa], payload);
+
+    return { success: true };
   } catch (error) {
-    console.log(error);
-    const errorMessage = prismaErrorHandler(error);
-    throw new Error(errorMessage);
+    console.error(error);
+    throw new Error(prismaErrorHandler(error));
   }
 };
 
@@ -396,43 +434,68 @@ export const uploadBuktiTagihan = async (id, file) => {
 
 export const buktiTidakValid = async (id) => {
   try {
+    // 1️⃣ AMBIL DATA TAGIHAN
     const tagihan = await prisma.tagihan.findUnique({
-      where: {
-        id,
-      },
+      where: { id },
     });
 
-    await prisma.riwayatPembayaran.deleteMany({
-      where: {
-        idTagihan: tagihan.id,
-      },
+    if (!tagihan) {
+      throw new Error("Tagihan tidak ditemukan");
+    }
+
+    // 2️⃣ HAPUS BUKTI DI CLOUDINARY (DI LUAR TRANSACTION)
+    if (tagihan.buktiId) {
+      await deleteFromCloudinary(tagihan.buktiId);
+    }
+
+    // 3️⃣ TRANSACTION (DB ONLY)
+    const result = await prisma.$transaction(async (tx) => {
+      await tx.riwayatPembayaran.deleteMany({
+        where: { idTagihan: tagihan.id },
+      });
+
+      const updatedTagihan = await tx.tagihan.update({
+        where: { id },
+        data: {
+          status: "BUKTI_TIDAK_VALID",
+          buktiId: null,
+        },
+      });
+
+      // 🗂️ SIMPAN NOTIF KE DB
+      await createNotifikasi({
+        createdBy: "",
+        idGuru: "",
+        idKelas: "",
+        idSiswa: tagihan.idSiswa,
+        idTerkait: id,
+        kategori: "Pembayaran",
+        keterangan: `Bukti pembayaran ${tagihan.nama} tidak valid`,
+        redirectGuru: "",
+        redirectSiswa: "/siswa/pembayaran",
+      });
+
+      return {
+        idSiswa: tagihan.idSiswa,
+        namaTagihan: tagihan.nama,
+      };
     });
 
-    await deleteFromCloudinary(tagihan.buktiId);
-    await prisma.tagihan.update({
-      where: {
-        id,
-      },
+    // 4️⃣ PUSH NOTIFICATION (SETELAH TRANSACTION)
+    const payload = {
+      title: "❌ Bukti Pembayaran Ditolak",
+      body: `Bukti pembayaran ${result.namaTagihan} tidak valid. Silakan upload ulang.`,
+      icon: "/icons/icon-192.png",
       data: {
-        status: "BUKTI_TIDAK_VALID",
-        buktiId: "",
-        buktiId: "",
+        url: "/siswa/pembayaran",
       },
-    });
-    await createNotifikasi({
-      createdBy: "",
-      idGuru: "",
-      idKelas: "",
-      idSiswa: tagihan.idSiswa,
-      idTerkait: id,
-      kategori: "Pembayaran",
-      keterangan: `Bukti pembayaran ${tagihan.nama} tidak valid`,
-      redirectGuru: "",
-      redirectSiswa: "/siswa/pembayaran",
-    });
+    };
+
+    await sendNotificationToUsers([result.idSiswa], payload);
+
+    return { success: true };
   } catch (error) {
-    console.log(error);
-    const errorMessage = prismaErrorHandler(error);
-    throw new Error(errorMessage);
+    console.error(error);
+    throw new Error(prismaErrorHandler(error));
   }
 };

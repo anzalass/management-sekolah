@@ -1,12 +1,16 @@
 import { PrismaClient } from "@prisma/client";
 import { prismaErrorHandler } from "../utils/errorHandlerPrisma.js";
-import { sendNotificationToUsers } from "./notifikasiService.js";
+import {
+  createNotifikasi,
+  sendNotificationToUsers,
+} from "./notifikasiService.js";
 const prisma = new PrismaClient();
 
 export const createPengumuman = async (data) => {
   const { title, time, content } = data;
 
   try {
+    // 1️⃣ CREATE PENGUMUMAN
     const pengumuman = await prisma.pengumuman.create({
       data: {
         title,
@@ -15,22 +19,36 @@ export const createPengumuman = async (data) => {
       },
     });
 
+    // 2️⃣ AMBIL SEMUA SISWA (UNTUK PUSH)
     const siswa = await prisma.siswa.findMany({
       select: { id: true },
     });
 
     const userIds = siswa.map((s) => s.id);
 
+    // 3️⃣ PUSH NOTIFICATION (BANYAK USER)
     const payload = {
-      title: "📢 " + pengumuman.title,
-      body: pengumuman.content.slice(0, 100),
+      title: "📢 Pengumuman Baru",
+      body: pengumuman.title,
       icon: "/icons/icon-192.png",
       data: {
-        url: `/pengumuman/${pengumuman.id}`,
+        url: "/siswa/pengumuman",
       },
     };
 
     await sendNotificationToUsers(userIds, payload);
+
+    // 4️⃣ CREATE NOTIFIKASI DB (SATU SAJA ‼️)
+    await createNotifikasi({
+      createdBy: data.createdBy || "",
+      idGuru: "", // ❗ kosong
+      idKelas: "", // ❗ kosong (GLOBAL)
+      idSiswa: "", // ❗ kosong
+      idTerkait: pengumuman.id,
+      kategori: "Pengumuman",
+      keterangan: pengumuman.title,
+      redirectSiswa: "/siswa/pengumuman",
+    });
 
     return pengumuman;
   } catch (error) {

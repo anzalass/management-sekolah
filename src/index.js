@@ -8,6 +8,7 @@ import { fileURLToPath } from "url";
 import path from "path";
 import { DendaTelatBayar } from "./scheduler/cron.js";
 import fs from "fs";
+import webpush from "web-push";
 
 // ROUTES
 import sekolaRoutes from "../src/routes/sekolahRoutes.js";
@@ -120,6 +121,12 @@ app.use("/api/v1", notifikasiRoutes);
 app.use("/api/v1", pendaftaranRoutes);
 
 DendaTelatBayar();
+
+webpush.setVapidDetails(
+  "mailto:admin@yourdomain.com",
+  process.env.VAPID_PUBLIC_KEY,
+  process.env.VAPID_PRIVATE_KEY
+);
 
 app.listen(port, () => {
   console.log(`Server running on http://localhost:${port}`);
