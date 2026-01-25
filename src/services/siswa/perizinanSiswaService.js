@@ -13,8 +13,26 @@ import { getNamaSiswa } from "../userService.js";
 
 const prisma = new PrismaClient();
 
+const sendnotification = async (data, siswa) =>{
+      await createNotifikasi({
+        idSiswa: data.idSiswa,
+        idKelas: data.idKelas,
+        kategori: "Perizinan Siswa",
+        idTerkait: data.id,
+        redirectGuru: `/mengajar/walikelas/${data.idKelas}`,
+        redirectSiswa: `/siswa/perizinan`,
+        keterangan: `${siswa.nama} mengajukan izin`,
+        createdBy: data.idSiswa,
+      });
+}
+
 // ✅ Create (Ajukan Izin)
 export const createPerizinanSiswa = async (data) => {
+  const start = new Date(data.time);
+  const end = new Date(data.enddate);
+
+  const diffTime = end.getTime() - start.getTime();
+  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
   try {
     let imageUploadResult;
 
@@ -25,7 +43,8 @@ export const createPerizinanSiswa = async (data) => {
         data.idSiswa
       );
     }
-    const izin = await prisma.perizinanSiswa.create({
+
+    let datasiswa =  {
       data: {
         idSiswa: data.idSiswa,
         idKelas: data.idKelas || null,
@@ -33,31 +52,40 @@ export const createPerizinanSiswa = async (data) => {
         time: new Date(`${data.time}T00:00:00Z`) || new Date(),
         bukti: imageUploadResult?.secure_url || "",
         bukti_id: imageUploadResult?.public_id || "",
-        status: data.status || "menunggu",
+        status: data.status || "waiting",
       },
-    });
+    }
 
     const siswa = await prisma.siswa.findUnique({
       where: {
-        id: izin.idSiswa,
+        id: data.idSiswa,
       },
       select: {
         nama: true,
       },
     });
 
-    if (izin) {
-      await createNotifikasi({
-        idSiswa: izin.idSiswa,
-        idKelas: izin.idKelas,
-        kategori: "Perizinan Siswa",
-        idTerkait: izin.id,
-        redirectGuru: `/mengajar/walikelas/${izin.idKelas}`,
-        redirectSiswa: `/siswa/perizinan`,
-        keterangan: `${siswa.nama} mengajukan izin`,
-        createdBy: izin.idSiswa,
-      });
-    }
+    if(data.enddate === ''){
+        const izin = await prisma.perizinanSiswa.create(datasiswa);
+        
+        if(izin){
+          sendnotification(izin, siswa)
+        }
+
+    }else{
+        const baseDate = data?.time? new Date(`${data.time}T00:00:00Z`) : new Date();
+        for(let i=0; i < diffDays; i++){
+          const plusOneDay = new Date(baseDate.getTime() + ((i+1)*24) * 60 * 60 * 1000);
+          if(i !== 0){
+            datasiswa.data.time = plusOneDay;
+          }
+          const izin = await prisma.perizinanSiswa.create(datasiswa);
+          
+          if (izin) {
+            sendnotification(izin, siswa)
+          }
+        }
+      }
   } catch (error) {
     console.log(error);
     throw new Error(prismaErrorHandler(error));
