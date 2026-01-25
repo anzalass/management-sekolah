@@ -4,7 +4,10 @@ import {
   createNotifikasi,
   sendNotificationToUsers,
 } from "./notifikasiService.js";
+import dotenv from "dotenv";
 const prisma = new PrismaClient();
+
+dotenv.config();
 
 export const createPengumuman = async (data) => {
   const { title, time, content } = data;
@@ -32,7 +35,7 @@ export const createPengumuman = async (data) => {
       body: pengumuman.title,
       icon: "/icons/icon-192.png",
       data: {
-        url: "/siswa/pengumuman",
+        url: `${process.env.SERVER_FE}/siswa/pengumuman`,
       },
     };
 
