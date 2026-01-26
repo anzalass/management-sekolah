@@ -2,11 +2,17 @@ import { PrismaClient } from "@prisma/client";
 import { prismaErrorHandler } from "../utils/errorHandlerPrisma.js";
 import { hitungJarak } from "../utils/hitungJarak.js";
 import { uploadToCloudinary } from "../utils/ImageHandler.js";
+import dotenv from "dotenv";
 const prisma = new PrismaClient();
 
-const LAT_SEKOLAH = -6.09955851839959;
-const LNG_SEKOLAH = 106.51911493230111;
-const MAX_RADIUS = 100; // meter
+// const LAT_SEKOLAH = -6.09955851839959;
+// const LNG_SEKOLAH = 106.51911493230111;
+// const MAX_RADIUS = 100; // meter
+
+// LAT_SEKOLAH = "-6.1810233";
+// LANG_SEKOLAH = "106.4958147";
+
+dotenv.config();
 
 export const absenMasukGuru = async ({ idGuru, fotoMasuk, lokasi }) => {
   try {
@@ -18,8 +24,13 @@ export const absenMasukGuru = async ({ idGuru, fotoMasuk, lokasi }) => {
       throw new Error("Guru tidak ditemukan di database");
     }
 
-    const jarak = hitungJarak(lat, long, LAT_SEKOLAH, LNG_SEKOLAH);
-    if (jarak > MAX_RADIUS) {
+    const jarak = hitungJarak(
+      lat,
+      long,
+      process.env.LAT_SEKOLAH,
+      process.env.LANG_SEKOLAH
+    );
+    if (jarak > process.env.MAX_RADIUS) {
       throw new Error(
         `Lokasi terlalu jauh dari sekolah: ${Math.round(jarak)} meter`
       );
@@ -75,8 +86,13 @@ export const absenPulangGuru = async ({ idGuru, lokasi }) => {
   try {
     const { lat, long } = lokasi;
 
-    const jarak = hitungJarak(lat, long, LAT_SEKOLAH, LNG_SEKOLAH);
-    if (jarak > MAX_RADIUS) {
+    const jarak = hitungJarak(
+      lat,
+      long,
+      process.env.LAT_SEKOLAH,
+      process.env.LANG_SEKOLAH
+    );
+    if (jarak > process.env.MAX_RADIUS) {
       throw new Error(
         `Lokasi terlalu jauh dari sekolah: ${Math.round(jarak)} meter`
       );
@@ -106,7 +122,7 @@ export const absenPulangGuru = async ({ idGuru, lokasi }) => {
       data: {
         jamPulang: now,
         lokasiPulang: JSON.stringify(lokasi),
-        status: "hadir",
+        status: "Hadir",
       },
     });
   } catch (error) {
@@ -117,15 +133,26 @@ export const absenPulangGuru = async ({ idGuru, lokasi }) => {
 };
 
 export const getAllKehadiranGuru = async ({
-  tanggal,
+  startDate,
+  endDate,
   nama,
   nip,
   page = 1,
   pageSize = 10,
 }) => {
-  const tanggalFilter = tanggal ? new Date(`${tanggal}T00:00:00Z`) : undefined;
+  let startDateFilter;
+  let endDateFilter;
+
+  if (startDate) {
+    startDateFilter = new Date(`${startDate}T00:00:00.000Z`);
+  }
+
+  if (endDate) {
+    endDateFilter = new Date(`${endDate}T23:59:59.999Z`);
+  }
 
   let nipList = undefined;
+
   if (nama || nip) {
     const guruFilter = {
       ...(nama && {
@@ -155,11 +182,18 @@ export const getAllKehadiranGuru = async ({
   }
 
   const whereClause = {
-    ...(tanggalFilter && { tanggal: tanggalFilter }),
+    ...(startDateFilter || endDateFilter
+      ? {
+          tanggal: {
+            ...(startDateFilter && { gte: startDateFilter }),
+            ...(endDateFilter && { lte: endDateFilter }),
+          },
+        }
+      : {}),
     ...(nipList && { Guru: { nip: { in: nipList } } }),
   };
 
-  // Hitung total dulu
+  // Hitung total
   const total = await prisma.kehadiranGuru.count({
     where: whereClause,
   });
@@ -182,7 +216,6 @@ export const getAllKehadiranGuru = async ({
     take: pageSize,
   });
 
-  // Map hasil dan return data + total
   return {
     data: kehadiran.map((item) => ({
       ...item,
