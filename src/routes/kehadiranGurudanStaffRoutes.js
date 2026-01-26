@@ -4,6 +4,7 @@ import {
   absenMasukGuruController,
   absenPulangGuruController,
   getKehadiranGuruController,
+  rekapHadirBulanan,
 } from "../controller/kehadiranGurudanStaffController.js";
 
 const router = express.Router();
@@ -25,5 +26,12 @@ router.get(
   AuthMiddleware,
   isGuruOnly,
   getKehadiranGuruController
+);
+
+router.get(
+  "/rekap-kehadiran-guru",
+  AuthMiddleware,
+  isGuruOnly,
+  rekapHadirBulanan
 );
 export default router;

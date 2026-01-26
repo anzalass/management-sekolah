@@ -200,3 +200,26 @@ export const ubahPasswordSiswa = async (userId, oldPassword, newPassword) => {
     throw new Error(errorMessage);
   }
 };
+
+export const logout = async (id, data) => {
+  try {
+    // const userId = req.user.id; // dari JWT / session
+    // const { endpoint } = req.body;
+
+    if (endpoint) {
+      await prisma.pushSubscription.deleteMany({
+        where: {
+          userId: id,
+          endpoint: data.endpoint,
+        },
+      });
+    } else {
+      // fallback: hapus semua device user tsb
+      await prisma.pushSubscription.deleteMany({
+        where: { userId },
+      });
+    }
+  } catch (error) {
+    console.error(error);
+  }
+};

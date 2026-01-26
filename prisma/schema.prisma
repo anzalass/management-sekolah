@@ -99,7 +99,7 @@ model KehadiranGuru {
   status        String?
   Guru          Guru     @relation(fields: [idGuru], references: [id])
   createdOn DateTime? @default(now())
- modifiedOn DateTime? @updatedAt
+  modifiedOn DateTime? @updatedAt
 }
 
 model Kelas {

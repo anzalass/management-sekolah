@@ -91,7 +91,8 @@ export const getPerizinanGuruController = async (req, res) => {
     const {
       nama = "",
       nip = "",
-      tanggal = "",
+      startDate = "",
+      endDate = "",
       page = "1",
       pageSize = "10",
     } = req.query;
@@ -99,7 +100,8 @@ export const getPerizinanGuruController = async (req, res) => {
     const result = await getPerizinanGuru({
       nama,
       nip,
-      tanggal,
+      startDate,
+      endDate,
       page: parseInt(page),
       pageSize: parseInt(pageSize),
     });

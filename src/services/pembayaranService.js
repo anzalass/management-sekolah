@@ -16,7 +16,7 @@ export const createTagihan = async (data) => {
   try {
     const { opsi, siswaList = [], ...tagihanData } = data;
 
-    // 1️⃣ TRANSACTION (DB TAGIHAN ONLY)
+    // 1️⃣ TRANSACTION: CREATE TAGIHAN ONLY
     const siswaTarget = await prisma.$transaction(async (tx) => {
       let siswaTarget = [];
 
@@ -63,25 +63,23 @@ export const createTagihan = async (data) => {
       return siswaTarget;
     });
 
-    // 2️⃣ NOTIFIKASI DB (PER SISWA, AMAN)
-    const notifikasiData = siswaTarget.map((siswa) => ({
-      createdBy: "",
-      idGuru: "",
-      idKelas: "",
-      idSiswa: siswa.id,
-      idTerkait: null,
-      kategori: "Pembayaran",
-      keterangan: `Tagihan baru "${tagihanData.nama}" sebesar Rp ${Number(
-        tagihanData.nominal
-      ).toLocaleString("id-ID")}`,
-      redirectSiswa: "/siswa/pembayaran",
-    }));
+    // 2️⃣ NOTIFIKASI DB (PAKAI createNotifikasi)
+    for (const siswa of siswaTarget) {
+      await createNotifikasi({
+        createdBy: "",
+        idGuru: "",
+        idKelas: "",
+        idSiswa: siswa.id,
+        idTerkait: null, // karena createMany, kita memang ga punya id tagihan spesifik
+        kategori: "Pembayaran",
+        keterangan: `Tagihan baru "${tagihanData.nama}" sebesar Rp ${Number(
+          tagihanData.nominal
+        ).toLocaleString("id-ID")}`,
+        redirectSiswa: "/siswa/pembayaran",
+      });
+    }
 
-    await prisma.notifikasi.createMany({
-      data: notifikasiData,
-    });
-
-    // 3️⃣ PUSH NOTIFICATION (PER SISWA)
+    // 3️⃣ PUSH NOTIFICATION
     const userIds = siswaTarget.map((s) => s.id);
 
     const payload = {
