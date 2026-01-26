@@ -1,6 +1,7 @@
 import {
   login,
   loginAdmin,
+  logout,
   resetPassword,
   ubahPasswordSiswa,
 } from "../services/authService.js";
@@ -85,5 +86,19 @@ export const ubahPasswordSiswaController = async (req, res) => {
       .json({ message: "Password berhasil diubah", success: true });
   } catch (error) {
     return res.status(500).json({ message: error.message, success: false });
+  }
+};
+
+export const logoutController = async (req, res) => {
+  try {
+    const idGuru = req.user.id; // dari JWT / session
+    const { endpoint } = req.body;
+
+    await logout(idGuru, endpoint);
+
+    res.json({ success: true });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Logout failed" });
   }
 };
