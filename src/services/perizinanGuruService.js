@@ -279,7 +279,12 @@ export function isWorkingDay(date) {
   return !isWeekend(date) && !isHoliday(date);
 }
 
-export async function getRekapHadirBulanan({ nama = "", nip = "" }) {
+export async function getRekapHadirBulanan({
+  nama = "",
+  nip = "",
+  page = 1,
+  limit = 10,
+}) {
   const now = new Date();
 
   const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
@@ -306,13 +311,13 @@ export async function getRekapHadirBulanan({ nama = "", nip = "" }) {
         },
         select: {
           tanggal: true,
-          status: true, // Hadir | Izin | Alpha
+          status: true,
         },
       },
     },
   });
 
-  // 🔍 FILTER DI LEVEL JS
+  // 🔍 FILTER DI JS
   const filteredGurus = gurus.filter((guru) => {
     const matchNama = nama
       ? guru.nama.toLowerCase().includes(nama.toLowerCase())
@@ -325,7 +330,8 @@ export async function getRekapHadirBulanan({ nama = "", nip = "" }) {
     return matchNama && matchNip;
   });
 
-  return filteredGurus.map((guru) => {
+  // 📄 MAP REKAP
+  const mappedData = filteredGurus.map((guru) => {
     let totalHadirHariNormal = 0;
     let totalHadirHariLembur = 0;
     let totalIzin = 0;
@@ -335,20 +341,11 @@ export async function getRekapHadirBulanan({ nama = "", nip = "" }) {
       const isKerja = isWorkingDay(absen.tanggal);
 
       if (absen.status === "Hadir") {
-        if (isKerja) {
-          totalHadirHariNormal++;
-        } else {
-          totalHadirHariLembur++;
-        }
+        isKerja ? totalHadirHariNormal++ : totalHadirHariLembur++;
       }
 
-      if (absen.status === "Izin" && isKerja) {
-        totalIzin++;
-      }
-
-      if (absen.status === "Alpha" && isKerja) {
-        totalAlpha++;
-      }
+      if (absen.status === "Izin" && isKerja) totalIzin++;
+      if (absen.status === "Alpha" && isKerja) totalAlpha++;
     });
 
     return {
@@ -361,4 +358,22 @@ export async function getRekapHadirBulanan({ nama = "", nip = "" }) {
       seluruhTotalHadir: totalHadirHariNormal + totalHadirHariLembur,
     };
   });
+
+  // 📦 PAGINATION DI JS
+  const total = mappedData.length;
+  const totalPages = Math.ceil(total / limit);
+  const startIndex = (page - 1) * limit;
+  const endIndex = startIndex + limit;
+
+  const data = mappedData.slice(startIndex, endIndex);
+
+  return {
+    data,
+    meta: {
+      page,
+      limit,
+      total,
+      totalPages,
+    },
+  };
 }
