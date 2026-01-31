@@ -8,7 +8,16 @@ router.post(
   "/pengumuman-kelas",
   AuthMiddleware,
   isGuruOnly,
+  uploadImage.single("image"),
   pengumumanKelasController.createPengumumanKelas
+);
+
+router.put(
+  "/pengumuman-kelas/:id",
+  AuthMiddleware,
+  isGuruOnly,
+  uploadImage.single("image"),
+  pengumumanKelasController.updatePengumumanKelas
 );
 router.get(
   "/pengumuman-kelas",
@@ -29,12 +38,7 @@ router.get(
   isGuruOnly,
   pengumumanKelasController.getPengumumanKelasByKelasId
 );
-router.put(
-  "/pengumuman-kelas/:id",
-  AuthMiddleware,
-  isGuruOnly,
-  pengumumanKelasController.updatePengumumanKelas
-);
+
 router.delete(
   "/pengumuman-kelas/:id",
   AuthMiddleware,

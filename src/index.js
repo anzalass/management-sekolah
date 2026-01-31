@@ -51,6 +51,7 @@ import ujianRoutes from "../src/routes/ujianIframeRoutes.js";
 import weeklyActivity from "../src/routes/weeklyActivityRoutes.js";
 import notifikasiRoutes from "../src/routes/notifikasiRoutes.js";
 import pendaftaranRoutes from "../src/routes/pendaftaranRoutes.js";
+import hariLiburRoutes from "../src/routes/hariLiburRoutes.js";
 
 dotenv.config();
 
@@ -119,6 +120,7 @@ app.use("/api/v1", ujianRoutes);
 app.use("/api/v1", weeklyActivity);
 app.use("/api/v1", notifikasiRoutes);
 app.use("/api/v1", pendaftaranRoutes);
+app.use("/api/v1", hariLiburRoutes);
 
 DendaTelatBayar();
 

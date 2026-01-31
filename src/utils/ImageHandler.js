@@ -4,6 +4,8 @@ import { fileTypeFromBuffer } from "file-type";
 import { v2 as cloudinary } from "cloudinary";
 import sharp from "sharp";
 
+const MAX_SIZE = 3 * 1024 * 1024; // 3 MB
+
 // Konfigurasi Cloudinary
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME || "dyofh7ecq",
@@ -18,6 +20,30 @@ cloudinary.config({
  * @param {string} folder - Nama folder di Cloudinary
  * @param {string} fileName - Nama file (tanpa ekstensi)
  */
+
+async function compressToMaxSize(buffer) {
+  let quality = 80;
+  let output = buffer;
+
+  while (quality >= 40) {
+    output = await sharp(buffer)
+      .resize({ width: 2000, withoutEnlargement: true })
+      .jpeg({ quality, mozjpeg: true })
+      .toBuffer();
+
+    if (output.length <= MAX_SIZE) {
+      return output;
+    }
+
+    quality -= 10;
+  }
+
+  // fallback terakhir
+  return await sharp(buffer)
+    .resize({ width: 1500 })
+    .jpeg({ quality: 60 })
+    .toBuffer();
+}
 
 export const uploadToCloudinary = async (
   fileBuffer,
