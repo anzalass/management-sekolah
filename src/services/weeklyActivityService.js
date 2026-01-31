@@ -20,8 +20,33 @@ export const createWeeklyActivity = async (
   files
 ) => {
   try {
+    // ===============================
+    // 1️⃣ UPLOAD FOTO (DI LUAR TX)
+    // ===============================
+    let uploadedPhotos = [];
+
+    if (files && files.length > 0) {
+      uploadedPhotos = await Promise.all(
+        files.map(async (file, index) => {
+          const uploaded = await uploadToCloudinary(
+            file.buffer,
+            "weekly_activity",
+            `weekly_${index}`
+          );
+
+          return {
+            fotoUrl: uploaded.secure_url,
+            fotoId: uploaded.public_id,
+          };
+        })
+      );
+    }
+
+    // ===============================
+    // 2️⃣ TRANSACTION KHUSUS DATABASE
+    // ===============================
     const result = await prisma.$transaction(async (tx) => {
-      // 1️⃣ Simpan Weekly Activity
+      // Weekly Activity
       const weeklyActivity = await tx.weeklyActivity.create({
         data: {
           judul,
@@ -31,65 +56,59 @@ export const createWeeklyActivity = async (
         },
       });
 
-      // 2️⃣ Upload foto (jika ada)
-      if (files && files.length > 0) {
-        const fotoPromises = files.map(async (file, index) => {
-          const uploaded = await uploadToCloudinary(
-            file.buffer,
-            "weekly_activity",
-            `weekly_${index}`
-          );
-
-          return tx.fotoWeeklyActivity.create({
-            data: {
-              idWeeklyActivity: weeklyActivity.id,
-              fotoUrl: uploaded.secure_url,
-              fotoId: uploaded.public_id,
-            },
-          });
+      // Foto (BATCH)
+      if (uploadedPhotos.length > 0) {
+        await tx.fotoWeeklyActivity.createMany({
+          data: uploadedPhotos.map((foto) => ({
+            idWeeklyActivity: weeklyActivity.id,
+            fotoUrl: foto.fotoUrl,
+            fotoId: foto.fotoId,
+          })),
         });
-
-        await Promise.all(fotoPromises);
       }
 
-      // 3️⃣ Ambil daftar siswa di kelas
+      // Ambil siswa
       const daftarSiswa = await tx.daftarSiswaKelas.findMany({
         where: { idKelas },
         select: { idSiswa: true },
       });
 
-      const userIds = daftarSiswa.map((s) => s.idSiswa);
-
-      // 4️⃣ Push notification (ke semua siswa kelas)
-      if (userIds.length > 0) {
-        await sendNotificationToUsers(userIds, {
-          title: "📸 Weekly Activity Baru",
-          body: judul,
-          icon: "/icons/icon-192.png",
-          data: {
-            url: "/siswa/weekly-activity",
-          },
-        });
-      }
-
-      // 5️⃣ DB Notification (SATU AJA – berbasis kelas)
-      await createNotifikasi({
-        createdBy: "", // isi idGuru kalau ada
-        idGuru: "",
-        idKelas: idKelas, // 🔥 kunci utama
-        idSiswa: "", // kosong → notif kelas
-        idTerkait: weeklyActivity.id,
-        kategori: "Weekly Activity",
-        keterangan: judul,
-        redirectSiswa: "/siswa/weekly-activity",
-      });
-
-      return weeklyActivity;
+      return {
+        weeklyActivity,
+        userIds: daftarSiswa.map((s) => s.idSiswa),
+      };
     });
 
-    // 6️⃣ Return lengkap
+    // ===============================
+    // 3️⃣ SIDE EFFECT (LUAR TX)
+    // ===============================
+    if (result.userIds.length > 0) {
+      await sendNotificationToUsers(result.userIds, {
+        title: "📸 Weekly Activity Baru",
+        body: judul,
+        icon: "/icons/icon-192.png",
+        data: {
+          url: "/siswa/weekly-activity",
+        },
+      });
+    }
+
+    await createNotifikasi({
+      createdBy: "",
+      idGuru: "",
+      idKelas,
+      idSiswa: "",
+      idTerkait: result.weeklyActivity.id,
+      kategori: "Weekly Activity",
+      keterangan: judul,
+      redirectSiswa: "/siswa/weekly-activity",
+    });
+
+    // ===============================
+    // 4️⃣ RETURN DATA LENGKAP
+    // ===============================
     return await prisma.weeklyActivity.findUnique({
-      where: { id: result.id },
+      where: { id: result.weeklyActivity.id },
       include: { FotoWeeklyActivity: true },
     });
   } catch (error) {
