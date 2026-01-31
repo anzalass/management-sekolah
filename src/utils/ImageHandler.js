@@ -34,10 +34,8 @@ export const uploadToCloudinary = async (
 
   try {
     if (isImage) {
-      const compressedBuffer = await sharp(fileBuffer)
-        .resize({ width: 2000, withoutEnlargement: true })
-        .jpeg({ quality: 80 })
-        .toBuffer();
+      // 🔥 COMPRESS KE ≤ 3MB
+      const compressedBuffer = await compressToMaxSize(fileBuffer);
 
       return await new Promise((resolve, reject) => {
         const uploadStream = cloudinary.uploader.upload_stream(
@@ -52,34 +50,37 @@ export const uploadToCloudinary = async (
             resolve({
               secure_url: result.secure_url,
               public_id: result.public_id,
+              size: compressedBuffer.length,
             });
           }
         );
+
         uploadStream.end(compressedBuffer);
       });
-    } else {
-      // === PDF, docx, zip ===
-      return await new Promise((resolve, reject) => {
-        const uploadStream = cloudinary.uploader.upload_stream(
-          {
-            folder,
-            public_id: `${fileName}_${Date.now()}`,
-            resource_type: "raw", // penting
-            timeout: 120000,
-          },
-          (error, result) => {
-            if (error) return reject(error);
-            resolve({
-              secure_url: result.secure_url, // URL default
-              public_id: result.public_id, // simpan public_id untuk bikin URL inline
-            });
-          }
-        );
-        uploadStream.end(fileBuffer);
-      });
     }
+
+    // === FILE NON IMAGE (PDF, ZIP, dll) ===
+    return await new Promise((resolve, reject) => {
+      const uploadStream = cloudinary.uploader.upload_stream(
+        {
+          folder,
+          public_id: `${fileName}_${Date.now()}`,
+          resource_type: "raw",
+          timeout: 120000,
+        },
+        (error, result) => {
+          if (error) return reject(error);
+          resolve({
+            secure_url: result.secure_url,
+            public_id: result.public_id,
+          });
+        }
+      );
+
+      uploadStream.end(fileBuffer);
+    });
   } catch (err) {
-    console.error("Upload gagal:", err.message);
+    console.error("Upload gagal:", err);
     throw err;
   }
 };
