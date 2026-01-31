@@ -1,6 +1,7 @@
 import express from "express";
 import * as pengumumanKelasController from "../controller/pengumumanKelasController.js";
 import { AuthMiddleware, isGuruOnly } from "../utils/authMiddleware.js";
+import memoryUpload from "../utils/multer.js";
 
 const router = express.Router();
 
@@ -8,7 +9,7 @@ router.post(
   "/pengumuman-kelas",
   AuthMiddleware,
   isGuruOnly,
-  uploadImage.single("image"),
+  memoryUpload.single("image"),
   pengumumanKelasController.createPengumumanKelas
 );
 
@@ -16,7 +17,7 @@ router.put(
   "/pengumuman-kelas/:id",
   AuthMiddleware,
   isGuruOnly,
-  uploadImage.single("image"),
+  memoryUpload.single("image"),
   pengumumanKelasController.updatePengumumanKelas
 );
 router.get(
