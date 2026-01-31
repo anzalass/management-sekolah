@@ -6,34 +6,50 @@ import {
   updatePengumuman,
 } from "../services/pengumumanService.js";
 
-export const createPengumumanController = async (req, res, next) => {
+export const createPengumumanController = async (req, res) => {
   try {
-    await createPengumuman(req.body);
-    return res
-      .status(201)
-      .json({ message: "Berhasil membuat pengumuman", success: true });
+    const image = req.file ?? null;
+
+    await createPengumuman({
+      ...req.body,
+      image, // 🔥 kirim file
+    });
+
+    return res.status(201).json({
+      message: "Berhasil membuat pengumuman",
+      success: true,
+    });
   } catch (error) {
     return res.status(500).json({ message: error.message, success: false });
   }
 };
 
-export const updatePengumumanController = async (req, res, next) => {
+export const updatePengumumanController = async (req, res) => {
   try {
-    await updatePengumuman(req.params.id, req.body);
-    return res
-      .status(200)
-      .json({ message: "Berhasil mengupdate pengumuman", success: true });
+    const image = req.file ?? null;
+
+    await updatePengumuman(req.params.id, {
+      ...req.body,
+      image,
+    });
+
+    return res.status(200).json({
+      message: "Berhasil mengupdate pengumuman",
+      success: true,
+    });
   } catch (error) {
     return res.status(500).json({ message: error.message, success: false });
   }
 };
 
-export const deletePengumumanController = async (req, res, next) => {
+export const deletePengumumanController = async (req, res) => {
   try {
     await deletePengumuman(req.params.id);
-    return res
-      .status(200)
-      .json({ message: "Berhasil menghapus pengumuman", success: true });
+
+    return res.status(200).json({
+      message: "Berhasil menghapus pengumuman",
+      success: true,
+    });
   } catch (error) {
     return res.status(500).json({ message: error.message, success: false });
   }

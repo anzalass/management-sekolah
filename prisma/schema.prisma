@@ -87,6 +87,20 @@ model jadwalMengajar {
 
 }
 
+
+model HariLibur {
+  id          String   @id @default(uuid())
+  namaHari    String
+  tanggal     DateTime
+  tahunAjaran String
+
+  createdOn   DateTime? @default(now())
+  modifiedOn  DateTime? @updatedAt
+
+  @@index([tahunAjaran])
+}
+
+
 model KehadiranGuru {
   id            String   @id @default(uuid())
   idGuru        String
@@ -454,6 +468,8 @@ model Pengumuman {
   title       String
   time        DateTime
   content     String
+   fotoId      String?
+  fotoUrl     String?
   createdOn DateTime? @default(now())
   modifiedOn DateTime? @updatedAt
 }
@@ -465,6 +481,8 @@ model PengumumanKelas {
   title       String
   time        DateTime
   content     String
+  fotoId      String?
+  fotoUrl     String?
   createdOn DateTime? @default(now())
   modifiedOn DateTime? @updatedAt
   Guru       Guru?  @relation(fields: [idGuru], references: [id])

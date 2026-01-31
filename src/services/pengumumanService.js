@@ -5,48 +5,63 @@ import {
   sendNotificationToUsers,
 } from "./notifikasiService.js";
 import dotenv from "dotenv";
+import {
+  deleteFromCloudinary,
+  uploadToCloudinary,
+} from "../utils/ImageHandler.js";
 const prisma = new PrismaClient();
 
 dotenv.config();
 
-export const createPengumuman = async (data) => {
+export const createPengumuman = async (data, image) => {
   const { title, time, content } = data;
 
   try {
-    // 1️⃣ CREATE PENGUMUMAN
+    let imageResult = null;
+
+    // 1️⃣ UPLOAD IMAGE (JIKA ADA)
+    if (image?.buffer) {
+      imageResult = await uploadToCloudinary(
+        image.buffer,
+        "pengumuman",
+        `pengumuman-${Date.now()}`
+      );
+    }
+
+    // 2️⃣ CREATE PENGUMUMAN
     const pengumuman = await prisma.pengumuman.create({
       data: {
         title,
         time: new Date(`${time}T00:00:00Z`),
         content,
+        fotoUrl: imageResult?.secure_url || null,
+        fotoId: imageResult?.public_id || null,
       },
     });
 
-    // 2️⃣ AMBIL SEMUA SISWA (UNTUK PUSH)
+    // 3️⃣ AMBIL SEMUA SISWA
     const siswa = await prisma.siswa.findMany({
       select: { id: true },
     });
 
     const userIds = siswa.map((s) => s.id);
 
-    // 3️⃣ PUSH NOTIFICATION (BANYAK USER)
-    const payload = {
+    // 4️⃣ PUSH NOTIFICATION
+    await sendNotificationToUsers(userIds, {
       title: "📢 Pengumuman Baru",
       body: pengumuman.title,
       icon: "/icons/icon-192.png",
       data: {
-        url: `${process.env.SERVER_FE}/siswa/pengumuman`,
+        url: "/siswa/pengumuman",
       },
-    };
+    });
 
-    await sendNotificationToUsers(userIds, payload);
-
-    // 4️⃣ CREATE NOTIFIKASI DB (SATU SAJA ‼️)
+    // 5️⃣ DB NOTIFIKASI (GLOBAL)
     await createNotifikasi({
       createdBy: data.createdBy || "",
-      idGuru: "", // ❗ kosong
-      idKelas: "", // ❗ kosong (GLOBAL)
-      idSiswa: "", // ❗ kosong
+      idGuru: "",
+      idKelas: "",
+      idSiswa: "",
       idTerkait: pengumuman.id,
       kategori: "Pengumuman",
       keterangan: pengumuman.title,
@@ -60,31 +75,76 @@ export const createPengumuman = async (data) => {
   }
 };
 
-export const updatePengumuman = async (id, data) => {
+export const updatePengumuman = async (id, data, image) => {
   const { title, time, content } = data;
+
   try {
-    await prisma.$transaction(async (tx) => {
-      await tx.pengumuman.update({
+    return await prisma.$transaction(async (tx) => {
+      const existing = await tx.pengumuman.findUnique({
         where: { id },
-        data: { title, time: new Date(`${time}T00:00:00Z`), content },
+        select: { fotoId: true },
+      });
+
+      let imageResult = null;
+
+      // 1️⃣ JIKA ADA IMAGE BARU
+      if (image?.buffer) {
+        // hapus image lama
+        if (existing?.fotoId) {
+          await deleteFromCloudinary(existing.fotoId);
+        }
+
+        imageResult = await uploadToCloudinary(
+          image.buffer,
+          "pengumuman",
+          `pengumuman-${Date.now()}`
+        );
+      }
+
+      // 2️⃣ UPDATE DB
+      return await tx.pengumuman.update({
+        where: { id },
+        data: {
+          title,
+          time: new Date(`${time}T00:00:00Z`),
+          content,
+          ...(imageResult && {
+            fotoUrl: imageResult.secure_url,
+            fotoId: imageResult.public_id,
+          }),
+        },
       });
     });
   } catch (error) {
-    console.log(error);
-    const errorMessage = prismaErrorHandler(error);
-    throw new Error(errorMessage);
+    console.error(error);
+    throw new Error(prismaErrorHandler(error));
   }
 };
-
 export const deletePengumuman = async (id) => {
   try {
-    await prisma.$transaction(async (tx) => {
-      await tx.pengumuman.delete({ where: { id } });
+    return await prisma.$transaction(async (tx) => {
+      const pengumuman = await tx.pengumuman.findUnique({
+        where: { id },
+        select: { fotoId: true },
+      });
+
+      if (!pengumuman) {
+        throw new Error("Pengumuman tidak ditemukan");
+      }
+
+      // 1️⃣ DELETE IMAGE
+      if (pengumuman.fotoId) {
+        await deleteFromCloudinary(pengumuman.fotoId);
+      }
+
+      // 2️⃣ DELETE DB
+      return await tx.pengumuman.delete({
+        where: { id },
+      });
     });
   } catch (error) {
-    console.log(error);
-    const errorMessage = prismaErrorHandler(error);
-    throw new Error(errorMessage);
+    console.error(error);
+    throw new Error(prismaErrorHandler(error));
   }
 };
 
