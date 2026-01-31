@@ -279,6 +279,7 @@ export function isWorkingDay(date) {
   return !isWeekend(date) && !isHoliday(date);
 }
 
+
 export async function getRekapHadirBulanan({
   nama = "",
   nip = "",
@@ -297,9 +298,30 @@ export async function getRekapHadirBulanan({
     59
   );
 
+  // 🔍 FILTER DI DATABASE
+  const whereGuru = {
+    ...(nama && {
+      nama: { contains: nama, mode: "insensitive" },
+    }),
+    ...(nip && {
+      nip: { contains: nip, mode: "insensitive" },
+    }),
+  };
+
+  // 📊 TOTAL DATA (UNTUK PAGINATION)
+  const total = await prisma.guru.count({
+    where: whereGuru,
+  });
+
+  const totalPages = Math.ceil(total / limit);
+  const skip = (page - 1) * limit;
+
+  // 📦 AMBIL DATA GURU + KEHADIRAN BULAN INI
   const gurus = await prisma.guru.findMany({
+    where: whereGuru,
+    skip,
+    take: limit,
     select: {
-      id: true,
       nama: true,
       nip: true,
       KehadiranGuru: {
@@ -315,23 +337,13 @@ export async function getRekapHadirBulanan({
         },
       },
     },
-  });
-
-  // 🔍 FILTER DI JS
-  const filteredGurus = gurus.filter((guru) => {
-    const matchNama = nama
-      ? guru.nama.toLowerCase().includes(nama.toLowerCase())
-      : true;
-
-    const matchNip = nip
-      ? guru.nip.toLowerCase().includes(nip.toLowerCase())
-      : true;
-
-    return matchNama && matchNip;
+    orderBy: {
+      nama: "asc",
+    },
   });
 
   // 📄 MAP REKAP
-  const mappedData = filteredGurus.map((guru) => {
+  const data = gurus.map((guru) => {
     let totalHadirHariNormal = 0;
     let totalHadirHariLembur = 0;
     let totalIzin = 0;
@@ -358,14 +370,6 @@ export async function getRekapHadirBulanan({
       seluruhTotalHadir: totalHadirHariNormal + totalHadirHariLembur,
     };
   });
-
-  // 📦 PAGINATION DI JS
-  const total = mappedData.length;
-  const totalPages = Math.ceil(total / limit);
-  const startIndex = (page - 1) * limit;
-  const endIndex = startIndex + limit;
-
-  const data = mappedData.slice(startIndex, endIndex);
 
   return {
     data,
