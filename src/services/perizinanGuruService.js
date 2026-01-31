@@ -279,7 +279,13 @@ export function isWorkingDay(date) {
   return !isWeekend(date) && !isHoliday(date);
 }
 
-export async function getRekapHadirBulanan({ nama = "", nip = "" }) {
+
+export async function getRekapHadirBulanan({
+  nama = "",
+  nip = "",
+  page = 1,
+  limit = 10,
+}) {
   const now = new Date();
 
   const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
@@ -292,9 +298,30 @@ export async function getRekapHadirBulanan({ nama = "", nip = "" }) {
     59
   );
 
+  // 🔍 FILTER DI DATABASE
+  const whereGuru = {
+    ...(nama && {
+      nama: { contains: nama, mode: "insensitive" },
+    }),
+    ...(nip && {
+      nip: { contains: nip, mode: "insensitive" },
+    }),
+  };
+
+  // 📊 TOTAL DATA (UNTUK PAGINATION)
+  const total = await prisma.guru.count({
+    where: whereGuru,
+  });
+
+  const totalPages = Math.ceil(total / limit);
+  const skip = (page - 1) * limit;
+
+  // 📦 AMBIL DATA GURU + KEHADIRAN BULAN INI
   const gurus = await prisma.guru.findMany({
+    where: whereGuru,
+    skip,
+    take: limit,
     select: {
-      id: true,
       nama: true,
       nip: true,
       KehadiranGuru: {
@@ -306,26 +333,17 @@ export async function getRekapHadirBulanan({ nama = "", nip = "" }) {
         },
         select: {
           tanggal: true,
-          status: true, // Hadir | Izin | Alpha
+          status: true,
         },
       },
     },
+    orderBy: {
+      nama: "asc",
+    },
   });
 
-  // 🔍 FILTER DI LEVEL JS
-  const filteredGurus = gurus.filter((guru) => {
-    const matchNama = nama
-      ? guru.nama.toLowerCase().includes(nama.toLowerCase())
-      : true;
-
-    const matchNip = nip
-      ? guru.nip.toLowerCase().includes(nip.toLowerCase())
-      : true;
-
-    return matchNama && matchNip;
-  });
-
-  return filteredGurus.map((guru) => {
+  // 📄 MAP REKAP
+  const data = gurus.map((guru) => {
     let totalHadirHariNormal = 0;
     let totalHadirHariLembur = 0;
     let totalIzin = 0;
@@ -335,20 +353,11 @@ export async function getRekapHadirBulanan({ nama = "", nip = "" }) {
       const isKerja = isWorkingDay(absen.tanggal);
 
       if (absen.status === "Hadir") {
-        if (isKerja) {
-          totalHadirHariNormal++;
-        } else {
-          totalHadirHariLembur++;
-        }
+        isKerja ? totalHadirHariNormal++ : totalHadirHariLembur++;
       }
 
-      if (absen.status === "Izin" && isKerja) {
-        totalIzin++;
-      }
-
-      if (absen.status === "Alpha" && isKerja) {
-        totalAlpha++;
-      }
+      if (absen.status === "Izin" && isKerja) totalIzin++;
+      if (absen.status === "Alpha" && isKerja) totalAlpha++;
     });
 
     return {
@@ -361,4 +370,14 @@ export async function getRekapHadirBulanan({ nama = "", nip = "" }) {
       seluruhTotalHadir: totalHadirHariNormal + totalHadirHariLembur,
     };
   });
+
+  return {
+    data,
+    meta: {
+      page,
+      limit,
+      total,
+      totalPages,
+    },
+  };
 }

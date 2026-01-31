@@ -114,6 +114,8 @@ export const rekapHadirBulanan = async (req, res) => {
     const data = await getRekapHadirBulanan({
       nama: req.query.nama,
       nip: req.query.nip,
+      page: req.query.page,
+      limit: req.query.pageSize,
     });
 
     res.json({
