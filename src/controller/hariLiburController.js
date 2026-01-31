@@ -1,4 +1,4 @@
-import * as hariLiburService from "../services/hariLiburService.js";
+import * as hariLiburService from "../services/hariliburService.js";
 
 /**
  * CREATE
