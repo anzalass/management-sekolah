@@ -76,10 +76,10 @@ export const updateStatusPerizinanGuru = async (id, status) => {
             idGuru: izin.idGuru,
             jamMasuk: new Date(),
             jamPulang: new Date(), // bisa null jika belum pulang, tapi sesuaikan logika
-            lokasiMasuk: "izin",
-            lokasiPulang: "izin",
-            fotoMasuk: "izin",
-            status: "Izin",
+            lokasiMasuk: status === "disetujui" ? "Izin" : "Alpha",
+            lokasiPulang: status === "disetujui" ? "Izin" : "Alpha",
+            fotoMasuk: status === "disetujui" ? "Izin" : "Alpha",
+            status: status === "disetujui" ? "Izin" : "Alpha",
           },
         });
       }
@@ -122,11 +122,23 @@ export const getPerizinanGuruById = async (id) => {
 export const getPerizinanGuru = async ({
   nama = "",
   nip = "",
-  tanggal = "",
+  startDate = "",
+  endDate = "",
   page = 1,
   pageSize = 10,
 }) => {
   const skip = (page - 1) * pageSize;
+
+  let startDateFilter;
+  let endDateFilter;
+
+  if (startDate) {
+    startDateFilter = new Date(`${startDate}T00:00:00.000Z`);
+  }
+
+  if (endDate) {
+    endDateFilter = new Date(`${endDate}T23:59:59.999Z`);
+  }
 
   const where = {
     AND: [
@@ -150,11 +162,11 @@ export const getPerizinanGuru = async ({
             },
           }
         : {},
-      tanggal
+      startDateFilter || endDateFilter
         ? {
             time: {
-              gte: new Date(tanggal + "T00:00:00.000Z"),
-              lte: new Date(tanggal + "T23:59:59.999Z"),
+              ...(startDateFilter && { gte: startDateFilter }),
+              ...(endDateFilter && { lte: endDateFilter }),
             },
           }
         : {},
@@ -181,7 +193,6 @@ export const getPerizinanGuru = async ({
     prisma.perizinanGuru.count({ where }),
   ]);
 
-  // Mapping agar nama & nip keluar langsung tanpa nested Guru
   const data = dataRaw.map((item) => ({
     ...item,
     nama: item.Guru?.nama || null,
@@ -250,3 +261,123 @@ export const getPerizinanGuruByIdGuru = async ({
     throw new Error(errorMessage);
   }
 };
+
+// lib/holidays.ts
+export const HOLIDAYS = [];
+
+export function isWeekend(date) {
+  const day = date.getDay();
+  return day === 0 || day === 6;
+}
+
+export function isHoliday(date) {
+  const formatted = date.toISOString().split("T")[0];
+  return HOLIDAYS.includes(formatted);
+}
+
+export function isWorkingDay(date) {
+  return !isWeekend(date) && !isHoliday(date);
+}
+
+
+export async function getRekapHadirBulanan({
+  nama = "",
+  nip = "",
+  page = 1,
+  limit = 10,
+}) {
+  const now = new Date();
+
+  const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+  const endOfMonth = new Date(
+    now.getFullYear(),
+    now.getMonth() + 1,
+    0,
+    23,
+    59,
+    59
+  );
+
+  // 🔍 FILTER DI DATABASE
+  const whereGuru = {
+    ...(nama && {
+      nama: { contains: nama, mode: "insensitive" },
+    }),
+    ...(nip && {
+      nip: { contains: nip, mode: "insensitive" },
+    }),
+  };
+
+  // 📊 TOTAL DATA (UNTUK PAGINATION)
+  const total = await prisma.guru.count({
+    where: whereGuru,
+  });
+
+  const totalPages = Math.ceil(total / limit);
+  const skip = (page - 1) * limit;
+
+  // 📦 AMBIL DATA GURU + KEHADIRAN BULAN INI
+  const gurus = await prisma.guru.findMany({
+    where: whereGuru,
+    skip,
+    take: limit,
+    select: {
+      nama: true,
+      nip: true,
+      KehadiranGuru: {
+        where: {
+          tanggal: {
+            gte: startOfMonth,
+            lte: endOfMonth,
+          },
+        },
+        select: {
+          tanggal: true,
+          status: true,
+        },
+      },
+    },
+    orderBy: {
+      nama: "asc",
+    },
+  });
+
+  // 📄 MAP REKAP
+  const data = gurus.map((guru) => {
+    let totalHadirHariNormal = 0;
+    let totalHadirHariLembur = 0;
+    let totalIzin = 0;
+    let totalAlpha = 0;
+
+    guru.KehadiranGuru.forEach((absen) => {
+      const isKerja = isWorkingDay(absen.tanggal);
+
+      if (absen.status === "Hadir") {
+        isKerja ? totalHadirHariNormal++ : totalHadirHariLembur++;
+      }
+
+      if (absen.status === "Izin" && isKerja) totalIzin++;
+      if (absen.status === "Alpha" && isKerja) totalAlpha++;
+    });
+
+    return {
+      nama: guru.nama,
+      nip: guru.nip,
+      totalHadirHariNormal,
+      totalHadirHariLembur,
+      totalIzin,
+      totalAlpha,
+      seluruhTotalHadir: totalHadirHariNormal + totalHadirHariLembur,
+    };
+  });
+
+  return {
+    data,
+    meta: {
+      page,
+      limit,
+      total,
+      totalPages,
+    },
+  };
+}

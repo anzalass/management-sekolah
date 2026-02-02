@@ -303,7 +303,6 @@ export const rekapNilaiAbsensiSiswa = async (idSiswa, idKelas) => {
         totalBobot += jn.bobot;
       }
     });
-
     return {
       mapel: mapel.namaMapel,
       guru: mapel.namaGuru,

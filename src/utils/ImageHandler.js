@@ -4,6 +4,8 @@ import { fileTypeFromBuffer } from "file-type";
 import { v2 as cloudinary } from "cloudinary";
 import sharp from "sharp";
 
+const MAX_SIZE = 3 * 1024 * 1024; // 3 MB
+
 // Konfigurasi Cloudinary
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME || "dyofh7ecq",
@@ -18,6 +20,30 @@ cloudinary.config({
  * @param {string} folder - Nama folder di Cloudinary
  * @param {string} fileName - Nama file (tanpa ekstensi)
  */
+
+async function compressToMaxSize(buffer) {
+  let quality = 80;
+  let output = buffer;
+
+  while (quality >= 40) {
+    output = await sharp(buffer)
+      .resize({ width: 2000, withoutEnlargement: true })
+      .jpeg({ quality, mozjpeg: true })
+      .toBuffer();
+
+    if (output.length <= MAX_SIZE) {
+      return output;
+    }
+
+    quality -= 10;
+  }
+
+  // fallback terakhir
+  return await sharp(buffer)
+    .resize({ width: 1500 })
+    .jpeg({ quality: 60 })
+    .toBuffer();
+}
 
 export const uploadToCloudinary = async (
   fileBuffer,
@@ -34,10 +60,8 @@ export const uploadToCloudinary = async (
 
   try {
     if (isImage) {
-      const compressedBuffer = await sharp(fileBuffer)
-        .resize({ width: 2000, withoutEnlargement: true })
-        .jpeg({ quality: 80 })
-        .toBuffer();
+      // 🔥 COMPRESS KE ≤ 3MB
+      const compressedBuffer = await compressToMaxSize(fileBuffer);
 
       return await new Promise((resolve, reject) => {
         const uploadStream = cloudinary.uploader.upload_stream(
@@ -52,34 +76,37 @@ export const uploadToCloudinary = async (
             resolve({
               secure_url: result.secure_url,
               public_id: result.public_id,
+              size: compressedBuffer.length,
             });
           }
         );
+
         uploadStream.end(compressedBuffer);
       });
-    } else {
-      // === PDF, docx, zip ===
-      return await new Promise((resolve, reject) => {
-        const uploadStream = cloudinary.uploader.upload_stream(
-          {
-            folder,
-            public_id: `${fileName}_${Date.now()}`,
-            resource_type: "raw", // penting
-            timeout: 120000,
-          },
-          (error, result) => {
-            if (error) return reject(error);
-            resolve({
-              secure_url: result.secure_url, // URL default
-              public_id: result.public_id, // simpan public_id untuk bikin URL inline
-            });
-          }
-        );
-        uploadStream.end(fileBuffer);
-      });
     }
+
+    // === FILE NON IMAGE (PDF, ZIP, dll) ===
+    return await new Promise((resolve, reject) => {
+      const uploadStream = cloudinary.uploader.upload_stream(
+        {
+          folder,
+          public_id: `${fileName}_${Date.now()}`,
+          resource_type: "raw",
+          timeout: 120000,
+        },
+        (error, result) => {
+          if (error) return reject(error);
+          resolve({
+            secure_url: result.secure_url,
+            public_id: result.public_id,
+          });
+        }
+      );
+
+      uploadStream.end(fileBuffer);
+    });
   } catch (err) {
-    console.error("Upload gagal:", err.message);
+    console.error("Upload gagal:", err);
     throw err;
   }
 };

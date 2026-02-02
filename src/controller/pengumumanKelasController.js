@@ -1,4 +1,5 @@
 import * as pengumumanKelasService from "../services/pengumumanKelasService.js";
+import memoryUpload from "../utils/multer.js";
 
 export const getAllPengumumanKelas = async (req, res, next) => {
   try {
@@ -57,25 +58,6 @@ export const getPengumumanKelasByKelasByGuru = async (req, res, next) => {
   }
 };
 
-export const updatePengumumanKelas = async (req, res, next) => {
-  try {
-    const { id } = req.params;
-    const { idKelas, title, time, content } = req.body;
-    const result = await pengumumanKelasService.updatePengumumanKelas(id, {
-      idKelas,
-      title,
-      time: new Date(),
-      content,
-    });
-    return res.json({
-      message: "Pengumuman kelas berhasil diupdate",
-      data: result,
-    });
-  } catch (error) {
-    return res.status(500).json({ message: error.message, success: false });
-  }
-};
-
 export const deletePengumumanKelas = async (req, res, next) => {
   try {
     const { id } = req.params;
@@ -98,85 +80,75 @@ export const getAllKelasAndMapelByGuruController = async (req, res) => {
   }
 };
 
-export const createPengumumanKelas = async (req, res, next) => {
+export const createPengumumanKelas = async (req, res) => {
   try {
     const { idKelas, title, content } = req.body;
     const { idGuru } = req.user;
-
-    // Waktu sekarang
+    const image = req.file || null;
     const time = new Date();
 
-    // Jika user memilih "Semua"
-    if (idKelas === "All") {
-      // Ambil semua kelas yang diajar guru
+    if (!idKelas || !title || !content) {
+      return res.status(400).json({ message: "Data wajib diisi" });
+    }
+
+    // 🔥 SEMUA KELAS
+    if (idKelas === "All" || idKelas === "Semua Mapel") {
       const kelasGuru =
         await pengumumanKelasService.getAllKelasAndMapelByGuruService(idGuru);
 
-      // Filter hanya yang type-nya "Kelas"
-      // const hanyaKelas = kelasGuru.filter((k) => k.type === "Kelas");
+      const target =
+        idKelas === "All"
+          ? kelasGuru.filter((k) => k.type === "Kelas")
+          : kelasGuru.filter((k) => k.type === "Mapel");
 
-      // Buat pengumuman untuk setiap kelas
-      const createPromises = kelasGuru.map((k) =>
-        pengumumanKelasService.createPengumumanKelas({
-          idKelas: k.id,
-          title,
-          content,
-          time,
-          idGuru,
-        })
+      const results = await Promise.all(
+        target.map((k) =>
+          pengumumanKelasService.createPengumumanKelas(
+            { idKelas: k.id, title, content, time, idGuru },
+            image
+          )
+        )
       );
 
-      // Tunggu semua proses selesai
-      const results = await Promise.all(createPromises);
-
       return res.status(201).json({
-        message: "Pengumuman berhasil dikirim ke semua kelas",
-        data: results,
-      });
-    } else if (idKelas === "Semua Mapel") {
-      const kelasGuru = await getAllKelasAndMapelByGuruService(idGuru);
-
-      // Filter hanya yang type-nya "Kelas"
-      const hanyaKelas = kelasGuru.filter((k) => k.type === "Mapel");
-
-      // Buat pengumuman untuk setiap kelas
-      const createPromises = hanyaKelas.map((k) =>
-        pengumumanKelasService.createPengumumanKelas({
-          idKelas: k.id,
-          title,
-          content,
-          time,
-          idGuru,
-        })
-      );
-
-      // Tunggu semua proses selesai
-      const results = await Promise.all(createPromises);
-
-      return res.status(201).json({
-        message: "Pengumuman berhasil dikirim ke semua kelas",
+        message: "Pengumuman berhasil dikirim",
         data: results,
       });
     }
 
-    // Jika user memilih 1 kelas tertentu
-    const result = await pengumumanKelasService.createPengumumanKelas({
-      idKelas,
-      title,
-      content,
-      time,
-      idGuru,
-    });
+    // 🔥 SATU KELAS
+    const result = await pengumumanKelasService.createPengumumanKelas(
+      { idKelas, title, content, time, idGuru },
+      image
+    );
 
-    return res.status(201).json({
+    res.status(201).json({
       message: "Pengumuman kelas berhasil dibuat",
       data: result,
     });
   } catch (error) {
-    console.error("Error createPengumumanKelas:", error);
-    return res.status(500).json({
-      message: error.message || "Gagal membuat pengumuman kelas",
-      success: false,
+    console.error(error);
+    res.status(500).json({ message: error.message });
+  }
+};
+
+export const updatePengumumanKelas = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { idKelas, title, content } = req.body;
+    const image = req.file || null;
+
+    const result = await pengumumanKelasService.updatePengumumanKelas(
+      id,
+      { idKelas, title, content, time: new Date() },
+      image
+    );
+
+    res.json({
+      message: "Pengumuman kelas berhasil diupdate",
+      data: result,
     });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
   }
 };

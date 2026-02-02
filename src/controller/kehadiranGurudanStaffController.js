@@ -4,6 +4,7 @@ import {
   getAllKehadiranGuru,
   getKehadiranGuruByIdGuru,
 } from "../services/KehadiranGurudanStaff.js";
+import { getRekapHadirBulanan } from "../services/perizinanGuruService.js";
 import memoryUpload from "../utils/multer.js";
 
 export const absenMasukGuruController = (req, res) => {
@@ -69,12 +70,13 @@ export const absenPulangGuruController = async (req, res) => {
 };
 export const getKehadiranGuruController = async (req, res) => {
   try {
-    const { tanggal, nama, nip, pageSize, page } = req.query;
+    const { startDate, endDate, nama, nip, pageSize, page } = req.query;
 
     const kehadiran = await getAllKehadiranGuru({
       page: parseInt(page) || 1,
       pageSize: parseInt(pageSize) || 10,
-      tanggal,
+      startDate,
+      endDate,
       nama,
       nip,
     });
@@ -104,5 +106,29 @@ export const getKehadiranGuruByIdGuruController = async (req, res) => {
     return res.status(200).json(result);
   } catch (error) {
     return res.status(500).json({ message: error.message, success: false });
+  }
+};
+
+export const rekapHadirBulanan = async (req, res) => {
+  try {
+    const data = await getRekapHadirBulanan({
+      nama: req.query.nama,
+      nip: req.query.nip,
+      page: req.query.page,
+      limit: req.query.pageSize,
+    });
+
+    res.json({
+      bulan: new Date().toLocaleString("id-ID", {
+        month: "long",
+        year: "numeric",
+      }),
+      data,
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({
+      message: "Gagal mengambil rekap kehadiran",
+    });
   }
 };
