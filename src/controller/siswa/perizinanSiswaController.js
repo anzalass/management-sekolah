@@ -24,7 +24,6 @@ export const createPerizinanSiswaController = async (req, res) => {
         bukti: req.file,
       };
       const newIzin = await createPerizinanSiswa(data);
-      console.log("new izin : ",newIzin);
       res
         .status(201)
         .json({ message: "Perizinan berhasil diajukan", data: newIzin });
