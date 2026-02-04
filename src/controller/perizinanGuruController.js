@@ -66,6 +66,19 @@ export const rejectPerizinanGuru = async (req, res) => {
   }
 };
 
+export const waitPerizinanGuru = async (req, res) => {
+  const { id } = req.params;
+  try {
+    await updateStatusPerizinanGuru(id, "menunggu");
+    res.status(200).json({
+      success: true,
+      message: "Perizinan berhasil ditolak",
+    });
+  } catch (error) {
+    return res.status(500).json({ message: error.message, success: false });
+  }
+};
+
 export const deletePerizinanGuruController = async (req, res, next) => {
   try {
     await deletePerizinanGuru(req.params.id);

@@ -1,6 +1,5 @@
 import { PrismaClient } from "@prisma/client";
 const prisma = new PrismaClient();
-import fs from "fs/promises";
 
 import bcrypt from "bcryptjs";
 import {
@@ -13,11 +12,10 @@ import {
   deleteFotoSummaryTugasIdSiswa,
 } from "./materiTugasSummaryService.js";
 
-const createGuru = async (guru, foto) => {
+const createGuru = async (guru) => {
   const {
     nip,
     nik,
-    password,
     jabatan,
     nama,
     tempatLahir,
@@ -31,14 +29,7 @@ const createGuru = async (guru, foto) => {
   } = guru;
 
   try {
-    const passwordHash = await bcrypt.hash(password, 10);
-    console.log(foto);
-
-    let imageUploadResult = null;
-
-    if (foto && foto.buffer && foto.buffer.length > 0) {
-      imageUploadResult = await uploadToCloudinary(foto.buffer, "guru", nip);
-    }
+    const passwordHash = await bcrypt.hash("gurupassword", 10);
 
     const newGuru = await prisma.guru.create({
       data: {
@@ -46,17 +37,15 @@ const createGuru = async (guru, foto) => {
         nik,
         password: passwordHash,
         jabatan,
+        alamat,
         nama,
         tempatLahir,
-        tanggalLahir,
-        alamat,
+        tanggalLahir: tanggalLahir ? new Date(tanggalLahir) : null, // <--- ini penting        alamat,
         agama,
         jenisKelamin,
         noTelepon,
         email,
         status,
-        foto: imageUploadResult?.secure_url || null,
-        fotoId: imageUploadResult?.public_id || null,
       },
     });
 
@@ -70,6 +59,8 @@ const createGuru = async (guru, foto) => {
 
 const createRiwayatPendidikan = async (nip, data) => {
   try {
+    console.log(nip, data);
+
     await prisma.$transaction(async (prisma) => {
       for (let index = 0; index < data.data.length; index++) {
         await prisma.riwayatPendidikanGuru.create({
@@ -103,11 +94,10 @@ const deleteRiwayatPendidikan = async (id) => {
   }
 };
 
-const updateGuru = async (id, guru, foto) => {
+const updateGuru = async (id, guru) => {
   const {
     nip,
     nik,
-    password,
     jabatan,
     nama,
     tempatLahir,
@@ -122,56 +112,36 @@ const updateGuru = async (id, guru, foto) => {
 
   try {
     const existingGuru = await prisma.guru.findUnique({ where: { id } });
-    if (!existingGuru)
+    if (!existingGuru) {
       throw new Error("Guru dengan ID tersebut tidak ditemukan");
-
-    // Upload foto baru kalau ada
-    let imageUploadResult = null;
-    if (foto && foto.buffer && foto.buffer.length > 0) {
-      if (existingGuru.fotoId) {
-        try {
-          await deleteFromCloudinary(existingGuru.fotoId);
-        } catch (err) {
-          console.warn("Gagal hapus foto lama:", err.message);
-        }
-      }
-      imageUploadResult = await uploadToCloudinary(foto.buffer, "guru", nip);
-      console.log("Foto baru di-upload:", imageUploadResult);
     }
 
-    const passwordHash = password?.trim()
-      ? await bcrypt.hash(password, 10)
-      : "";
+    const updateData = {
+      nip,
+      nik,
+      jabatan,
+      nama,
+      tempatLahir,
+      tanggalLahir: tanggalLahir ? new Date(tanggalLahir) : null,
+      alamat,
+      agama,
+      jenisKelamin,
+      noTelepon,
+      email,
+      status,
+    };
 
     await prisma.$transaction(async (tx) => {
-      // 1️⃣ Update data guru utama
       await tx.guru.update({
         where: { id },
-        data: {
-          nip,
-          nik,
-          jabatan,
-          nama,
-          tempatLahir,
-          tanggalLahir: tanggalLahir ? new Date(tanggalLahir) : null,
-          alamat,
-          agama,
-          jenisKelamin,
-          noTelepon,
-          email,
-          status,
-          ...(passwordHash && { password: passwordHash }),
-          ...(imageUploadResult && {
-            foto: imageUploadResult.secure_url,
-            fotoId: imageUploadResult.public_id,
-          }),
-        },
+        data: updateData,
       });
     });
+
+    return true;
   } catch (error) {
-    console.log(error);
-    const errorMessage = prismaErrorHandler(error);
-    throw new Error(errorMessage);
+    console.error(error);
+    throw new Error(prismaErrorHandler(error));
   }
 };
 
@@ -639,6 +609,178 @@ const getNamaSiswa = async (id) => {
   }
 };
 
+const updateFotoGuru = async (id, foto) => {
+  try {
+    // Cari data guru dulu
+    const existing = await prisma.guru.findUnique({
+      where: { id },
+    });
+
+    if (!existing) {
+      throw new Error("Guru tidak ditemukan");
+    }
+
+    let imageUrl;
+    let imageId;
+
+    // Upload ke Cloudinary kalau ada foto
+    if (foto && foto.buffer && foto.buffer.length > 0) {
+      if (existing.fotoId) {
+        await deleteFromCloudinary(existing.fotoId); // fungsi hapus foto lama
+      }
+      const uploadResult = await uploadToCloudinary(
+        foto.buffer,
+        "guru",
+        existing.nip
+      );
+      imageUrl = uploadResult.secure_url; // atau sesuai hasil return dari fungsi upload
+      imageId = uploadResult.public_id;
+    }
+
+    // Update kolom foto di DB
+    const updatedGuru = await prisma.guru.update({
+      where: { id },
+      data: {
+        foto: imageUrl,
+        fotoId: imageId,
+      },
+    });
+
+    return updatedGuru;
+  } catch (error) {
+    console.error("Gagal update foto guru:", error);
+    throw error;
+  }
+};
+
+export const updatePassword = async (id, newPassword) => {
+  try {
+    if (!newPassword || newPassword.length < 8) {
+      throw new Error("Password minimal 8 karakter");
+    }
+
+    // Hash password pakai bcrypt
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+    // Update di database
+    const updatedGuru = await prisma.guru.update({
+      where: { id },
+      data: { password: hashedPassword },
+    });
+
+    return updatedGuru;
+  } catch (error) {
+    console.error("Gagal update password:", error);
+    throw error;
+  }
+};
+
+const updateFotoSiswa = async (id, foto) => {
+  try {
+    // Cari data guru dulu
+    const existing = await prisma.siswa.findUnique({
+      where: { id },
+    });
+
+    if (!existing) {
+      throw new Error("Guru tidak ditemukan");
+    }
+
+    let imageUrl;
+    let imageId;
+
+    // Upload ke Cloudinary kalau ada foto
+    if (foto && foto.buffer && foto.buffer.length > 0) {
+      if (existing.fotoId) {
+        await deleteFromCloudinary(existing.fotoId); // fungsi hapus foto lama
+      }
+      const uploadResult = await uploadToCloudinary(
+        foto.buffer,
+        "siswa",
+        existing.nip
+      );
+      imageUrl = uploadResult.secure_url;
+      imageId = uploadResult.public_id; // atau sesuai hasil return dari fungsi upload
+    }
+
+    // Update kolom foto di DB
+    const updatedSiswa = await prisma.siswa.update({
+      where: { id },
+      data: {
+        foto: imageUrl,
+        fotoId: imageId,
+      },
+    });
+
+    return updatedSiswa;
+  } catch (error) {
+    console.error("Gagal update foto guru:", error);
+    throw error;
+  }
+};
+
+const updatePasswordSiswa = async (id, newPassword) => {
+  try {
+    if (!newPassword || newPassword.length < 8) {
+      throw new Error("Password minimal 8 karakter");
+    }
+
+    // Hash password pakai bcrypt
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+    // Update di database
+    const updatedGuru = await prisma.siswa.update({
+      where: { id },
+      data: { password: hashedPassword },
+    });
+
+    return updatedGuru;
+  } catch (error) {
+    console.error("Gagal update password:", error);
+    throw error;
+  }
+};
+
+const naikKelasSiswa = async (id, kelasBaru) => {
+  try {
+    await prisma.siswa.update({
+      where: {
+        id,
+      },
+      data: {
+        kelas: kelasBaru,
+      },
+    });
+  } catch (error) {
+    console.error("Gagal update password:", error);
+    throw error;
+  }
+};
+
+const luluskanSiswa = async (id, lulus, tahun) => {
+  try {
+    // Cari data siswa dulu
+    const existing = await prisma.siswa.findUnique({
+      where: { id },
+    });
+
+    if (!existing) {
+      throw new Error("Siswa tidak ditemukan");
+    }
+
+    const updated = await prisma.siswa.update({
+      where: { id },
+      data: {
+        tahunLulus: lulus ? tahun ?? new Date().getFullYear().toString() : null,
+      },
+    });
+
+    return updated;
+  } catch (error) {
+    console.error("Gagal mengubah status lulus siswa:", error);
+    throw error;
+  }
+};
 export {
   createRiwayatPendidikan,
   deleteRiwayatPendidikan,
@@ -655,4 +797,62 @@ export {
   getAllSiswaMaster,
   getNamaSiswa,
   getAllGuruMaster,
+  updateFotoGuru,
+  updatePasswordSiswa,
+  updateFotoSiswa,
+  naikKelasSiswa,
+  luluskanSiswa,
 };
+
+// const pushRiwayatPendidikan = () => {
+//   if (!riwayatPendidikanGuru.jenjangPendidikan) {
+//     alert('Jenjang Pendidikan is required');
+//     return;
+//   }
+
+//   if (
+//     riwayatPendidikanGuru.jenjangPendidikan !== 'SD' &&
+//     riwayatPendidikanGuru.jenjangPendidikan !== 'SMP' &&
+//     riwayatPendidikanGuru.jenjangPendidikan !== 'SMA' &&
+//     !riwayatPendidikanGuru.gelar
+//   ) {
+//     alert('Gelar is required for this Jenjang Pendidikan');
+//     return;
+//   }
+
+//   if (!riwayatPendidikanGuru.nama) {
+//     alert('Nama Institusi is required');
+//     return;
+//   }
+
+//   if (!riwayatPendidikanGuru.tahunLulus) {
+//     alert('Tahun Lulus is required');
+//     return;
+//   }
+
+//   // Jika validasi lolos, push data ke array
+//   setRiwayatPendidikanGuruArr((prev) => [...prev, riwayatPendidikanGuru]);
+
+//   setRiwayatPendidikanGuru({
+//     id: '',
+//     jenjangPendidikan: '',
+//     nama: '',
+//     gelar: '',
+//     tahunLulus: ''
+//   });
+// };
+
+// const hapusRiwayatPendidikan = async (id: string) => {
+//   try {
+//     await api.delete(`user/delete-riwayat-pendidikan/${id}`, {
+//       headers: {
+//         'Content-Type': 'application/json',
+//         Authorization: `Bearer ${session?.user?.token}`
+//       }
+//     });
+
+//     setData((prevData) => prevData.filter((r) => r.id !== id));
+//   } catch (error: any) {
+//     toast.error(error.response?.data?.message || 'Terjadi kesalahan');
+//   }
+// };

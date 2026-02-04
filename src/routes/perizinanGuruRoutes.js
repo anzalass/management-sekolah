@@ -11,6 +11,7 @@ import {
   getPerizinanGuruByIdController,
   getPerizinanGuruController,
   rejectPerizinanGuru,
+  waitPerizinanGuru,
 } from "../controller/perizinanGuruController.js";
 
 const router = express.Router();
@@ -40,10 +41,17 @@ router.put(
   rejectPerizinanGuru
 );
 
+router.put(
+  "/perizinan-guru/wait/:id",
+  AuthMiddleware,
+  isKepalaSekolah,
+  waitPerizinanGuru
+);
+
 router.delete(
   "/perizinan-guru/delete/:id",
   AuthMiddleware,
-  isKepalaSekolah,
+  isGuruOnly,
   deletePerizinanGuruController
 );
 router.get("/perizinan-guru", AuthMiddleware, getPerizinanGuruController);

@@ -3,14 +3,19 @@ import { prismaErrorHandler } from "../utils/errorHandlerPrisma.js";
 const prisma = new PrismaClient();
 
 export const createKegiatanSekolah = async (data) => {
-  const { nama, keterangan, waktuMulai, waktuSelesai, tahunAjaran } = data;
+  const { nama, keterangan, waktuMulai, waktuSelesai } = data;
   try {
+    const ta = await prisma.sekolah.findFirst({
+      select: {
+        tahunAjaran: true,
+      },
+    });
     await prisma.$transaction(async (tx) => {
       await tx.kegiatanSekolah.create({
         data: {
           nama,
           keterangan,
-          tahunAjaran,
+          tahunAjaran: ta.tahunAjaran,
           waktuMulai: new Date(`${waktuMulai}T00:00:00Z`), // Tambah waktu default
           waktuSelesai: waktuSelesai
             ? new Date(`${waktuSelesai}T00:00:00Z`)
