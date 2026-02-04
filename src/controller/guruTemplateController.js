@@ -37,7 +37,7 @@ export const createGuruTemplateController = async (req, res) => {
 export const getAllGuruTemplateController = async (req, res) => {
   try {
     const page = parseInt(req.query.page) || 1;
-    const pageSize = parseInt(req.query.pageSize) || 10;
+    const pageSize = parseInt(req.query.pageSize) || 30;
     const search = req.query.search || "";
     const guruTemplates = await getGuruTemplate(page, pageSize, search);
     return res.status(200).json({
