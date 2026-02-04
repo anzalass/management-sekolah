@@ -5,15 +5,66 @@ const prisma = new PrismaClient();
 
 export const createPerizinanGuru = async (data, foto) => {
   try {
+    // 1️⃣ CEK GURU
     const existingGuru = await prisma.guru.findUnique({
       where: { id: data.idGuru },
+      select: { id: true },
     });
+
     if (!existingGuru) {
-      throw new Error(`Guru dengan NIP ${data.nip} tidak ditemukan`);
+      throw new Error("Guru tidak ditemukan");
     }
+
+    // ===============================
+    // 2️⃣ VALIDASI TANGGAL (WIB)
+    // ===============================
+
+    // tanggal izin dari FE
+    const izinDate = new Date(data.time);
+
+    // hari ini versi WIB
+    const nowWIB = new Date(
+      new Date().toLocaleString("en-US", { timeZone: "Asia/Jakarta" })
+    );
+
+    const startOfTodayWIB = new Date(nowWIB);
+    startOfTodayWIB.setHours(0, 0, 0, 0);
+
+    if (izinDate < startOfTodayWIB) {
+      throw new Error(
+        "Tidak boleh mengajukan izin untuk hari yang sudah lewat"
+      );
+    }
+
+    // ===============================
+    // 3️⃣ RANGE HARI INI (WIB)
+    // ===============================
+    const endOfTodayWIB = new Date(startOfTodayWIB);
+    endOfTodayWIB.setHours(23, 59, 59, 999);
+
+    // ===============================
+    // 4️⃣ CEK IZIN HARI INI
+    // ===============================
+    const izinHariIni = await prisma.perizinanGuru.findFirst({
+      where: {
+        idGuru: data.idGuru,
+        time: {
+          gte: startOfTodayWIB,
+          lte: endOfTodayWIB,
+        },
+      },
+    });
+
+    if (izinHariIni) {
+      throw new Error("Anda sudah mengajukan izin hari ini");
+    }
+
+    // ===============================
+    // 5️⃣ UPLOAD FOTO (OPSIONAL)
+    // ===============================
     let imageUploadResult = null;
 
-    if (foto && foto.buffer) {
+    if (foto?.buffer) {
       imageUploadResult = await uploadToCloudinary(
         foto.buffer,
         "izinguru",
@@ -21,82 +72,127 @@ export const createPerizinanGuru = async (data, foto) => {
       );
     }
 
-    await prisma.perizinanGuru.create({
+    // ===============================
+    // 6️⃣ SIMPAN IZIN
+    // ===============================
+    return await prisma.perizinanGuru.create({
       data: {
         idGuru: data.idGuru,
         keterangan: data.keterangan,
-        time: new Date(`${data.time}T00:00:00Z`),
+        time: izinDate,
         status: "menunggu",
-        bukti: imageUploadResult?.secure_url ?? "", // pastikan tetap string
+        bukti: imageUploadResult?.secure_url ?? "",
         bukti_id: imageUploadResult?.public_id ?? "",
       },
     });
   } catch (error) {
-    console.log(error);
-    const errorMessage = prismaErrorHandler(error);
-    throw new Error(errorMessage);
+    console.error(error);
+    throw new Error(prismaErrorHandler(error));
   }
+};
+
+const WIB_OFFSET = 7 * 60 * 60 * 1000;
+
+export const nowWIB = () => {
+  return new Date(Date.now() + WIB_OFFSET);
+};
+
+export const startOfTodayWIB = () => {
+  const now = nowWIB();
+  return new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0, 0);
+};
+
+export const endOfTodayWIB = () => {
+  const now = nowWIB();
+  return new Date(
+    now.getFullYear(),
+    now.getMonth(),
+    now.getDate(),
+    23,
+    59,
+    59,
+    999
+  );
 };
 
 export const updateStatusPerizinanGuru = async (id, status) => {
   try {
-    // 1. Ambil data perizinan
     const izin = await prisma.perizinanGuru.findUnique({
       where: { id },
-      include: { Guru: true }, // opsional, untuk log/error
     });
 
     if (!izin) {
       throw new Error("Perizinan tidak ditemukan");
     }
 
-    // 2. Jika status "disetujui", cek dan buat kehadiran (jika belum ada hari ini)
-    if (status === "disetujui") {
-      const todayStart = new Date();
-      todayStart.setHours(0, 0, 0, 0);
+    const todayStart = startOfTodayWIB();
+    const todayEnd = endOfTodayWIB();
 
-      const todayEnd = new Date();
-      todayEnd.setHours(23, 59, 59, 999);
-
-      // Cek apakah guru sudah punya kehadiran hari ini
-      const existingKehadiran = await prisma.kehadiranGuru.findFirst({
-        where: {
-          idGuru: izin.idGuru,
-          jamMasuk: {
-            gte: todayStart,
-            lte: todayEnd,
-          },
+    // 1️⃣ Cari kehadiran hari ini
+    const existingKehadiran = await prisma.kehadiranGuru.findFirst({
+      where: {
+        idGuru: izin.idGuru,
+        tanggal: {
+          gte: todayStart,
+          lte: todayEnd,
         },
-      });
+      },
+    });
 
-      // Jika belum ada, buat baru
-      if (!existingKehadiran) {
+    // 2️⃣ Mapping status izin → status kehadiran
+    let kehadiranStatus = null;
+
+    if (status === "disetujui") {
+      kehadiranStatus = "Izin";
+    } else if (status === "ditolak") {
+      kehadiranStatus = "Alpha";
+    } else if (status === "menunggu") {
+      kehadiranStatus = "Menunggu";
+    }
+
+    // 3️⃣ Jika status perlu mempengaruhi kehadiran
+    if (kehadiranStatus) {
+      if (existingKehadiran) {
+        // ✅ UPDATE SAJA
+        await prisma.kehadiranGuru.update({
+          where: { id: existingKehadiran.id },
+          data: {
+            status: kehadiranStatus,
+            lokasiMasuk: kehadiranStatus,
+            lokasiPulang: kehadiranStatus,
+            fotoMasuk: kehadiranStatus,
+            jamMasuk: existingKehadiran.jamMasuk ?? nowWIB(),
+            jamPulang: existingKehadiran.jamPulang ?? nowWIB(),
+          },
+        });
+      } else {
+        // ➕ CREATE JIKA BELUM ADA
         await prisma.kehadiranGuru.create({
           data: {
             idGuru: izin.idGuru,
-            jamMasuk: new Date(),
-            jamPulang: new Date(), // bisa null jika belum pulang, tapi sesuaikan logika
-            lokasiMasuk: status === "disetujui" ? "Izin" : "Alpha",
-            lokasiPulang: status === "disetujui" ? "Izin" : "Alpha",
-            fotoMasuk: status === "disetujui" ? "Izin" : "Alpha",
-            status: status === "disetujui" ? "Izin" : "Alpha",
+            tanggal: todayStart, // WIB
+            jamMasuk: nowWIB(),
+            jamPulang: nowWIB(),
+            lokasiMasuk: kehadiranStatus,
+            lokasiPulang: kehadiranStatus,
+            fotoMasuk: kehadiranStatus,
+            status: kehadiranStatus,
           },
         });
       }
-      // Jika sudah ada, biarkan saja (tidak buat duplikat)
     }
 
-    // 3. Update status perizinan
+    // 4️⃣ Update status perizinan
     return await prisma.perizinanGuru.update({
       where: { id },
       data: { status },
     });
   } catch (error) {
     console.error("Error updateStatusPerizinanGuru:", error);
-    const errorMessage = prismaErrorHandler(error);
-    throw new Error(errorMessage);
+    throw new Error(prismaErrorHandler(error));
   }
 };
+
 export const deletePerizinanGuru = async (id) => {
   try {
     await prisma.$transaction(async () => {
@@ -279,13 +375,16 @@ export function isWorkingDay(date) {
   return !isWeekend(date) && !isHoliday(date);
 }
 
-
 export async function getRekapHadirBulanan({
   nama = "",
   nip = "",
   page = 1,
   limit = 10,
 }) {
+  // ✅ PAKSA NUMBER
+  page = Number(page) || 1;
+  limit = Number(limit) || 10;
+
   const now = new Date();
 
   const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
@@ -298,7 +397,6 @@ export async function getRekapHadirBulanan({
     59
   );
 
-  // 🔍 FILTER DI DATABASE
   const whereGuru = {
     ...(nama && {
       nama: { contains: nama, mode: "insensitive" },
@@ -308,19 +406,15 @@ export async function getRekapHadirBulanan({
     }),
   };
 
-  // 📊 TOTAL DATA (UNTUK PAGINATION)
-  const total = await prisma.guru.count({
-    where: whereGuru,
-  });
+  const total = await prisma.guru.count({ where: whereGuru });
 
   const totalPages = Math.ceil(total / limit);
   const skip = (page - 1) * limit;
 
-  // 📦 AMBIL DATA GURU + KEHADIRAN BULAN INI
   const gurus = await prisma.guru.findMany({
     where: whereGuru,
     skip,
-    take: limit,
+    take: limit, // ✅ INT
     select: {
       nama: true,
       nip: true,
@@ -337,12 +431,9 @@ export async function getRekapHadirBulanan({
         },
       },
     },
-    orderBy: {
-      nama: "asc",
-    },
+    orderBy: { nama: "asc" },
   });
 
-  // 📄 MAP REKAP
   const data = gurus.map((guru) => {
     let totalHadirHariNormal = 0;
     let totalHadirHariLembur = 0;

@@ -13,6 +13,12 @@ import {
   getSiswaByID,
   getAllSiswaMaster,
   getAllGuruMaster,
+  updateFotoGuru,
+  updatePassword,
+  updateFotoSiswa,
+  updatePasswordSiswa,
+  naikKelasSiswa,
+  luluskanSiswa,
 } from "../services/userService.js";
 import memoryUpload from "../utils/multer.js";
 import upload from "../utils/multer.js";
@@ -34,6 +40,40 @@ export const createGuruController = async (req, res) => {
   });
 };
 
+export const updateFotoGuruController = async (req, res) => {
+  memoryUpload.single("foto")(req, res, async (err) => {
+    if (err) {
+      return res.status(400).json({ message: err.message });
+    }
+
+    try {
+      const result = await updateFotoGuru(req.params.idGuru, req.file);
+      return res
+        .status(201)
+        .json({ message: "Berhasil membuat guru", data: result });
+    } catch (error) {
+      return res.status(500).json({ message: error.message });
+    }
+  });
+};
+
+export const updateFotoSiswaController = async (req, res) => {
+  memoryUpload.single("foto")(req, res, async (err) => {
+    if (err) {
+      return res.status(400).json({ message: err.message });
+    }
+
+    try {
+      const result = await updateFotoSiswa(req.params.idSiswa, req.file);
+      return res
+        .status(201)
+        .json({ message: "Berhasil membuat guru", data: result });
+    } catch (error) {
+      return res.status(500).json({ message: error.message });
+    }
+  });
+};
+
 export const createRiwayatPendidikanController = async (req, res, next) => {
   try {
     await createRiwayatPendidikan(req.params.idGuru, req.body);
@@ -42,6 +82,114 @@ export const createRiwayatPendidikanController = async (req, res, next) => {
       .json({ message: "Berhasil membuat riwayat pendidikan" });
   } catch (error) {
     return res.status(500).json({ message: error.message });
+  }
+};
+
+export const updatePasswordController = async (req, res) => {
+  const { idGuru } = req.params;
+  const { newPassword } = req.body;
+
+  if (!idGuru) {
+    return res.status(400).json({ message: "ID guru tidak boleh kosong" });
+  }
+
+  if (!newPassword || newPassword.length < 8) {
+    return res
+      .status(400)
+      .json({ message: "Password baru minimal 8 karakter" });
+  }
+
+  try {
+    const updatedGuru = await updatePassword(idGuru, newPassword);
+
+    return res.status(200).json({
+      message: "Password berhasil diupdate",
+      data: {
+        id: updatedGuru.id,
+        nama: updatedGuru.nama,
+        nip: updatedGuru.nip,
+      },
+    });
+  } catch (error) {
+    console.error("Gagal update password guru:", error);
+    return res
+      .status(500)
+      .json({ message: error?.message || "Terjadi kesalahan server" });
+  }
+};
+
+export const updatePasswordSiswaController = async (req, res) => {
+  const { idSiswa } = req.params;
+  const { newPassword } = req.body;
+
+  if (!idSiswa) {
+    return res.status(400).json({ message: "ID guru tidak boleh kosong" });
+  }
+
+  console.log(newPassword);
+
+  if (!newPassword || newPassword.length < 8) {
+    return res
+      .status(400)
+      .json({ message: "Password baru minimal 8 karakter" });
+  }
+
+  try {
+    const updatedSiswa = await updatePasswordSiswa(idSiswa, newPassword);
+
+    return res.status(200).json({
+      message: "Password berhasil diupdate",
+      data: {
+        id: updatedSiswa.id,
+        nama: updatedSiswa.nama,
+        nis: updatedSiswa.nis,
+      },
+    });
+  } catch (error) {
+    console.error("Gagal update password guru:", error);
+    return res
+      .status(500)
+      .json({ message: error?.message || "Terjadi kesalahan server" });
+  }
+};
+
+export const naikKelasController = async (req, res) => {
+  try {
+    const { idSiswa } = req.params;
+    const { kelasBaru } = req.body;
+
+    if (!kelasBaru) {
+      return res.status(400).json({ message: "Kelas baru wajib diisi" });
+    }
+
+    const updated = await naikKelasSiswa(idSiswa, kelasBaru);
+    res.json({ message: "Siswa berhasil naik kelas", data: updated });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: error.message || "Terjadi kesalahan" });
+  }
+};
+
+/**
+ * Luluskan / Ga Luluskan Siswa
+ */
+export const luluskanController = async (req, res) => {
+  try {
+    const { idSiswa } = req.params;
+    const { lulus, tahun } = req.body;
+
+    if (lulus === undefined) {
+      return res.status(400).json({ message: "Status lulus wajib diisi" });
+    }
+
+    const updated = await luluskanSiswa(idSiswa, lulus, tahun);
+    res.json({
+      message: `Siswa berhasil ${lulus ? "diluluskan" : "tidak diluluskan"}`,
+      data: updated,
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: error.message || "Terjadi kesalahan" });
   }
 };
 

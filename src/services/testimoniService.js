@@ -98,14 +98,22 @@ export const updateTestimoni = async (id, data) => {
   const { image, description, parentName } = data;
 
   try {
-    let imageUploadResult = null;
+    let imageUrl;
+    let imageId;
 
     const oldTesti = await prisma.testimoni.findUnique({
-      where: {
-        id: id,
-      },
+      where: { id },
     });
 
+    if (!oldTesti) {
+      throw new Error("Data testimoni tidak ditemukan");
+    }
+
+    // default → pakai foto lama
+    imageUrl = oldTesti.image;
+    imageId = oldTesti.imageId;
+
+    // jika upload foto baru
     if (image && image.buffer && image.buffer.length > 0) {
       if (oldTesti.imageId) {
         try {
@@ -114,20 +122,24 @@ export const updateTestimoni = async (id, data) => {
           console.warn("Gagal hapus foto lama:", err.message);
         }
       }
-      imageUploadResult = await uploadToCloudinary(
+
+      const uploadResult = await uploadToCloudinary(
         image.buffer,
         "cms",
         parentName
       );
+
+      imageUrl = uploadResult.secure_url;
+      imageId = uploadResult.public_id;
     }
 
     const updatedTestimoni = await prisma.testimoni.update({
       where: { id },
       data: {
-        image: imageUploadResult?.secure_url,
-        imageId: imageUploadResult?.public_id,
         parentName,
         description,
+        image: imageUrl,
+        imageId: imageId,
       },
     });
 

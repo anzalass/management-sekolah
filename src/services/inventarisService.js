@@ -510,41 +510,73 @@ export const getAllPemeliharaanInventaris = async ({
   try {
     const skip = (page - 1) * pageSize;
     const take = pageSize;
+
     let where = {};
 
+    // 🔥 NAMA DARI INVENTARIS (FILTER)
     if (nama) {
-      where.nama = { contains: nama, mode: "insensitive" };
+      where.Inventaris = {
+        nama: {
+          contains: nama,
+          mode: "insensitive",
+        },
+      };
     }
+
+    // ✅ STATUS DARI HISTORY
     if (status) {
-      where.status = { contains: status, mode: "insensitive" };
+      where.status = {
+        contains: status,
+        mode: "insensitive",
+      };
     }
+
+    // ✅ RUANG TETAP DARI HISTORY
     if (ruang) {
-      where.ruang = { contains: ruang, mode: "insensitive" };
+      where.ruang = {
+        contains: ruang,
+        mode: "insensitive",
+      };
     }
 
+    // ✅ FILTER TANGGAL (1 HARI)
     if (tanggal) {
-      where.tanggal = new Date(`${tanggal}T00:00:00Z`);
+      const start = new Date(`${tanggal}T00:00:00.000Z`);
+      const end = new Date(`${tanggal}T23:59:59.999Z`);
+
+      where.tanggal = {
+        gte: start,
+        lte: end,
+      };
     }
 
-    const pemeliharaanInventaris = await prisma.historyInventaris.findMany({
+    const data = await prisma.historyInventaris.findMany({
       where,
       skip,
       take,
+      include: {
+        Inventaris: {
+          select: {
+            nama: true, // 🔥 ambil nama inventaris
+          },
+        },
+      },
       orderBy: {
-        nama: "asc",
+        tanggal: "desc",
       },
     });
 
+    const totalData = await prisma.historyInventaris.count({ where });
+
     return {
-      data: pemeliharaanInventaris,
+      data,
       page,
       pageSize,
-      totalData: await prisma.historyInventaris.count(),
+      totalData,
     };
   } catch (error) {
-    console.log(error);
-    const errorMessage = prismaErrorHandler(error);
-    throw new Error(errorMessage);
+    console.error(error);
+    throw new Error(prismaErrorHandler(error));
   }
 };
 

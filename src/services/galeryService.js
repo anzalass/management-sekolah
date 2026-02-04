@@ -56,18 +56,26 @@ export const getGalleryByid = async (id) => {
 };
 
 export const updateGallery = async (id, data) => {
-  const { image } = data;
-
   try {
-    let imageUploadResult = null;
+    const { image } = data;
 
     const gallery = await prisma.gallery.findUnique({
-      where: {
-        id: id,
-      },
+      where: { id },
     });
 
-    if (image && image.buffer && image.buffer.length > 0) {
+    if (!gallery) {
+      throw new Error("Gallery tidak ditemukan");
+    }
+
+    let newImageUrl = gallery.image;
+    let newImageId = gallery.imageId;
+
+    // 🔥 Kalau ada gambar baru
+    if (image?.buffer?.length > 0) {
+      // 1️⃣ Upload dulu (AMAN)
+      const uploadResult = await uploadToCloudinary(image.buffer, "cms", id);
+
+      // 2️⃣ Hapus foto lama kalau ada
       if (gallery.imageId) {
         try {
           await deleteFromCloudinary(gallery.imageId);
@@ -75,19 +83,23 @@ export const updateGallery = async (id, data) => {
           console.warn("Gagal hapus foto lama:", err.message);
         }
       }
-      imageUploadResult = await uploadToCloudinary(image.buffer, "cms", id);
+
+      newImageUrl = uploadResult.secure_url;
+      newImageId = uploadResult.public_id;
     }
+
+    // 3️⃣ Update DB
     const updatedGallery = await prisma.gallery.update({
       where: { id },
       data: {
-        image: imageUploadResult?.secure_url || "",
-        imageId: imageUploadResult?.public_id || "",
+        image: newImageUrl,
+        imageId: newImageId,
       },
     });
 
     return updatedGallery;
   } catch (error) {
-    console.error(error);
+    console.error("updateGallery error:", error);
     const errorMessage =
       prismaErrorHandler(error) || "Gagal memperbarui gallery";
     throw new Error(errorMessage);

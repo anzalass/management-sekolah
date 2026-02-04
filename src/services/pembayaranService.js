@@ -149,14 +149,27 @@ export const updateTagihanForDenda = async (id, denda) => {
   }
 };
 
+const VALID_STATUS = [
+  "BELUM_BAYAR",
+  "LUNAS",
+  "MENUNGGU_KONFIRMASI",
+  "BUKTI_TIDAK_VALID",
+  "PENDING",
+  "GAGAL",
+];
+
 export const getAllTagihan = async (query) => {
   try {
     const page = parseInt(query.page) || 1;
     const pageSize = parseInt(query.pageSize) || 10;
-    const { nama, namaSiswa, nis } = query;
+
+    const { nama, namaSiswa, nis, status } = query;
 
     const whereClause = {};
 
+    /* =============================
+     * 🔍 Filter Nama Tagihan
+     * ============================= */
     if (nama) {
       whereClause.nama = {
         contains: nama,
@@ -164,28 +177,56 @@ export const getAllTagihan = async (query) => {
       };
     }
 
-    if (namaSiswa) {
-      whereClause.Siswa = {
-        nama: {
+    /* =============================
+     * 🔍 Filter Relasi Siswa
+     * ============================= */
+    if (namaSiswa || nis) {
+      whereClause.Siswa = {};
+
+      if (namaSiswa) {
+        whereClause.Siswa.nama = {
           contains: namaSiswa,
           mode: "insensitive",
-        },
-      };
-    }
+        };
+      }
 
-    if (nis) {
-      whereClause.Siswa = {
-        nis: {
+      if (nis) {
+        whereClause.Siswa.nis = {
           contains: nis,
           mode: "insensitive",
-        },
-      };
+        };
+      }
     }
 
+    /* =============================
+     * 🔥 Filter Status Pembayaran
+     * support:
+     *  ?status=LUNAS
+     *  ?status=LUNAS,PENDING
+     * ============================= */
+    if (status) {
+      const statusArray = status
+        .split(",")
+        .map((s) => s.trim())
+        .filter((s) => VALID_STATUS.includes(s));
+
+      if (statusArray.length > 0) {
+        whereClause.status = {
+          in: statusArray,
+        };
+      }
+    }
+
+    /* =============================
+     * 📊 Total Data
+     * ============================= */
     const total = await prisma.tagihan.count({
       where: whereClause,
     });
 
+    /* =============================
+     * 📄 Fetch Data
+     * ============================= */
     const data = await prisma.tagihan.findMany({
       skip: (page - 1) * pageSize,
       take: pageSize,
@@ -198,6 +239,9 @@ export const getAllTagihan = async (query) => {
       },
     });
 
+    /* =============================
+     * ✅ Response
+     * ============================= */
     return {
       data,
       total,
@@ -206,7 +250,7 @@ export const getAllTagihan = async (query) => {
       totalPages: Math.ceil(total / pageSize),
     };
   } catch (error) {
-    console.log(error);
+    console.error("getAllTagihan error:", error);
     const errorMessage = prismaErrorHandler(error);
     throw new Error(errorMessage);
   }
