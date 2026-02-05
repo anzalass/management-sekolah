@@ -6,10 +6,20 @@ const prisma = new PrismaClient();
 
 export const dashboardMengajarServicePage = async (idGuru) => {
   try {
-    const todayStart = new Date();
+    // const todayStart = new Date();
+    // todayStart.setHours(0, 0, 0, 0);
+
+    // const todayEnd = new Date();
+    // todayEnd.setHours(23, 59, 59, 999);
+
+    const nowWIB = new Date(
+      new Date().toLocaleString("en-US", { timeZone: "Asia/Jakarta" })
+    );
+
+    const todayStart = new Date(nowWIB);
     todayStart.setHours(0, 0, 0, 0);
 
-    const todayEnd = new Date();
+    const todayEnd = new Date(nowWIB);
     todayEnd.setHours(23, 59, 59, 999);
 
     // Ambil tahun ajaran aktif
