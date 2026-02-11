@@ -10,17 +10,17 @@ export const createPengumumanController = async (req, res) => {
   try {
     const image = req.file ?? null;
 
-    await createPengumuman({
-      ...req.body,
-      image, // 🔥 kirim file
-    });
+    await createPengumuman(req.body, image);
 
     return res.status(201).json({
       message: "Berhasil membuat pengumuman",
       success: true,
     });
   } catch (error) {
-    return res.status(500).json({ message: error.message, success: false });
+    return res.status(500).json({
+      message: error.message,
+      success: false,
+    });
   }
 };
 
@@ -28,17 +28,17 @@ export const updatePengumumanController = async (req, res) => {
   try {
     const image = req.file ?? null;
 
-    await updatePengumuman(req.params.id, {
-      ...req.body,
-      image,
-    });
+    await updatePengumuman(req.params.id, req.body, image);
 
     return res.status(200).json({
       message: "Berhasil mengupdate pengumuman",
       success: true,
     });
   } catch (error) {
-    return res.status(500).json({ message: error.message, success: false });
+    return res.status(500).json({
+      message: error.message,
+      success: false,
+    });
   }
 };
 

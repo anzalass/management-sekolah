@@ -28,6 +28,8 @@ export const createPengumuman = async (data, image) => {
       );
     }
 
+    console.log(imageResult);
+
     // 2️⃣ CREATE PENGUMUMAN
     const pengumuman = await prisma.pengumuman.create({
       data: {
@@ -85,10 +87,12 @@ export const updatePengumuman = async (id, data, image) => {
         select: { fotoId: true },
       });
 
+      console.log("paramimage", image);
+
       let imageResult = null;
 
       // 1️⃣ JIKA ADA IMAGE BARU
-      if (image?.buffer) {
+      if (image && image.buffer && image.buffer.length > 0) {
         // hapus image lama
         if (existing?.fotoId) {
           await deleteFromCloudinary(existing.fotoId);
@@ -100,6 +104,8 @@ export const updatePengumuman = async (id, data, image) => {
           `pengumuman-${Date.now()}`
         );
       }
+
+      console.log(imageResult);
 
       // 2️⃣ UPDATE DB
       return await tx.pengumuman.update({

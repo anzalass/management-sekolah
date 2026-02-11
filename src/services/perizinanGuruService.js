@@ -115,6 +115,21 @@ export const endOfTodayWIB = () => {
   );
 };
 
+// convert date apa pun → WIB
+export const toWIB = (date) => {
+  return new Date(new Date(date).getTime() + WIB_OFFSET);
+};
+
+export const startOfDayWIBFromDate = (date) => {
+  const d = toWIB(date);
+  return new Date(d.getFullYear(), d.getMonth(), d.getDate(), 0, 0, 0, 0);
+};
+
+export const endOfDayWIBFromDate = (date) => {
+  const d = toWIB(date);
+  return new Date(d.getFullYear(), d.getMonth(), d.getDate(), 23, 59, 59, 999);
+};
+
 export const updateStatusPerizinanGuru = async (id, status) => {
   try {
     const izin = await prisma.perizinanGuru.findUnique({
@@ -125,35 +140,31 @@ export const updateStatusPerizinanGuru = async (id, status) => {
       throw new Error("Perizinan tidak ditemukan");
     }
 
-    const todayStart = startOfTodayWIB();
-    const todayEnd = endOfTodayWIB();
+    // ✅ waktu izin (WIB)
+    const izinTimeWIB = toWIB(izin.time);
+    const dayStart = startOfDayWIBFromDate(izin.time);
+    const dayEnd = endOfDayWIBFromDate(izin.time);
 
-    // 1️⃣ Cari kehadiran hari ini
+    // 1️⃣ cari kehadiran di tanggal izin
     const existingKehadiran = await prisma.kehadiranGuru.findFirst({
       where: {
         idGuru: izin.idGuru,
         tanggal: {
-          gte: todayStart,
-          lte: todayEnd,
+          gte: dayStart,
+          lte: dayEnd,
         },
       },
     });
 
-    // 2️⃣ Mapping status izin → status kehadiran
+    // 2️⃣ mapping status
     let kehadiranStatus = null;
+    if (status === "disetujui") kehadiranStatus = "Izin";
+    else if (status === "ditolak") kehadiranStatus = "Alpha";
+    else if (status === "menunggu") kehadiranStatus = "Menunggu";
 
-    if (status === "disetujui") {
-      kehadiranStatus = "Izin";
-    } else if (status === "ditolak") {
-      kehadiranStatus = "Alpha";
-    } else if (status === "menunggu") {
-      kehadiranStatus = "Menunggu";
-    }
-
-    // 3️⃣ Jika status perlu mempengaruhi kehadiran
+    // 3️⃣ sync kehadiran
     if (kehadiranStatus) {
       if (existingKehadiran) {
-        // ✅ UPDATE SAJA
         await prisma.kehadiranGuru.update({
           where: { id: existingKehadiran.id },
           data: {
@@ -161,18 +172,17 @@ export const updateStatusPerizinanGuru = async (id, status) => {
             lokasiMasuk: kehadiranStatus,
             lokasiPulang: kehadiranStatus,
             fotoMasuk: kehadiranStatus,
-            jamMasuk: existingKehadiran.jamMasuk ?? nowWIB(),
-            jamPulang: existingKehadiran.jamPulang ?? nowWIB(),
+            jamMasuk: existingKehadiran.jamMasuk ?? izinTimeWIB,
+            jamPulang: existingKehadiran.jamPulang ?? izinTimeWIB,
           },
         });
       } else {
-        // ➕ CREATE JIKA BELUM ADA
         await prisma.kehadiranGuru.create({
           data: {
             idGuru: izin.idGuru,
-            tanggal: todayStart, // WIB
-            jamMasuk: nowWIB(),
-            jamPulang: nowWIB(),
+            tanggal: dayStart,
+            jamMasuk: izinTimeWIB,
+            jamPulang: izinTimeWIB,
             lokasiMasuk: kehadiranStatus,
             lokasiPulang: kehadiranStatus,
             fotoMasuk: kehadiranStatus,
@@ -182,7 +192,7 @@ export const updateStatusPerizinanGuru = async (id, status) => {
       }
     }
 
-    // 4️⃣ Update status perizinan
+    // 4️⃣ update izin
     return await prisma.perizinanGuru.update({
       where: { id },
       data: { status },

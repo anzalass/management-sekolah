@@ -50,11 +50,11 @@ export const absenMasukGuru = async ({ idGuru, fotoMasuk, lokasi }) => {
       Number(process.env.LANG_SEKOLAH)
     );
 
-    if (jarak > Number(process.env.MAX_RADIUS)) {
-      throw new Error(
-        `Lokasi terlalu jauh dari sekolah (${Math.round(jarak)} m)`
-      );
-    }
+    // if (jarak > Number(process.env.MAX_RADIUS)) {
+    //   throw new Error(
+    //     `Lokasi terlalu jauh dari sekolah (${Math.round(jarak)} m)`
+    //   );
+    // }
 
     // ===============================
     // 2️⃣ WAKTU WIB
@@ -127,11 +127,11 @@ export const absenPulangGuru = async ({ idGuru, lokasi }) => {
       Number(process.env.LANG_SEKOLAH)
     );
 
-    if (jarak > Number(process.env.MAX_RADIUS)) {
-      throw new Error(
-        `Lokasi terlalu jauh dari sekolah (${Math.round(jarak)} m)`
-      );
-    }
+    // if (jarak > Number(process.env.MAX_RADIUS)) {
+    //   throw new Error(
+    //     `Lokasi terlalu jauh dari sekolah (${Math.round(jarak)} m)`
+    //   );
+    // }
 
     // ===============================
     // 2️⃣ WAKTU WIB
