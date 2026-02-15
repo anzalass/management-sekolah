@@ -15,10 +15,8 @@ const prisma = new PrismaClient();
 dotenv.config();
 
 const getTodayRangeWIB = () => {
-  const nowWIB = new Date(
-    new Date().toLocaleString("en-US", { timeZone: "Asia/Jakarta" })
-  );
-
+  const nowUTC = new Date(); 
+  const nowWIB = new Date(nowUTC.getTime() + 7 * 60 * 60 * 1000);
   const startOfDay = new Date(nowWIB);
   startOfDay.setHours(0, 0, 0, 0);
 
@@ -60,6 +58,7 @@ export const absenMasukGuru = async ({ idGuru, fotoMasuk, lokasi }) => {
     // 2️⃣ WAKTU WIB
     // ===============================
     const { nowWIB, startOfDay, endOfDay } = getTodayRangeWIB();
+    console.log("Jam Masuk : ", nowWIB);
 
     // ===============================
     // 3️⃣ CEK SUDAH ABSEN?
