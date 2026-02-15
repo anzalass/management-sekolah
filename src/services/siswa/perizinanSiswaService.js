@@ -66,6 +66,14 @@ export const createPerizinanSiswa = async (data) => {
     });
 
     if(data.enddate === ''){
+        const CheckData = await prisma.perizinanSiswa.count({
+          where: {
+            idSiswa: data.idSiswa,
+            time: new Date(`${data.time}T00:00:00.000Z`)
+        }});
+
+        if(CheckData > 0){throw new Error("Sudah terdapat izin pada tanggal " + data.time);}
+
         const izin = await prisma.perizinanSiswa.create(datasiswa);
         
         if(izin){
@@ -79,15 +87,23 @@ export const createPerizinanSiswa = async (data) => {
           if(i !== 0){
             datasiswa.data.time = plusOneDay;
           }
-          const izin = await prisma.perizinanSiswa.create(datasiswa);
-          
-          if (izin) {
-            sendnotification(izin, siswa)
+
+          const CheckData = await prisma.perizinanSiswa.count({
+            where: {
+              idSiswa: data.idSiswa,
+              time: plusOneDay
+          }})
+
+          if(CheckData = 0){
+            const izin = await prisma.perizinanSiswa.create(datasiswa);
+            if (izin) {
+              sendnotification(izin, siswa)
+            }
           }
         }
       }
   } catch (error) {
-    console.log(error);
+    console.log("awokawok : ",error);
     throw new Error(prismaErrorHandler(error));
   }
 };
