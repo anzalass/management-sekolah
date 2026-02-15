@@ -315,6 +315,10 @@ export const dashboardOverview = async () => {
       where: {
         status: "BELUM_BAYAR",
       },
+      _sum: {
+        nominal: true,
+        denda:true
+      },
     });
 
     const totalTagihanMenungguKonfirmasi = await prisma.tagihan.count({
@@ -328,10 +332,11 @@ export const dashboardOverview = async () => {
       },
       _sum: {
         nominal: true,
+        denda: true
       },
     });
 
-    const totalNominalBelumBayar = result._sum.nominal || 0;
+    const totalNominalBelumBayar = (result._sum.nominal + result._sum.denda )|| 0;
     const now = new Date();
     const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1); // Awal bulan
     const endOfMonth = new Date(
@@ -353,6 +358,8 @@ export const dashboardOverview = async () => {
       },
     });
 
+    console.log("pendaftarBulanIni : ",pendaftarBulanIni);
+
     // === Return Object untuk Frontend ===
     return {
       kasSekolah: anggaranSekolah?.kas || 0,
@@ -369,10 +376,10 @@ export const dashboardOverview = async () => {
       pendaftarHariIni,
       riwayatAnggaranHariIni,
       totalTagihan,
-      totalNominalBelumBayar,
-      pendaftarBulanIni,
-      totalTagihanMenungguKonfirmasi,
-      totalTagihanBelumBayar,
+      totalNominalBelumBayar: totalNominalBelumBayar,
+      pendaftarBulanIni: pendaftarBulanIni,
+      totalTagihanMenungguKonfirmasi:totalTagihanMenungguKonfirmasi,
+      totalTagihanBelumBayar:totalTagihanBelumBayar,
     };
   } catch (error) {
     console.log(error);

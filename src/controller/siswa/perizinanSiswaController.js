@@ -24,13 +24,12 @@ export const createPerizinanSiswaController = async (req, res) => {
         bukti: req.file,
       };
       const newIzin = await createPerizinanSiswa(data);
-      console.log("new izin : ",newIzin);
-      res
+      return res
         .status(201)
         .json({ message: "Perizinan berhasil diajukan", data: newIzin });
     } catch (error) {
-      console.log(error.message);
-      return res.status(400).json({ message: error.message });
+      console.log("ajg : ", error)
+      return res.status(400).json({ message: "Gagal mengajukan izin"});
     }
   });
 };
