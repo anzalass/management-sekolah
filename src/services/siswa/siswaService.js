@@ -162,57 +162,63 @@ export const getPerizinanByIdSiswa = async () => {
   }
 };
 
+const WIB_OFFSET = 7 * 60 * 60 * 1000;
+
+export const nowWIB = () => {
+  return new Date(Date.now() + WIB_OFFSET);
+};
+
 export const getPengumuman = async (idSiswa) => {
   try {
-    const now = new Date();
+    const now = nowWIB(); // ✅ pakai WIB
 
-    // Ambil kelas yang diikuti siswa
-    const kelassiswa = await prisma.daftarSiswaKelas.findMany({
-      where: { idSiswa },
-    });
-    const kelassiswaMapel = await prisma.daftarSiswaMapel.findMany({
-      where: { idSiswa },
-    });
+    // 🔹 Ambil daftar kelas siswa
+    const [kelasSiswa, kelasSiswaMapel] = await Promise.all([
+      prisma.daftarSiswaKelas.findMany({
+        where: { idSiswa },
+        select: { idKelas: true },
+      }),
+      prisma.daftarSiswaMapel.findMany({
+        where: { idSiswa },
+        select: { idKelas: true },
+      }),
+    ]);
 
-    // Ambil semua pengumuman kelas berdasarkan daftar kelas siswa (yg belum lewat)
-    let pengumumanKelas = [];
+    const semuaIdKelas = [
+      ...kelasSiswa.map((k) => k.idKelas),
+      ...kelasSiswaMapel.map((k) => k.idKelas),
+    ];
 
-    for (let i = 0; i < kelassiswa.length; i++) {
-      const dataPengumumanKelas = await prisma.pengumumanKelas.findMany({
-        where: {
-          idKelas: kelassiswa[i].idKelas,
+    // 🔹 Pengumuman kelas (yang belum lewat)
+    const pengumumanKelas = await prisma.pengumumanKelas.findMany({
+      where: {
+        idKelas: { in: semuaIdKelas },
+        time: {
+          gte: now, // ✅ WIB filter
         },
-        orderBy: { time: "desc" },
-      });
-      pengumumanKelas = [...pengumumanKelas, ...dataPengumumanKelas];
-    }
+      },
+      orderBy: { time: "asc" }, // upcoming terdekat dulu
+    });
 
-    for (let i = 0; i < kelassiswaMapel.length; i++) {
-      const dataPengumumanKelas = await prisma.pengumumanKelas.findMany({
-        where: {
-          idKelas: kelassiswaMapel[i].idKelas,
-        },
-        orderBy: { time: "desc" },
-      });
-      pengumumanKelas = [...pengumumanKelas, ...dataPengumumanKelas];
-    }
-
-    // Ambil pengumuman umum yang belum lewat
+    // 🔹 Pengumuman umum (yang belum lewat)
     const pengumumanUmum = await prisma.pengumuman.findMany({
-      orderBy: { time: "desc" },
+      where: {
+        time: {
+          gte: now, // ✅ WIB filter
+        },
+      },
+      orderBy: { time: "asc" },
     });
 
-    // Gabung & urutkan berdasarkan time (descending)
-    const semuaPengumuman = [...pengumumanUmum, ...pengumumanKelas].sort(
-      (a, b) => new Date(b.time).getTime() - new Date(a.time).getTime()
+    return [...pengumumanUmum, ...pengumumanKelas].sort(
+      (a, b) => new Date(a.time) - new Date(b.time)
     );
-
-    return semuaPengumuman;
   } catch (error) {
     console.error(error);
     throw new Error(prismaErrorHandler(error));
   }
 };
+
 export const getRapotSiswa = async (idSiswa) => {
   const rapot = await prisma.daftarSiswaKelas.findMany({
     where: { idSiswa },

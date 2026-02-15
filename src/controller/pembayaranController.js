@@ -33,11 +33,16 @@ export const CreateTagihanController = async (req, res) => {
 
 export const GetAllTagihanController = async (req, res) => {
   try {
-    const query = req.query;
-    const result = await getAllTagihan(query);
-    return res.status(200).json(result);
+    const result = await getAllTagihan(req.query);
+    return res.status(200).json({
+      success: true,
+      ...result,
+    });
   } catch (error) {
-    return res.status(500).json({ message: error.message, success: false });
+    return res.status(500).json({
+      success: false,
+      message: error.message,
+    });
   }
 };
 

@@ -83,16 +83,25 @@ export const updateNews = async (id, data) => {
   const { image, title, content } = data;
 
   try {
-    let imageUploadResult = null;
-    console.log("img", image);
+    let imageUrl;
+    let imageId;
 
+    // 🔍 ambil data lama
     const oldNews = await prisma.news.findUnique({
-      where: {
-        id: id,
-      },
+      where: { id },
     });
 
+    if (!oldNews) {
+      throw new Error("News tidak ditemukan");
+    }
+
+    // default pakai gambar lama
+    imageUrl = oldNews.image;
+    imageId = oldNews.imageId;
+
+    // 🔄 jika upload gambar baru
     if (image && image.buffer && image.buffer.length > 0) {
+      // hapus gambar lama
       if (oldNews.imageId) {
         try {
           await deleteFromCloudinary(oldNews.imageId);
@@ -100,25 +109,30 @@ export const updateNews = async (id, data) => {
           console.warn("Gagal hapus foto lama:", err.message);
         }
       }
-      imageUploadResult = await uploadToCloudinary(image.buffer, "cms", title);
+
+      // upload gambar baru
+      const uploadResult = await uploadToCloudinary(image.buffer, "cms", title);
+
+      imageUrl = uploadResult.secure_url;
+      imageId = uploadResult.public_id;
     }
 
-    console.log(imageUploadResult);
-
-    const updatedTestimoni = await prisma.news.update({
+    // 🔥 update data
+    const updatedNews = await prisma.news.update({
       where: { id },
       data: {
-        image: imageUploadResult?.secure_url || "",
-        imageId: imageUploadResult?.public_id || "",
         title,
         content,
+        image: imageUrl,
+        imageId: imageId,
       },
     });
 
-    return updatedTestimoni;
+    return updatedNews;
   } catch (error) {
-    console.log(error);
-    const errorMessage = prismaErrorHandler(error);
+    console.error(error);
+    const errorMessage =
+      prismaErrorHandler(error) || "Gagal memperbarui berita";
     throw new Error(errorMessage);
   }
 };
@@ -133,7 +147,7 @@ export const deleteNews = async (id) => {
 
     if (news.imageId) {
       try {
-        await deleteFromCloudinary(oldTesti.imageId);
+        await deleteFromCloudinary(news.imageId);
       } catch (error) {
         console.log(error);
       }

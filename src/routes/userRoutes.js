@@ -13,7 +13,13 @@ import {
   getAllSiswaMasterController,
   getGuruByIDController,
   getSiswaByIDController,
+  luluskanController,
+  naikKelasController,
+  updateFotoGuruController,
+  updateFotoSiswaController,
   updateGuruController,
+  updatePasswordController,
+  updatePasswordSiswaController,
   updateSiswaController,
 } from "../controller/userController.js";
 import { AuthMiddleware, isKepalaSekolah } from "../utils/authMiddleware.js";
@@ -31,6 +37,46 @@ router.put(
   isKepalaSekolah,
   updateGuruController
 );
+
+router.put(
+  "/user/update-password-siswa/:idSiswa",
+  AuthMiddleware,
+  isKepalaSekolah,
+  updatePasswordSiswaController
+);
+
+router.put(
+  "/user/update-foto-siswa/:idSiswa",
+  AuthMiddleware,
+  isKepalaSekolah,
+  updateFotoSiswaController
+);
+router.put(
+  "/user/naik-kelas-siswa/:idSiswa",
+  AuthMiddleware,
+  isKepalaSekolah,
+  naikKelasController
+);
+router.put(
+  "/user/luluskan-siswa/:idSiswa",
+  AuthMiddleware,
+  isKepalaSekolah,
+  luluskanController
+);
+router.put(
+  "/user/update-password-guru/:idGuru",
+  AuthMiddleware,
+  isKepalaSekolah,
+  updatePasswordController
+);
+
+router.put(
+  "/user/update-foto-guru/:idGuru",
+  AuthMiddleware,
+  isKepalaSekolah,
+  updateFotoGuruController
+);
+
 router.get(
   "/user/get-guru/:idGuru",
   AuthMiddleware,

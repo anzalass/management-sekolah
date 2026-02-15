@@ -13,26 +13,21 @@ import { getNamaSiswa } from "../userService.js";
 
 const prisma = new PrismaClient();
 
-const sendnotification = async (data, siswa) =>{
-      await createNotifikasi({
-        idSiswa: data.idSiswa,
-        idKelas: data.idKelas,
-        kategori: "Perizinan Siswa",
-        idTerkait: data.id,
-        redirectGuru: `/mengajar/walikelas/${data.idKelas}`,
-        redirectSiswa: `/siswa/perizinan`,
-        keterangan: `${siswa.nama} mengajukan izin`,
-        createdBy: data.idSiswa,
-      });
-}
+const sendnotification = async (data, siswa) => {
+  await createNotifikasi({
+    idSiswa: data.idSiswa,
+    idKelas: data.idKelas,
+    kategori: "Perizinan Siswa",
+    idTerkait: data.id,
+    redirectGuru: `/mengajar/walikelas/${data.idKelas}`,
+    redirectSiswa: `/siswa/perizinan`,
+    keterangan: `${siswa.nama} mengajukan izin`,
+    createdBy: data.idSiswa,
+  });
+};
 
 // ✅ Create (Ajukan Izin)
 export const createPerizinanSiswa = async (data) => {
-  const start = new Date(data.time);
-  const end = new Date(data.enddate);
-
-  const diffTime = end.getTime() - start.getTime();
-  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
   try {
     let imageUploadResult;
 
@@ -44,66 +39,76 @@ export const createPerizinanSiswa = async (data) => {
       );
     }
 
-    let datasiswa =  {
-      data: {
-        idSiswa: data.idSiswa,
-        idKelas: data.idKelas || null,
-        keterangan: data.keterangan,
-        time: new Date(`${data.time}T00:00:00Z`) || new Date(),
-        bukti: imageUploadResult?.secure_url || "",
-        bukti_id: imageUploadResult?.public_id || "",
-        status: data.status || "waiting",
-      },
-    }
-
     const siswa = await prisma.siswa.findUnique({
-      where: {
-        id: data.idSiswa,
-      },
-      select: {
-        nama: true,
-      },
+      where: { id: data.idSiswa },
+      select: { nama: true },
     });
 
-    if(data.enddate === ''){
-        const CheckData = await prisma.perizinanSiswa.count({
-          where: {
-            idSiswa: data.idSiswa,
-            time: new Date(`${data.time}T00:00:00.000Z`)
-        }});
+    const startDate = new Date(`${data.time}T00:00:00Z`);
+    const endDate = data.enddate ? new Date(`${data.enddate}T00:00:00Z`) : null;
 
-        if(CheckData > 0){throw new Error("Sudah terdapat izin pada tanggal " + data.time);}
+    const isAlreadyExist = async (date) => {
+      const exist = await prisma.perizinanSiswa.findFirst({
+        where: {
+          idSiswa: data.idSiswa,
+          time: date,
+        },
+      });
 
-        const izin = await prisma.perizinanSiswa.create(datasiswa);
-        
-        if(izin){
-          sendnotification(izin, siswa)
-        }
+      return !!exist;
+    };
 
-    }else{
-        const baseDate = data?.time? new Date(`${data.time}T00:00:00Z`) : new Date();
-        for(let i=0; i < diffDays; i++){
-          const plusOneDay = new Date(baseDate.getTime() + ((i+1)*24) * 60 * 60 * 1000);
-          if(i !== 0){
-            datasiswa.data.time = plusOneDay;
-          }
+    const createIzin = async (date) => {
+      const izin = await prisma.perizinanSiswa.create({
+        data: {
+          idSiswa: data.idSiswa,
+          idKelas: data.idKelas || null,
+          keterangan: data.keterangan,
+          time: date,
+          bukti: imageUploadResult?.secure_url || "",
+          bukti_id: imageUploadResult?.public_id || "",
+          status: data.status || "menunggu",
+        },
+      });
 
-          const CheckData = await prisma.perizinanSiswa.count({
-            where: {
-              idSiswa: data.idSiswa,
-              time: plusOneDay
-          }})
-
-          if(CheckData = 0){
-            const izin = await prisma.perizinanSiswa.create(datasiswa);
-            if (izin) {
-              sendnotification(izin, siswa)
-            }
-          }
-        }
+      if (izin) {
+        sendnotification(izin, siswa);
       }
+    };
+
+    // SINGLE DATE
+    if (!endDate) {
+      const exist = await isAlreadyExist(startDate);
+
+      if (exist) {
+        throw new Error("Siswa sudah memiliki izin di tanggal tersebut");
+      }
+
+      await createIzin(startDate);
+      return;
+    }
+
+    // RANGE DATE
+    const diffTime = endDate.getTime() - startDate.getTime();
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
+
+    for (let i = 0; i < diffDays; i++) {
+      const currentDate = new Date(
+        startDate.getTime() + i * 24 * 60 * 60 * 1000
+      );
+
+      const exist = await isAlreadyExist(currentDate);
+      if (exist) continue;
+
+      await createIzin(currentDate);
+    }
   } catch (error) {
-    console.log("awokawok : ",error);
+    console.log(error);
+
+    if (error instanceof Error) {
+      throw error;
+    }
+
     throw new Error(prismaErrorHandler(error));
   }
 };

@@ -76,7 +76,7 @@ export const updateAnggaran = async (idAnggaran, data) => {
       }
 
       // 3. Cek apakah kas mencukupi
-      if (kasBaru < 0) throw new Error("Kas sekolah tidak mencukupi");
+      // if (kasBaru < 0) throw new Error("Kas sekolah tidak mencukupi");
 
       // 4. Update data riwayat anggaran dan kas sekolah
       await tx.riwayatAnggaran.update({

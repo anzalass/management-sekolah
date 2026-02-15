@@ -88,29 +88,33 @@ export const updateGuruTemplate = async (id, data) => {
   try {
     let imageUploadResult = null;
 
-    const oldTesti = await prisma.guruTemplate.findUnique({
-      where: {
-        id: id,
-      },
+    const oldGuru = await prisma.guruTemplate.findUnique({
+      where: { id },
     });
 
+    if (!oldGuru) {
+      throw new Error("Guru template tidak ditemukan");
+    }
+
+    // Jika ada image baru → upload & hapus lama
     if (image && image.buffer && image.buffer.length > 0) {
-      if (oldTesti.imageId) {
+      if (oldGuru.imageId) {
         try {
-          await deleteFromCloudinary(oldTesti.imageId);
+          await deleteFromCloudinary(oldGuru.imageId);
         } catch (err) {
           console.warn("Gagal hapus foto lama:", err.message);
         }
       }
+
       imageUploadResult = await uploadToCloudinary(image.buffer, "cms", name);
     }
 
     const result = await prisma.guruTemplate.update({
       where: { id },
       data: {
-        image: imageUploadResult?.secure_url || "",
-        imageId: imageUploadResult?.public_id || "",
         name,
+        image: imageUploadResult?.secure_url ?? oldGuru.image,
+        imageId: imageUploadResult?.public_id ?? oldGuru.imageId,
       },
     });
 
@@ -118,7 +122,7 @@ export const updateGuruTemplate = async (id, data) => {
   } catch (error) {
     console.error(error);
     const errorMessage =
-      prismaErrorHandler(error) || "Gagal memperbarui testimoni";
+      prismaErrorHandler(error) || "Gagal memperbarui guru template";
     throw new Error(errorMessage);
   }
 };

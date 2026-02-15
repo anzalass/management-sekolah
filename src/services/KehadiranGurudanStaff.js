@@ -14,46 +14,63 @@ const prisma = new PrismaClient();
 
 dotenv.config();
 
+const getTodayRangeWIB = () => {
+  const nowWIB = new Date(
+    new Date().toLocaleString("en-US", { timeZone: "Asia/Jakarta" })
+  );
+
+  const startOfDay = new Date(nowWIB);
+  startOfDay.setHours(0, 0, 0, 0);
+
+  const endOfDay = new Date(nowWIB);
+  endOfDay.setHours(23, 59, 59, 999);
+
+  return { nowWIB, startOfDay, endOfDay };
+};
+
 export const absenMasukGuru = async ({ idGuru, fotoMasuk, lokasi }) => {
   try {
     const { lat, long } = lokasi;
-    console.log("idgr", idGuru);
 
-    const guru = await prisma.guru.findUnique({ where: { id: idGuru } });
+    const guru = await prisma.guru.findUnique({
+      where: { id: idGuru },
+    });
+
     if (!guru) {
       throw new Error("Guru tidak ditemukan di database");
     }
 
+    // ===============================
+    // 1️⃣ CEK JARAK
+    // ===============================
     const jarak = hitungJarak(
       lat,
       long,
-      process.env.LAT_SEKOLAH,
-      process.env.LANG_SEKOLAH
+      Number(process.env.LAT_SEKOLAH),
+      Number(process.env.LANG_SEKOLAH)
     );
-    if (jarak > process.env.MAX_RADIUS) {
-      throw new Error(
-        `Lokasi terlalu jauh dari sekolah: ${Math.round(jarak)} meter`
-      );
-    }
 
-    let imageUploadResult = null;
+    // if (jarak > Number(process.env.MAX_RADIUS)) {
+    //   throw new Error(
+    //     `Lokasi terlalu jauh dari sekolah (${Math.round(jarak)} m)`
+    //   );
+    // }
 
-    if (fotoMasuk && fotoMasuk.buffer) {
-      imageUploadResult = await uploadToCloudinary(
-        fotoMasuk.buffer,
-        "presensiguru",
-        idGuru
-      );
-    }
+    // ===============================
+    // 2️⃣ WAKTU WIB
+    // ===============================
+    const { nowWIB, startOfDay, endOfDay } = getTodayRangeWIB();
 
-    const now = new Date();
-    const tanggalHariIni = new Date();
-    tanggalHariIni.setHours(0, 0, 0, 0);
-
+    // ===============================
+    // 3️⃣ CEK SUDAH ABSEN?
+    // ===============================
     const sudahAbsen = await prisma.kehadiranGuru.findFirst({
       where: {
         idGuru,
-        tanggal: { gte: tanggalHariIni },
+        tanggal: {
+          gte: startOfDay,
+          lte: endOfDay,
+        },
       },
     });
 
@@ -65,47 +82,72 @@ export const absenMasukGuru = async ({ idGuru, fotoMasuk, lokasi }) => {
       throw new Error("Anda sudah melakukan absen masuk hari ini");
     }
 
+    // ===============================
+    // 4️⃣ UPLOAD FOTO
+    // ===============================
+    let imageUploadResult = null;
+
+    if (fotoMasuk?.buffer) {
+      imageUploadResult = await uploadToCloudinary(
+        fotoMasuk.buffer,
+        "presensiguru",
+        idGuru
+      );
+    }
+
+    // ===============================
+    // 5️⃣ SIMPAN ABSEN MASUK
+    // ===============================
     return await prisma.kehadiranGuru.create({
       data: {
-        idGuru: idGuru,
-        tanggal: new Date(`${now.toISOString().split("T")[0]}T00:00:00Z`), // <-- ini
-        jamMasuk: now,
-        fotoMasuk: imageUploadResult?.secure_url,
+        idGuru,
+        tanggal: startOfDay, // START OF DAY WIB
+        jamMasuk: nowWIB,
+        fotoMasuk: imageUploadResult?.secure_url ?? "",
         lokasiMasuk: JSON.stringify(lokasi),
         status: "",
       },
     });
   } catch (error) {
-    console.log(error);
-    const errorMessage = prismaErrorHandler(error);
-    throw new Error(errorMessage);
+    console.error(error);
+    throw new Error(prismaErrorHandler(error));
   }
 };
-
 export const absenPulangGuru = async ({ idGuru, lokasi }) => {
   try {
     const { lat, long } = lokasi;
 
+    // ===============================
+    // 1️⃣ CEK JARAK
+    // ===============================
     const jarak = hitungJarak(
       lat,
       long,
-      process.env.LAT_SEKOLAH,
-      process.env.LANG_SEKOLAH
+      Number(process.env.LAT_SEKOLAH),
+      Number(process.env.LANG_SEKOLAH)
     );
-    if (jarak > process.env.MAX_RADIUS) {
-      throw new Error(
-        `Lokasi terlalu jauh dari sekolah: ${Math.round(jarak)} meter`
-      );
-    }
 
-    const now = new Date();
-    const tanggalHariIni = new Date();
-    tanggalHariIni.setHours(0, 0, 0, 0);
+    // if (jarak > Number(process.env.MAX_RADIUS)) {
+    //   throw new Error(
+    //     `Lokasi terlalu jauh dari sekolah (${Math.round(jarak)} m)`
+    //   );
+    // }
 
+    // ===============================
+    // 2️⃣ WAKTU WIB
+    // ===============================
+    const { nowWIB, startOfDay, endOfDay } = getTodayRangeWIB();
+
+    // ===============================
+    // 3️⃣ AMBIL ABSEN HARI INI
+    // ===============================
     const absenHariIni = await prisma.kehadiranGuru.findFirst({
       where: {
         idGuru,
-        tanggal: { gte: tanggalHariIni },
+        tanggal: {
+          gte: startOfDay,
+          lte: endOfDay,
+        },
       },
     });
 
@@ -117,18 +159,20 @@ export const absenPulangGuru = async ({ idGuru, lokasi }) => {
       throw new Error("Anda sudah melakukan absen pulang hari ini");
     }
 
+    // ===============================
+    // 4️⃣ UPDATE ABSEN PULANG
+    // ===============================
     return await prisma.kehadiranGuru.update({
       where: { id: absenHariIni.id },
       data: {
-        jamPulang: now,
+        jamPulang: nowWIB,
         lokasiPulang: JSON.stringify(lokasi),
         status: "Hadir",
       },
     });
   } catch (error) {
-    console.log(error);
-    const errorMessage = prismaErrorHandler(error);
-    throw new Error(errorMessage);
+    console.error(error);
+    throw new Error(prismaErrorHandler(error));
   }
 };
 

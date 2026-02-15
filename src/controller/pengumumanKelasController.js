@@ -82,10 +82,9 @@ export const getAllKelasAndMapelByGuruController = async (req, res) => {
 
 export const createPengumumanKelas = async (req, res) => {
   try {
-    const { idKelas, title, content } = req.body;
+    const { idKelas, title, content, time } = req.body;
     const { idGuru } = req.user;
     const image = req.file || null;
-    const time = new Date();
 
     if (!idKelas || !title || !content) {
       return res.status(400).json({ message: "Data wajib diisi" });
@@ -118,7 +117,7 @@ export const createPengumumanKelas = async (req, res) => {
 
     // 🔥 SATU KELAS
     const result = await pengumumanKelasService.createPengumumanKelas(
-      { idKelas, title, content, time, idGuru },
+      { idKelas, title, content, time: new Date(time), idGuru },
       image
     );
 
