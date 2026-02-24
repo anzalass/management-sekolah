@@ -4,7 +4,10 @@ import {
   createNotifikasi,
   sendNotificationToUsers,
 } from "./notifikasiService.js";
-import { uploadToCloudinary } from "../utils/ImageHandler.js";
+import {
+  deleteFromCloudinary,
+  uploadToCloudinary,
+} from "../utils/ImageHandler.js";
 
 const prisma = new PrismaClient();
 
