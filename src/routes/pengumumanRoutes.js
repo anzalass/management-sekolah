@@ -28,7 +28,7 @@ router.put(
 );
 
 router.delete(
-  "/pengumuman/delete:id",
+  "/pengumuman/delete/:id",
   AuthMiddleware,
   isKepalaSekolah,
   deletePengumumanController
