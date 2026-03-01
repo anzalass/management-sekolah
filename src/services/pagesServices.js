@@ -457,8 +457,12 @@ export const dashboardWaliKelas = async (idKelas) => {
             id: true,
             nama: true,
             nis: true,
+            createdOn: true,
           },
         },
+      },
+      orderBy: {
+        createdOn: "desc",
       },
     });
 
@@ -475,6 +479,7 @@ export const dashboardWaliKelas = async (idKelas) => {
       nama: c.Siswa.nama,
       kategori: c.kategori,
       catatan: c.content,
+      createdOn: c.createdOn,
     }));
 
     return {
