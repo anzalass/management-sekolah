@@ -55,15 +55,6 @@ export const deletePengumumanController = async (req, res) => {
   }
 };
 
-export const getPengumumanByIdController = async (req, res, next) => {
-  try {
-    const pengumuman = await getPengumumanById(req.params.id);
-    return res.status(200).json(pengumuman);
-  } catch (error) {
-    return res.status(500).json({ message: error.message, success: false });
-  }
-};
-
 export const getAllPengumumanController = async (req, res, next) => {
   try {
     const result = await getAllPengumuman({
@@ -75,5 +66,41 @@ export const getAllPengumumanController = async (req, res, next) => {
     return res.status(200).json(result);
   } catch (error) {
     return res.status(500).json({ message: error.message, success: false });
+  }
+};
+
+export const getPengumumanByIdController = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    if (!id) {
+      return res.status(400).json({
+        success: false,
+        message: "ID pengumuman wajib diisi",
+      });
+    }
+
+    const data = await getPengumumanById(id);
+
+    return res.status(200).json({
+      success: true,
+      message: "Berhasil mengambil pengumuman",
+      data,
+    });
+  } catch (error) {
+    console.error("Error getPengumumanById:", error);
+
+    // 🔥 handle not found
+    if (error.message === "Pengumuman tidak ditemukan") {
+      return res.status(404).json({
+        success: false,
+        message: error.message,
+      });
+    }
+
+    return res.status(500).json({
+      success: false,
+      message: "Terjadi kesalahan server",
+    });
   }
 };

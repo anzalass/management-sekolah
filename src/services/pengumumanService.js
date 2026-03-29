@@ -155,11 +155,45 @@ export const deletePengumuman = async (id) => {
 };
 
 export const getPengumumanById = async (id) => {
-  const pengumuman = await prisma.pengumuman.findUnique({ where: { id } });
-  if (!pengumuman) {
-    throw new Error("Pengumuman not found");
+  // 🔥 cari di pengumuman umum
+  const pengumuman = await prisma.pengumuman.findUnique({
+    where: { id },
+  });
+
+  if (pengumuman) {
+    return {
+      id: pengumuman.id,
+      title: pengumuman.title,
+      time: pengumuman.time,
+      content: pengumuman.content,
+      fotoUrl: pengumuman.fotoUrl,
+      type: "umum", // 🔥 pembeda
+      kelas: null,
+    };
   }
-  return pengumuman;
+
+  // 🔥 kalau ga ada, cek di pengumuman kelas
+  const pengumumanKelas = await prisma.pengumumanKelas.findUnique({
+    where: { id },
+    include: {
+      Guru: true,
+    },
+  });
+
+  if (pengumumanKelas) {
+    return {
+      id: pengumumanKelas.id,
+      title: pengumumanKelas.title,
+      time: pengumumanKelas.time,
+      content: pengumumanKelas.content,
+      fotoUrl: pengumumanKelas.fotoUrl,
+      type: "kelas", // 🔥 pembeda
+      kelas: pengumumanKelas.idKelas,
+      guru: pengumumanKelas.Guru || null,
+    };
+  }
+
+  throw new Error("Pengumuman tidak ditemukan");
 };
 
 export const getAllPengumuman = async ({
