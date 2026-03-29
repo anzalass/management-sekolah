@@ -33,18 +33,8 @@ router.delete(
   isKepalaSekolah,
   deletePengumumanController
 );
-router.get(
-  "/pengumuman/get/:id",
-  AuthMiddleware,
-  isKepalaSekolah,
-  getPengumumanByIdController
-);
-router.get(
-  "/pengumuman/get/:id",
-  AuthMiddleware,
-  isKepalaSekolah,
-  getPengumumanByIdController
-);
+router.get("/pengumuman/get/:id", AuthMiddleware, getPengumumanByIdController);
+
 router.get(
   "/pengumuman",
   AuthMiddleware,
