@@ -237,16 +237,14 @@ export const midtransNotificationController = async (req, res) => {
 };
 
 export const uploadBuktiTagihanController = async (req, res) => {
-  memoryUpload.single("bukti")(req, res, async (err) => {
-    try {
-      await uploadBuktiTagihan(req.params.id, req.file);
-      return res
-        .status(200)
-        .json({ message: "Berhasil upload bukti Tagihan", success: true });
-    } catch (error) {
-      return res.status(500).json({ message: "Gagal upload bukti pembayaran" });
-    }
-  });
+  try {
+    await uploadBuktiTagihan(req.params.id, req.file);
+    return res
+      .status(200)
+      .json({ message: "Berhasil upload bukti Tagihan", success: true });
+  } catch (error) {
+    return res.status(500).json({ message: "Gagal upload bukti pembayaran" });
+  }
 };
 
 export const buktiTidakValidController = async (req, res) => {

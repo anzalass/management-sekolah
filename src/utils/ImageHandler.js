@@ -123,3 +123,25 @@ export const deleteFromCloudinary = async (publicId) => {
     console.error("Error deleting file from Cloudinary:", error);
   }
 };
+
+export const handleMulterError = (err, req, res, next) => {
+  if (err instanceof multer.MulterError) {
+    // ❌ File terlalu besar
+    if (err.code === "LIMIT_FILE_SIZE") {
+      return res.status(400).json({
+        success: false,
+        message: "Ukuran file maksimal 4MB",
+      });
+    }
+  }
+
+  // ❌ Format salah
+  if (err.message === "Format file harus JPG / PNG") {
+    return res.status(400).json({
+      success: false,
+      message: err.message,
+    });
+  }
+
+  next(err);
+};
