@@ -13,6 +13,8 @@ import {
   uploadBuktiTagihanController,
 } from "../controller/pembayaranController.js";
 import { AuthMiddleware, hasRole, isSiswa } from "../utils/authMiddleware.js";
+import memoryUpload from "../utils/multer.js";
+import { handleMulterError } from "../utils/ImageHandler.js";
 
 const router = express.Router();
 
@@ -69,6 +71,8 @@ router.patch(
   "/pembayaran-upload-bukti/:id",
   AuthMiddleware,
   isSiswa,
+  memoryUpload.single("bukti"),
+  handleMulterError,
   uploadBuktiTagihanController
 );
 router.patch(
