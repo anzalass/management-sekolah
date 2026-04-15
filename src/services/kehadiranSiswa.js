@@ -410,6 +410,9 @@ export const getAbsesniSiswaByKelas = async (idSiswa, idKelas) => {
         idKelas,
         idSiswa,
       },
+      orderBy: {
+        createdOn: "desc",
+      },
     });
 
     return dataAbsen;
