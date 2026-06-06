@@ -3,8 +3,12 @@ import {
   getAllArsipController,
   createArsipController,
   deleteArsipController,
+  uploadFileController,
 } from "../controller/arsipController.js";
 import { AuthMiddleware, isKepalaSekolah } from "../utils/authMiddleware.js";
+import multer from "multer";
+import memoryUpload from "../utils/multer.js";
+import { uploadFile } from "../utils/multerFile.js";
 
 const router = express.Router();
 
@@ -16,5 +20,7 @@ router.delete(
   isKepalaSekolah,
   deleteArsipController
 );
+
+router.post("/arsip-drive", uploadFile.single("file"), uploadFileController);
 
 export default router;

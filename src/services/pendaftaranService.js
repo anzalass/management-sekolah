@@ -49,6 +49,9 @@ export const getAllPendaftaran = async (
           mode: "insensitive",
         },
       },
+      orderBy: {
+        createdOn: "desc",
+      },
       skip,
       take,
     });
