@@ -3,6 +3,7 @@ import {
   deleteArsip,
   getAllArsip,
 } from "../services/arsipService.js";
+import { uploadAndGetUrl } from "../utils/arsipUtils.js";
 import fileUpload from "../utils/pdfUpload.js";
 
 const tipeController = "arsip";
@@ -69,5 +70,48 @@ export const getAllArsipController = async (req, res) => {
     });
   } catch (error) {
     return res.status(500).json({ message: error.message, success: false });
+  }
+};
+
+// controllers/upload.controller.ts
+
+export const uploadFileController = async (req, res) => {
+  try {
+    const file = req.file;
+
+    if (!file) {
+      return res.status(400).json({
+        success: false,
+        message: "File tidak ditemukan",
+      });
+    }
+
+    // optional validation
+    if (!file.mimetype) {
+      return res.status(400).json({
+        success: false,
+        message: "File tidak valid",
+      });
+    }
+
+    const result = await uploadAndGetUrl(
+      file.buffer,
+      file.originalname,
+      file.mimetype
+    );
+
+    return res.status(200).json({
+      success: true,
+      message: "Upload berhasil",
+      data: result,
+    });
+  } catch (error) {
+    console.error("Upload Controller Error:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: "Upload gagal",
+      error: error.message,
+    });
   }
 };
